@@ -1,12 +1,39 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
-import { Footer, Header } from "@/components/ui";
+import localFont from "next/font/local";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/ui";
 import { getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const jost = localFont({
+  src: [
+    {
+      path: "./fonts/Jost-VariableFont_wght.ttf",
+      style: "normal",
+      weight: "100 900"
+    },
+    {
+      path: "./fonts/Jost-Italic-VariableFont_wght.ttf",
+      style: "italic",
+      weight: "100 900"
+    }
+  ],
+  variable: "--font-jost",
+  display: "swap"
+});
+
+const slogan = localFont({
+  src: [
+    {
+      path: "./fonts/NothingYouCouldDo-Regular.ttf",
+      style: "normal",
+      weight: "400"
+    }
+  ],
+  variable: "--font-slogan",
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -28,7 +55,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const socialLinks = await getSocialLinks();
   return (
-    <html lang="nl" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="nl" className={`${jost.variable} ${slogan.variable}`}>
       <body>
         <div className="site-shell">
           <Header />

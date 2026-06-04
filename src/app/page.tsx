@@ -7,7 +7,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero latest={latest} />
+      <Hero />
       {latest ? (
         <section className="content-band">
           <div className="section-heading">

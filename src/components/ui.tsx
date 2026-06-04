@@ -15,31 +15,13 @@ import {
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
-export function Header() {
-  return (
-    <header className="site-header">
-      <Link className="brand" href="/" aria-label="Stuk Verdriet home">
-        <Image src={site.logo} alt="Stuk Verdriet" width={124} height={124} priority />
-        <span>{site.name}</span>
-      </Link>
-      <nav className="nav" aria-label="Hoofdnavigatie">
-        {navigation.map((item) => (
-          <Link key={item.href} href={item.href}>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-    </header>
-  );
-}
-
 export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
   return (
     <footer className="footer">
       <div>
         <Image src={site.logo} alt="" width={76} height={76} />
         <h2>{site.name}</h2>
-        <p>{site.tagline}</p>
+        <p className="slogan-text">{site.tagline}</p>
       </div>
       <div className="footer-links">
         {navigation.map((item) => (
@@ -84,24 +66,19 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
   );
 }
 
-export function Hero({ latest }: { latest: PodcastEpisode | null }) {
+export function Hero() {
   return (
     <section className="hero">
       <div className="hero-copy">
-        <Image src={site.logo} alt="Stuk Verdriet logo" width={168} height={168} priority className="hero-logo" />
         <p className="eyebrow">De podcast</p>
         <h1>{site.name}</h1>
-        <p className="hero-tagline">{site.tagline}</p>
+        <p className="hero-tagline slogan-text">{site.tagline}</p>
         <p className="placeholder">[HOMEPAGE_TEKST_WORDT_AANGELEVERD]</p>
         <div className="subtle-actions">
           <Link href="/podcast">Bekijk afleveringen</Link>
           <Link href="/community">Naar de community</Link>
         </div>
       </div>
-      <div className="hero-media" aria-label="Rustig sfeerbeeld uit de Stuk Verdriet richting">
-        <Image src="/brand/moodboard.jpeg" alt="Moodboard met logo, beelden en sfeer voor Stuk Verdriet" fill priority sizes="(max-width: 900px) 100vw, 46vw" />
-      </div>
-      {latest ? <LatestEpisodeCard episode={latest} compact /> : null}
     </section>
   );
 }
