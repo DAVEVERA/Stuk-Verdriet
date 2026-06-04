@@ -2,15 +2,21 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Calendar,
+  Clock3,
+  Download,
   Headphones,
   Heart,
   Leaf,
   Mail,
   MessageCircle,
+  Mic2,
+  Pause,
+  Play,
   Shield,
   Star,
   User,
-  Users
+  Users,
+  Volume2
 } from "lucide-react";
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
@@ -68,15 +74,90 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
 
 export function Hero() {
   return (
-    <section className="hero">
+    <section className="hero" id="home">
       <div className="hero-copy">
         <p className="eyebrow">De podcast</p>
         <h1>{site.name}</h1>
         <p className="hero-tagline slogan-text">{site.tagline}</p>
         <p className="placeholder">[HOMEPAGE_TEKST_WORDT_AANGELEVERD]</p>
         <div className="subtle-actions">
-          <Link href="/podcast">Bekijk afleveringen</Link>
-          <Link href="/community">Naar de community</Link>
+          <Link href="/#podcast">Bekijk afleveringen</Link>
+          <Link href="/#community">Naar de community</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function PodcastOnePagerSection({
+  latest,
+  seasons,
+  episodes
+}: {
+  latest: PodcastEpisode | null;
+  seasons: PodcastSeason[];
+  episodes: PodcastEpisode[];
+}) {
+  const featured = latest ?? episodes[0] ?? null;
+  const upcoming = episodes.find((episode) => episode.next_episode_date)?.next_episode_date ?? featured?.next_episode_date ?? null;
+
+  if (!featured) return null;
+
+  return (
+    <section className="podcast-module" id="podcast" aria-labelledby="podcast-title">
+      <div className="podcast-shell">
+        <div className="podcast-copy">
+          <p className="eyebrow">Podcast</p>
+          <h2 id="podcast-title">Luisteren op je eigen tempo</h2>
+          <p>[PODCAST_INTRO_WORDT_AANGELEVERD]</p>
+        </div>
+
+        <div className="podcast-app">
+          <div className="podcast-now">
+            <div className="podcast-cover">
+              <span>Stuk Verdriet</span>
+              <Mic2 aria-hidden />
+              <small>De podcast</small>
+            </div>
+            <div className="podcast-player-panel">
+              <p className="eyebrow">Nieuwste aflevering</p>
+              <h3>{featured.title}</h3>
+              <EpisodeMeta episode={featured} />
+              {featured.short_intro ? <p>{featured.short_intro}</p> : null}
+              <ModernAudioPlayer episode={featured} />
+              <PlatformLinks episode={featured} />
+            </div>
+          </div>
+
+          <div className="podcast-utility-grid" aria-label="Podcastinformatie">
+            <div>
+              <Clock3 aria-hidden />
+              <span>Elke 14 dagen</span>
+              <strong>{upcoming ? `Volgende: ${formatDate(upcoming)}` : "Planning volgt"}</strong>
+            </div>
+            <div>
+              <Headphones aria-hidden />
+              <span>Direct luisteren</span>
+              <strong>{featured.audio_file_url ? "Audio beschikbaar" : "Audio wordt toegevoegd"}</strong>
+            </div>
+            <div>
+              <Shield aria-hidden />
+              <span>Rustig ingericht</span>
+              <strong>Geen drukke feed</strong>
+            </div>
+          </div>
+
+          <div className="episode-queue">
+            <div className="queue-header">
+              <h3>Afleveringen</h3>
+              <span>{seasons.length} seizoen</span>
+            </div>
+            <div className="episode-stack">
+              {episodes.map((episode) => (
+                <EpisodeQueueItem key={episode.id} episode={episode} active={episode.id === featured.id} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -100,6 +181,48 @@ export function LatestEpisodeCard({ episode, compact = false }: { episode: Podca
       <Link className="text-link" href={`/podcast/${episode.slug}`}>
         Lees meer
       </Link>
+    </article>
+  );
+}
+
+function ModernAudioPlayer({ episode }: { episode: PodcastEpisode }) {
+  return (
+    <div className="modern-player">
+      <div className="player-controls">
+        <button type="button" aria-label={episode.audio_file_url ? "Afspelen" : "Audio nog niet beschikbaar"} disabled={!episode.audio_file_url}>
+          {episode.audio_file_url ? <Play aria-hidden /> : <Pause aria-hidden />}
+        </button>
+        <div className="player-timeline">
+          <div className="timeline-track">
+            <span style={{ width: episode.audio_file_url ? "18%" : "0%" }} />
+          </div>
+          <div className="timeline-meta">
+            <span>00:00</span>
+            <span>{episode.duration ?? "--:--"}</span>
+          </div>
+        </div>
+        <Volume2 aria-hidden className="volume-icon" />
+      </div>
+      {episode.audio_file_url ? <audio controls preload="metadata" src={episode.audio_file_url} /> : <p className="player-note">Audio, shownotes en platformlinks verschijnen zodra de aflevering klaarstaat.</p>}
+    </div>
+  );
+}
+
+function EpisodeQueueItem({ episode, active }: { episode: PodcastEpisode; active?: boolean }) {
+  return (
+    <article className={`queue-item${active ? " active" : ""}`}>
+      <div className="queue-play">
+        {episode.audio_file_url ? <Play aria-hidden /> : <Headphones aria-hidden />}
+      </div>
+      <div>
+        <p className="eyebrow">S{episode.season_number} · E{episode.episode_number}</p>
+        <h4>{episode.title}</h4>
+        <EpisodeMeta episode={episode} />
+      </div>
+      <div className="queue-actions">
+        {episode.audio_file_url ? <Download aria-hidden /> : null}
+        {episode.next_episode_date ? <span>{formatDate(episode.next_episode_date)}</span> : null}
+      </div>
     </article>
   );
 }

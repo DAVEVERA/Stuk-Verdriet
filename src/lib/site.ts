@@ -17,10 +17,10 @@ export const site = {
 };
 
 export const navigation = [
-  { href: "/", label: "Home" },
-  { href: "/podcast", label: "Podcast" },
-  { href: "/community", label: "Community" },
-  { href: "/over", label: "Over ons" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" }
+  { href: "/#home", label: "Home" },
+  { href: "/#podcast", label: "Podcast" },
+  { href: "/#themas", label: "Thema's" },
+  { href: "/#community", label: "Community" },
+  { href: "/#over", label: "Over ons" },
+  { href: "/#contact", label: "Contact" }
 ];
