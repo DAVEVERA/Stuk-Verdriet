@@ -22,6 +22,29 @@ import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
 export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
+  const footerFeatures = [
+    {
+      title: "Longeneeslijk",
+      name: "Eva Hermans-Kroot",
+      text: "Het boek van Eva Kroot over leven met kanker, pech en geluk.",
+      href: "https://www.thema.nl/boek-longeneeslijk/",
+      image: "/footer/longeneeslijk.jpg",
+      imageAlt: "Boekomslag Longeneeslijk van Eva Hermans-Kroot",
+      qr: "/qr/longeneeslijk-thema.png",
+      qrAlt: "QR-code naar het boek Longeneeslijk bij Thema"
+    },
+    {
+      title: "Actie voor Tycho",
+      name: "Radboud Oncologie Fonds",
+      text: "Steun Tycho's inzamelingsactie voor onderzoek naar darmkanker.",
+      href: "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho",
+      image: "/footer/tycho-over-mijn-lijk.png",
+      imageAlt: "Portret van Tycho bij zijn inzamelingsactie",
+      qr: "/qr/tycho-radboud.png",
+      qrAlt: "QR-code naar de inzamelingsactie van Tycho"
+    }
+  ];
+
   return (
     <footer className="footer">
       <div>
@@ -45,7 +68,29 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
         </a>
         <SocialLinksList links={socialLinks} />
       </div>
-      <p className="copyright">© {new Date().getFullYear()} Stuk Verdriet</p>
+      <div className="footer-feature-grid" aria-label="Aanbevolen links">
+        {footerFeatures.map((item) => (
+          <article className="footer-feature" key={item.href}>
+            <a href={item.href} target="_blank" rel="noreferrer" aria-label={`${item.title} openen`}>
+              <Image src={item.image} alt={item.imageAlt} width={220} height={160} />
+            </a>
+            <div>
+              <p className="eyebrow">{item.name}</p>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </div>
+            <a className="footer-qr" href={item.href} target="_blank" rel="noreferrer" aria-label={`${item.title} openen via QR-link`}>
+              <Image src={item.qr} alt={item.qrAlt} width={112} height={112} />
+            </a>
+          </article>
+        ))}
+      </div>
+      <p className="copyright">
+        &copy; {new Date().getFullYear()} Stuk Verdriet - Met liefde gebouwd door{" "}
+        <a href="https://mnrv.nl" target="_blank" rel="noreferrer">
+          MNRV
+        </a>
+      </p>
     </footer>
   );
 }
