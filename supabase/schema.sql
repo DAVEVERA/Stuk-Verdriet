@@ -1,0 +1,203 @@
+create extension if not exists pgcrypto;
+
+create type content_status as enum ('draft', 'scheduled', 'published', 'archived');
+create type community_status as enum ('pending', 'approved', 'rejected', 'archived');
+create type author_display_type as enum ('real_name', 'first_name', 'anonymous');
+
+create table if not exists podcast_seasons (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  season_number integer not null unique,
+  description text,
+  cover_image text,
+  status content_status not null default 'draft',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists podcast_episodes (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  season_number integer not null,
+  episode_number integer not null,
+  short_intro text,
+  description text,
+  audio_file_url text,
+  spotify_url text,
+  podimo_url text,
+  apple_podcast_url text,
+  image_url text,
+  publication_date timestamptz,
+  next_episode_date date,
+  duration text,
+  featured_latest boolean not null default false,
+  status content_status not null default 'draft',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists host_profiles (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  role text,
+  image_url text,
+  bio text,
+  personal_motivation text,
+  display_order integer not null default 100,
+  status content_status not null default 'draft',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists community_categories (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  description text not null default '',
+  icon text not null default 'heart',
+  display_order integer not null default 100
+);
+
+create table if not exists community_posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  author_name text,
+  author_display_type author_display_type not null default 'first_name',
+  title text not null,
+  slug text not null unique,
+  body text not null,
+  category text not null,
+  tags text[] not null default '{}',
+  target_group text,
+  status community_status not null default 'pending',
+  reply_count integer not null default 0,
+  support_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists community_replies (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references community_posts(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
+  author_name text,
+  author_display_type author_display_type not null default 'first_name',
+  body text not null,
+  status community_status not null default 'pending',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists community_supports (
+  post_id uuid not null references community_posts(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+create table if not exists community_reports (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references community_posts(id) on delete cascade,
+  reply_id uuid references community_replies(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
+  reason text not null,
+  resolved_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists faqs (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  answer text not null,
+  category text,
+  display_order integer not null default 100,
+  status content_status not null default 'draft',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists sponsor_logos (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  logo_url text not null,
+  website_url text,
+  display_order integer not null default 100,
+  status content_status not null default 'draft',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists site_settings (
+  id text primary key default 'main',
+  logo_url text,
+  homepage_intro text,
+  social_links jsonb not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+alter table community_posts enable row level security;
+alter table community_replies enable row level security;
+alter table community_supports enable row level security;
+alter table community_reports enable row level security;
+
+create policy "approved posts are public" on community_posts for select using (status = 'approved');
+create policy "authenticated users create pending posts" on community_posts for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
+create policy "approved replies are public" on community_replies for select using (status = 'approved');
+create policy "authenticated users create pending replies" on community_replies for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
+create policy "authenticated users support once" on community_supports for insert to authenticated with check (auth.uid() = user_id);
+create policy "authenticated users report content" on community_reports for insert to authenticated with check (auth.uid() = user_id);
+
+create or replace function refresh_post_counts(target_post_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update community_posts
+  set
+    reply_count = (select count(*) from community_replies where post_id = target_post_id and status = 'approved'),
+    support_count = (select count(*) from community_supports where post_id = target_post_id),
+    updated_at = now()
+  where id = target_post_id;
+end;
+$$;
+
+create or replace function refresh_reply_count_trigger()
+returns trigger
+language plpgsql
+as $$
+begin
+  perform refresh_post_counts(coalesce(new.post_id, old.post_id));
+  return coalesce(new, old);
+end;
+$$;
+
+create or replace function refresh_support_count_trigger()
+returns trigger
+language plpgsql
+as $$
+begin
+  perform refresh_post_counts(coalesce(new.post_id, old.post_id));
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists community_reply_count_refresh on community_replies;
+create trigger community_reply_count_refresh
+after insert or update or delete on community_replies
+for each row execute function refresh_reply_count_trigger();
+
+drop trigger if exists community_support_count_refresh on community_supports;
+create trigger community_support_count_refresh
+after insert or delete on community_supports
+for each row execute function refresh_support_count_trigger();
+
+insert into community_categories (title, slug, description, icon, display_order) values
+  ('Rouw algemeen', 'rouw-algemeen', 'Ruimte voor herkenning, vragen en steun.', 'heart', 1),
+  ('Voor ouders', 'voor-ouders', 'Voor ouders die leven met gemis.', 'users', 2),
+  ('Voor AYA''s', 'voor-ayas', 'Voor jonge mensen die rouw meemaken.', 'user', 3),
+  ('Voor broers en zussen', 'voor-broers-en-zussen', 'Voor broers, zussen en andere naasten.', 'users', 4),
+  ('Praktische steun', 'praktische-steun', 'Ervaringen en tips voor wat er geregeld moet worden.', 'leaf', 5),
+  ('Vragen & antwoorden', 'vragen-en-antwoorden', 'Stel een vraag of reageer op die van een ander.', 'message', 6),
+  ('Verhalen & herkenning', 'verhalen-en-herkenning', 'Persoonlijke verhalen die mogen bestaan.', 'star', 7)
+on conflict (slug) do nothing;

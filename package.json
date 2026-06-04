@@ -1,0 +1,29 @@
+{
+  "name": "stuk-verdriet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobile-first website, podcast environment, and moderated community for Stuk Verdriet.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.84.0",
+    "lucide-react": "^0.562.0",
+    "next": "^16.0.7",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.7",
+    "typescript": "^5.9.3"
+  }
+}
