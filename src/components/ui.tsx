@@ -164,6 +164,29 @@ export function PodcastOnePagerSection({
   );
 }
 
+export function StickySpotifyPlayer({ episode }: { episode: PodcastEpisode | null }) {
+  const spotifyEmbedUrl = episode?.spotify_url ? getSpotifyEmbedUrl(episode.spotify_url) : null;
+
+  if (!episode || !spotifyEmbedUrl) return null;
+
+  return (
+    <aside className="sticky-spotify-player" aria-label={`Spotify-player voor ${episode.title}`}>
+      <div>
+        <p className="eyebrow">Speelt op Spotify</p>
+        <h2>{episode.title}</h2>
+      </div>
+      <iframe
+        title={`Spotify-player: ${episode.title}`}
+        src={spotifyEmbedUrl}
+        width="100%"
+        height="80"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+      />
+    </aside>
+  );
+}
+
 export function LatestEpisodeCard({ episode, compact = false }: { episode: PodcastEpisode; compact?: boolean }) {
   return (
     <article className={compact ? "latest-card floating" : "latest-card"}>
@@ -382,4 +405,18 @@ function displayAuthor(name: string | null, type: string) {
   if (type === "anonymous") return "Anoniem";
   if (type === "first_name" && name) return name.split(" ")[0];
   return name ?? "Communitylid";
+}
+
+function getSpotifyEmbedUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.hostname !== "open.spotify.com") return value;
+    if (!url.pathname.startsWith("/embed/")) {
+      url.pathname = `/embed${url.pathname}`;
+    }
+    url.search = "";
+    return url.toString();
+  } catch {
+    return value;
+  }
 }

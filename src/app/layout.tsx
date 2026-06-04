@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/ui";
 import { getSocialLinks } from "@/lib/content";
@@ -54,9 +55,24 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const socialLinks = await getSocialLinks();
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
   return (
     <html lang="nl" className={`${jost.variable} ${slogan.variable}`}>
       <body>
+        {gaId ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        ) : null}
         <div className="site-shell">
           <Header />
           <main className="main">{children}</main>

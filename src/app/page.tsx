@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CommunityCategoryGrid, CommunityPostCard, Hero, HostCard, PodcastOnePagerSection, SocialLinksList } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityPostCard, Hero, HostCard, PodcastOnePagerSection, SocialLinksList, StickySpotifyPlayer } from "@/components/ui";
 import { createCommunityPost } from "@/lib/actions";
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
@@ -19,6 +19,7 @@ export default async function HomePage() {
     <>
       <Hero />
       <PodcastOnePagerSection latest={latest} seasons={seasons} episodes={episodes} />
+      <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
 
       <section className="content-band image-band" id="themas">
         <div className="section-heading">
