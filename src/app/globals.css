@@ -1028,7 +1028,7 @@ textarea {
     background:
       linear-gradient(180deg, rgba(242, 239, 233, 0.16) 0%, rgba(242, 239, 233, 0.72) 42%, rgba(242, 239, 233, 0.96) 72%),
       url("/hero/stukverdriet-hero-forest-susan.png");
-    background-position: 70% top;
+    background-position: 76% 28px;
     background-repeat: no-repeat;
     background-size: auto 54vh;
     min-height: auto;
