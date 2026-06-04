@@ -74,7 +74,7 @@ textarea {
 .site-header {
   background: transparent;
   left: 0;
-  padding: 16px clamp(14px, 3vw, 36px);
+  padding: 12px clamp(12px, 3vw, 32px);
   position: fixed;
   top: 0;
   width: 100%;
@@ -92,8 +92,8 @@ textarea {
   gap: 24px;
   justify-content: space-between;
   margin: 0 auto;
-  max-width: 1120px;
-  padding: 10px 14px 10px clamp(14px, 2vw, 22px);
+  max-width: 1080px;
+  padding: 8px 12px 8px clamp(12px, 2vw, 18px);
   width: 100%;
 }
 
@@ -107,7 +107,7 @@ textarea {
   filter: drop-shadow(0 8px 18px rgba(43, 49, 43, 0.22));
   height: auto;
   object-fit: contain;
-  width: clamp(72px, 7.5vw, 112px);
+  width: clamp(58px, 5.2vw, 76px);
 }
 
 .desktop-nav {
@@ -141,7 +141,7 @@ textarea {
   color: var(--white) !important;
   font-weight: 800 !important;
   margin-left: 16px;
-  padding: 10px 24px;
+  padding: 9px 20px;
   text-shadow: none !important;
 }
 
@@ -272,8 +272,9 @@ textarea {
   background:
     linear-gradient(90deg, rgba(242, 239, 233, 0.94) 0%, rgba(242, 239, 233, 0.84) 31%, rgba(242, 239, 233, 0.18) 62%, rgba(43, 49, 43, 0.04) 100%),
     linear-gradient(180deg, rgba(242, 239, 233, 0.18) 0%, rgba(242, 239, 233, 0) 42%),
-    url("/hero/stukverdriet-hero-composite.png");
-  background-position: center;
+    url("/hero/stukverdriet-hero-forest-susan.png");
+  background-position: center top;
+  background-repeat: no-repeat;
   background-size: cover;
   min-height: 100svh;
 }
@@ -962,7 +963,7 @@ textarea {
   }
 
   .hero {
-    background-position: center right;
+    background-position: center top;
   }
 
   .podcast-shell {
@@ -1026,8 +1027,9 @@ textarea {
   .hero {
     background:
       linear-gradient(180deg, rgba(242, 239, 233, 0.16) 0%, rgba(242, 239, 233, 0.72) 42%, rgba(242, 239, 233, 0.96) 72%),
-      url("/hero/stukverdriet-hero-composite.png");
-    background-position: 68% top;
+      url("/hero/stukverdriet-hero-forest-susan.png");
+    background-position: 70% top;
+    background-repeat: no-repeat;
     background-size: auto 54vh;
     min-height: auto;
     padding-bottom: 108px;
@@ -1039,7 +1041,7 @@ textarea {
   }
 
   .header-logo img {
-    width: 62px;
+    width: 52px;
   }
 
   .sticky-spotify-player {
