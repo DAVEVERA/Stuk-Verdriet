@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Onepager } from "@/app/onepager";
 
 export default function FaqPage() {
-  redirect("/#themas");
+  return <Onepager initialPanel="themas" />;
 }

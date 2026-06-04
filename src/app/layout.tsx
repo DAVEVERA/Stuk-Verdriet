@@ -29,7 +29,7 @@ const slogan = localFont({
     {
       path: "./fonts/NothingYouCouldDo-Regular.ttf",
       style: "normal",
-      weight: "400"
+      weight: "350"
     }
   ],
   variable: "--font-slogan",

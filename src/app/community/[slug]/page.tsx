@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Onepager } from "@/app/onepager";
 
 export default function CommunityPostPage() {
-  redirect("/#community");
+  return <Onepager initialPanel="community" />;
 }

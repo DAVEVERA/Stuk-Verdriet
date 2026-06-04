@@ -8,9 +8,9 @@ import { X } from "lucide-react";
 import { site } from "@/lib/site";
 
 const navLinks = [
-  { href: "/#home", label: "Home" },
-  { href: "/#podcast", label: "Podcast" },
-  { href: "/#themas", label: "Thema's" }
+  { href: "/", label: "Home" },
+  { href: "/podcast", label: "Podcast" },
+  { href: "/themas", label: "Thema's" }
 ];
 
 export function Header() {
@@ -34,11 +34,11 @@ export function Header() {
 
           <nav className="desktop-nav" aria-label="Hoofdnavigatie">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={pathname === "/" && link.href === "/#home" ? "active" : undefined}>
+              <Link key={link.href} href={link.href} className={pathname === link.href ? "active" : undefined}>
                 {link.label}
               </Link>
             ))}
-            <Link href="/#deel-je-verhaal" className="story-link">
+            <Link href="/bijsluiter" className="story-link">
               Deel je verhaal
             </Link>
           </nav>
@@ -65,11 +65,11 @@ export function Header() {
 
         <nav className="sidebar-nav" aria-label="Mobiele navigatie">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={pathname === "/" && link.href === "/#home" ? "active" : undefined}>
+            <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={pathname === link.href ? "active" : undefined}>
               {link.label}
             </Link>
           ))}
-          <Link href="/#deel-je-verhaal" onClick={() => setOpen(false)} className="story-link">
+          <Link href="/bijsluiter" onClick={() => setOpen(false)} className="story-link">
             Deel je verhaal
           </Link>
         </nav>

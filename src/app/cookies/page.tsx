@@ -1,9 +1,5 @@
-import { PageIntro } from "@/components/ui";
+import { Onepager } from "@/app/onepager";
 
 export default function CookiesPage() {
-  return (
-    <PageIntro eyebrow="Cookies" title="Cookieverklaring">
-      <p>Deze pagina wordt definitief ingevuld zodra de gebruikte cookies en diensten vaststaan.</p>
-    </PageIntro>
-  );
+  return <Onepager initialPanel="cookies" />;
 }

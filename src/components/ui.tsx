@@ -34,6 +34,16 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
       qrAlt: "QR-code naar het boek Longeneeslijk bij Thema"
     },
     {
+      title: "Onvergetelijk",
+      name: "Matthijs Hermans",
+      text: "Een jaar later, over Eva, gemis en het fijne van herinneren.",
+      href: "https://www.thema.nl/boek-onvergetelijk/",
+      image: "/footer/onvergetelijk.jpg",
+      imageAlt: "Boekomslag Onvergetelijk van Matthijs Hermans en Hanneke Mijnster",
+      qr: "/qr/onvergetelijk-thema.png",
+      qrAlt: "QR-code naar het boek Onvergetelijk bij Thema"
+    },
+    {
       title: "Actie voor Tycho",
       name: "Radboud Oncologie Fonds",
       text: "Steun Tycho's inzamelingsactie voor onderzoek naar darmkanker.",
@@ -62,7 +72,7 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
         <Link href="/communityrichtlijnen">Communityrichtlijnen</Link>
         <Link href="/cookies">Cookieverklaring</Link>
       </div>
-      <div>
+      <div className="footer-contact">
         <a className="quiet-link" href={`mailto:${site.email}`}>
           <Mail size={18} aria-hidden /> {site.email}
         </a>
@@ -126,8 +136,8 @@ export function Hero() {
         <p className="hero-tagline slogan-text">{site.tagline}</p>
         <p className="placeholder">[HOMEPAGE_TEKST_WORDT_AANGELEVERD]</p>
         <div className="subtle-actions">
-          <Link href="/#podcast">Bekijk afleveringen</Link>
-          <Link href="/#community">Naar de community</Link>
+          <Link href="/podcast">Bekijk afleveringen</Link>
+          <Link href="/community">Naar de community</Link>
         </div>
       </div>
     </section>
@@ -153,8 +163,8 @@ export function PodcastOnePagerSection({
       <div className="podcast-shell">
         <div className="podcast-copy">
           <p className="eyebrow">Podcast</p>
-          <h2 id="podcast-title">Luisteren op je eigen tempo</h2>
-          <p>[PODCAST_INTRO_WORDT_AANGELEVERD]</p>
+          <h2 id="podcast-title">De podcast</h2>
+          <p>Een stuk verdriet. Een leven vol herinneringen. Iedereen rouwt anders. Verdriet verdient een stem.</p>
         </div>
 
         <div className="podcast-app">
@@ -253,16 +263,24 @@ export function LatestEpisodeCard({ episode, compact = false }: { episode: Podca
   );
 }
 
-function ModernAudioPlayer({ episode }: { episode: PodcastEpisode }) {
+export function ModernAudioPlayer({ episode }: { episode: PodcastEpisode }) {
+  if (episode.audio_file_url) {
+    return (
+      <div className="modern-player">
+        <audio controls preload="metadata" src={episode.audio_file_url} />
+      </div>
+    );
+  }
+
   return (
     <div className="modern-player">
       <div className="player-controls">
-        <button type="button" aria-label={episode.audio_file_url ? "Afspelen" : "Audio nog niet beschikbaar"} disabled={!episode.audio_file_url}>
-          {episode.audio_file_url ? <Play aria-hidden /> : <Pause aria-hidden />}
+        <button type="button" aria-label="Audio nog niet beschikbaar" disabled>
+          <Pause aria-hidden />
         </button>
         <div className="player-timeline">
           <div className="timeline-track">
-            <span style={{ width: episode.audio_file_url ? "18%" : "0%" }} />
+            <span style={{ width: "0%" }} />
           </div>
           <div className="timeline-meta">
             <span>00:00</span>
@@ -271,7 +289,7 @@ function ModernAudioPlayer({ episode }: { episode: PodcastEpisode }) {
         </div>
         <Volume2 aria-hidden className="volume-icon" />
       </div>
-      {episode.audio_file_url ? <audio controls preload="metadata" src={episode.audio_file_url} /> : <p className="player-note">Audio, shownotes en platformlinks verschijnen zodra de aflevering klaarstaat.</p>}
+      <p className="player-note">Audio volgt zodra de aflevering klaarstaat.</p>
     </div>
   );
 }
@@ -373,14 +391,25 @@ export function EpisodeCard({ episode }: { episode: PodcastEpisode }) {
 }
 
 export function CommunityCategoryGrid({ categories }: { categories: CommunityCategory[] }) {
+  const themeImages: Record<string, string> = {
+    "rouw-algemeen": "/img/theme-rouw.jpg",
+    "voor-ouders": "/img/theme-ouders.jpg",
+    "voor-ayas": "/img/theme-ayas.png",
+    "naasten-en-familie": "/img/theme-naasten.jpg",
+    "voor-broers-en-zussen": "/img/theme-naasten.jpg",
+    "praktische-steun": "/img/theme-praktisch.jpg",
+    "vragen-en-antwoorden": "/img/theme-vragen.jpg",
+    "verhalen-en-herkenning": "/img/theme-herkenning.jpg"
+  };
+
   return (
     <div className="category-grid">
       {categories.map((category) => (
-        <article key={category.id} className="category-card">
-          <Icon name={category.icon} />
+        <Link key={category.id} className="category-card category-card-linked" href={`/themas?theme=${category.slug}`}>
+          <Image src={themeImages[category.slug] ?? "/img/theme-rouw.jpg"} alt="" width={520} height={340} />
           <h3>{category.title}</h3>
           <p>{category.description}</p>
-        </article>
+        </Link>
       ))}
     </div>
   );
@@ -405,9 +434,11 @@ export function CommunityPostCard({ post }: { post: CommunityPost }) {
 }
 
 export function HostCard({ host }: { host: HostProfile }) {
+  const imageUrl = host.name.toLowerCase().includes("susan") ? "/img/portretsuus.png" : host.image_url || null;
+
   return (
     <article className="host-card">
-      {host.image_url ? <Image src={host.image_url} alt={host.name} width={720} height={540} /> : <div className="host-placeholder" aria-hidden />}
+      {imageUrl ? <Image src={imageUrl} alt={host.name} width={720} height={540} /> : <div className="host-placeholder" aria-hidden />}
       <div>
         <p className="eyebrow">{host.role ?? "Team"}</p>
         <h3>{host.name}</h3>

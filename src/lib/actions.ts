@@ -42,7 +42,7 @@ export async function signInWithProvider(provider: "google" | "apple") {
 
 export async function createCommunityPost(formData: FormData) {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/community?missing=supabase");
+  if (!supabase) redirect("/bijsluiter?missing=supabase");
 
   const {
     data: { user }
@@ -55,7 +55,7 @@ export async function createCommunityPost(formData: FormData) {
   const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
   const targetGroup = String(formData.get("target_group") ?? "").trim() || null;
 
-  if (!title || !body || !category) redirect("/community?error=missing-fields");
+  if (!title || !body || !category) redirect("/bijsluiter?error=missing-fields");
 
   await supabase.from("community_posts").insert({
     user_id: user.id,
@@ -69,8 +69,10 @@ export async function createCommunityPost(formData: FormData) {
     status: "pending"
   });
 
+  revalidatePath("/");
   revalidatePath("/community");
-  redirect("/community?submitted=pending");
+  revalidatePath("/bijsluiter");
+  redirect("/bijsluiter?submitted=pending");
 }
 
 export async function createCommunityReply(postId: string, formData: FormData) {

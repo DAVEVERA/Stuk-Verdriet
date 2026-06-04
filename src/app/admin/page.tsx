@@ -96,7 +96,7 @@ export default async function AdminPage() {
             <label>Slug<input name="slug" /></label>
             <label>Seizoen<input name="season_number" type="number" min="1" required /></label>
             <label>Aflevering<input name="episode_number" type="number" min="1" required /></label>
-            <label>Korte intro<textarea name="short_intro" placeholder="[AFLEVERING_INTRO_WORDT_AANGELEVERD]" /></label>
+            <label>Korte intro<textarea name="short_intro" /></label>
             <label>Beschrijving<textarea name="description" /></label>
             <label>Audio URL<input name="audio_file_url" /></label>
             <label>Spotify URL<input name="spotify_url" /></label>

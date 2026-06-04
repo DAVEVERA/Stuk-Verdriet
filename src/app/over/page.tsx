@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Onepager } from "@/app/onepager";
 
 export default function OverPage() {
-  redirect("/#over");
+  return <Onepager initialPanel="over" />;
 }

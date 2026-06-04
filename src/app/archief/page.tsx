@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { Onepager } from "@/app/onepager";
 
 export default function ArchiefPage() {
-  redirect("/#themas");
+  return <Onepager initialPanel="archief" />;
 }

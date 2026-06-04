@@ -16,11 +16,13 @@ export const site = {
   }
 };
 
+export type OnepagerPanel = "podcast" | "themas" | "community" | "over" | "contact" | "privacy" | "cookies" | "communityrichtlijnen" | "bijsluiter" | "archief";
+
 export const navigation = [
-  { href: "/#home", label: "Home" },
-  { href: "/#podcast", label: "Podcast" },
-  { href: "/#themas", label: "Thema's" },
-  { href: "/#community", label: "Community" },
-  { href: "/#over", label: "Over ons" },
-  { href: "/#contact", label: "Contact" }
+  { href: "/", label: "Home" },
+  { href: "/podcast", label: "Podcast", panel: "podcast" },
+  { href: "/themas", label: "Thema's", panel: "themas" },
+  { href: "/community", label: "Community", panel: "community" },
+  { href: "/over", label: "Over ons", panel: "over" },
+  { href: "/contact", label: "Contact", panel: "contact" }
 ];
