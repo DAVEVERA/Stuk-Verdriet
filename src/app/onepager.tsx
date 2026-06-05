@@ -53,6 +53,26 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
             </div>
           </div>
         </section>
+
+        <section className="aya-support-banner" aria-labelledby="aya-support-title">
+          <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
+            <Image src="/img/AYAFonds/aya_sage.png" alt="AYA" width={1131} height={417} />
+          </a>
+          <div className="aya-banner-content">
+            <h2 id="aya-support-title">Deze podcast wordt mede mogelijk gemaakt door AYAfonds.nl</h2>
+            <Image
+              className="aya-banner-text"
+              src="/img/AYAFonds/text_sage.png"
+              alt="De juiste zorg om krachtig in het leven te blijven staan. Daar zetten wij ons voor in."
+              width={1699}
+              height={926}
+              sizes="(max-width: 900px) 92vw, 920px"
+            />
+            <a className="aya-donate-button" href="https://ayafonds.nl/doneer/" target="_self">
+              Doneer nu <span aria-hidden>♡</span>
+            </a>
+          </div>
+        </section>
       </div>
 
       {hosts.length ? (

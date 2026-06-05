@@ -829,6 +829,88 @@ p {
   max-width: 720px;
 }
 
+.aya-support-banner {
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.08), rgba(255, 253, 248, 0) 42%),
+    #3f5944;
+  box-shadow: 0 26px 70px rgba(43, 49, 43, 0.14);
+  color: var(--white);
+  display: grid;
+  gap: clamp(22px, 4vw, 42px);
+  margin: clamp(34px, 7vw, 92px) auto 0;
+  max-width: 1320px;
+  overflow: hidden;
+  padding: clamp(18px, 3vw, 34px) clamp(18px, 4vw, 56px) clamp(28px, 6vw, 64px);
+  position: relative;
+}
+
+.aya-logo-link {
+  display: block;
+  height: 54px;
+  justify-self: start;
+  overflow: hidden;
+  width: 156px;
+}
+
+.aya-logo-link img {
+  height: 417px;
+  max-width: none;
+  object-fit: none;
+  object-position: left top;
+  transform: translate(-22px, -14px);
+  width: 1131px;
+}
+
+.aya-banner-content {
+  align-items: start;
+  display: grid;
+  gap: clamp(18px, 3vw, 30px);
+  justify-items: start;
+}
+
+.aya-banner-content h2 {
+  color: var(--white);
+  font-size: clamp(1.65rem, 6vw, 4.1rem);
+  line-height: 1.02;
+  max-width: 920px;
+  text-wrap: balance;
+}
+
+.aya-banner-text {
+  display: block;
+  height: auto;
+  max-width: min(100%, 920px);
+  width: 100%;
+}
+
+.aya-donate-button {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--white);
+  color: var(--pine);
+  display: inline-flex;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 20px;
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.aya-donate-button:hover,
+.aya-donate-button:focus-visible {
+  background: transparent;
+  color: var(--white);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.aya-donate-button span {
+  font-size: 1.1em;
+  line-height: 1;
+}
+
 .contact-actions {
   align-items: center;
   display: flex;
