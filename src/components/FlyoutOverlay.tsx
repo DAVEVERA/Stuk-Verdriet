@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { site, type OnepagerPanel } from "@/lib/site";
+import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 import { CommunityFeedback, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
 
@@ -36,18 +37,6 @@ const panelLabels: Record<OnepagerPanel, string> = {
   archief: "Archief"
 };
 
-const themeImages: Record<string, string> = {
-  "rouw-algemeen": "/img/theme-rouw.jpg",
-  "voor-ouders": "/img/theme-ouders.jpg",
-  "voor-ayas": "/img/theme-ayas.png",
-  "naasten-en-familie": "/img/theme-naasten.jpg",
-  "voor-broers-en-zussen": "/img/theme-naasten.jpg",
-  "praktische-steun": "/img/theme-praktisch.jpg",
-  "vragen-en-antwoorden": "/img/theme-vragen-lieveheersbeestje.jpg",
-  "verhalen-en-herkenning": "/img/theme-herkenning.jpg"
-};
-
-const fallbackThemeImage = "/img/theme-rouw.jpg";
 const podcastIntro = "Een stuk verdriet. Een leven vol herinneringen. Iedereen rouwt anders. Verdriet verdient een stem.";
 
 export function FlyoutOverlay({

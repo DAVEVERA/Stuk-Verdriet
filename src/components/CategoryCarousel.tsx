@@ -4,18 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory } from "@/types/content";
-
-const themeImages: Record<string, string> = {
-  "rouw-algemeen": "/img/theme-rouw.jpg",
-  "voor-ouders": "/img/theme-ouders.jpg",
-  "voor-ayas": "/img/theme-ayas.png",
-  "naasten-en-familie": "/img/theme-naasten.jpg",
-  "voor-broers-en-zussen": "/img/theme-naasten.jpg",
-  "praktische-steun": "/img/theme-praktisch.jpg",
-  "vragen-en-antwoorden": "/img/theme-vragen-lieveheersbeestje.jpg",
-  "verhalen-en-herkenning": "/img/theme-herkenning.jpg"
-};
 
 export function CategoryCarousel({ categories }: { categories: CommunityCategory[] }) {
   const count = categories.length;
@@ -100,7 +90,7 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
               aria-hidden={isPrimarySet ? undefined : true}
               tabIndex={isPrimarySet ? undefined : -1}
             >
-              <Image src={themeImages[category.slug] ?? "/img/theme-rouw.jpg"} alt="" width={760} height={520} />
+              <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={760} height={520} />
               <h3>{category.title}</h3>
               <p>{category.description}</p>
             </Link>

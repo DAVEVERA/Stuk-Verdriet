@@ -16,6 +16,8 @@ import {
   Users,
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
+import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
+import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { createCommunityPost, subscribeEpisodeSignup } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
@@ -518,10 +520,12 @@ export function CommunityStoryForm({
 
 export function HostCard({ host }: { host: HostProfile }) {
   const hostName = host.name.toLowerCase();
+  const isSusan = hostName.includes("susan");
+  const isDaniela = hostName.includes("daniela");
   const imageUrl = hostName.includes("susan")
     ? "/img/portretsuus.png"
     : hostName.includes("daniela")
-      ? "/img/portret-daniela.jpg"
+      ? "/img/Portret_Daniela.jpeg"
       : host.image_url || null;
 
   return (
@@ -532,6 +536,8 @@ export function HostCard({ host }: { host: HostProfile }) {
         <h3>{host.name}</h3>
         {host.bio ? <p>{host.bio}</p> : null}
         {host.personal_motivation ? <p>{host.personal_motivation}</p> : null}
+        {isSusan ? <SusanStoryPopout /> : null}
+        {isDaniela ? <DanielaStoryPopout /> : null}
       </div>
     </article>
   );
