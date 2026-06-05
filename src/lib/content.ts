@@ -24,6 +24,13 @@ function newestFirst(a: PodcastEpisode, b: PodcastEpisode) {
   return new Date(b.publication_date ?? 0).getTime() - new Date(a.publication_date ?? 0).getTime();
 }
 
+function normalizeEpisode(episode: PodcastEpisode): PodcastEpisode {
+  return {
+    ...episode,
+    link_cards: Array.isArray(episode.link_cards) ? episode.link_cards : []
+  };
+}
+
 async function fromTable<T>(table: string, fallback: T[], query = "status.eq.published") {
   const supabase = createSupabaseAdminClient();
   if (!supabase) return fallback;
@@ -44,7 +51,7 @@ export async function getPublishedSeasons(): Promise<PodcastSeason[]> {
 
 export async function getPublishedEpisodes(): Promise<PodcastEpisode[]> {
   const episodes = await fromTable<PodcastEpisode>("podcast_episodes", fallbackEpisodes);
-  return episodes.sort(newestFirst);
+  return episodes.map(normalizeEpisode).sort(newestFirst);
 }
 
 export async function getLatestEpisode() {
@@ -67,7 +74,9 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
 
 export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
   const posts = await fromTable<CommunityPost>("community_posts", fallbackPosts, "status.eq.approved");
-  return posts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return posts
+    .map((post) => ({ ...post, image_url: post.image_url ?? null }))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function getCommunityPostBySlug(slug: string) {

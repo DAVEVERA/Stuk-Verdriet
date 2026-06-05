@@ -1,25 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 import {
   Calendar,
-  Clock3,
   Download,
   Headphones,
   Heart,
   Leaf,
   Mail,
   MessageCircle,
-  Mic2,
-  Pause,
   Play,
   Shield,
   Star,
   User,
   Users,
-  Volume2
 } from "lucide-react";
+import { CategoryCarousel } from "@/components/CategoryCarousel";
+import { createCommunityPost, subscribeEpisodeSignup } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
+
+const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
+const podcastInstagramReelUrl = "https://www.instagram.com/reel/DZJ5DJAoWQx/?utm_source=ig_embed&utm_campaign=loading";
 
 export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
   const footerFeatures = [
@@ -131,13 +133,47 @@ export function Hero() {
   return (
     <section className="hero" id="home">
       <div className="hero-copy">
-        <p className="eyebrow">De podcast</p>
         <h1>{site.name}</h1>
-        <p className="hero-tagline slogan-text">{site.tagline}</p>
+        <div className="hero-slogan-art slogan-text" aria-label={site.tagline}>
+          <span>Je staat er niet</span>
+          <span>alleen voor.</span>
+        </div>
         <div className="subtle-actions">
-          <Link href="/podcast">Bekijk afleveringen</Link>
+          <Link href="/podcast">Luister nu</Link>
         </div>
       </div>
+    </section>
+  );
+}
+
+export function EpisodeSignupSection({ status }: { status?: string | null }) {
+  const feedback: Record<string, string> = {
+    error: "Aanmelden lukte niet. Probeer het nog eens.",
+    invalid: "Vul je naam en een geldig e-mailadres in.",
+    storage: "Aanmelden is nog niet gekoppeld aan Supabase.",
+    subscribed: "Je staat op de lijst. We laten je weten wanneer aflevering 1 klaarstaat."
+  };
+
+  return (
+    <section className="episode-signup-section" id="aanmelden" aria-labelledby="episode-signup-title">
+      <div className="episode-signup-copy">
+        <p className="eyebrow">Aflevering 1</p>
+        <h2 id="episode-signup-title">Mis het niet!</h2>
+        <p>Meld je aan en ben één van de eerste die aflevering 1 luisteren kan!</p>
+      </div>
+      <form className="episode-signup-form" action={subscribeEpisodeSignup}>
+        <input type="hidden" name="source" value="homepage_episode_1" readOnly />
+        <label>
+          Naam
+          <input name="name" autoComplete="name" required />
+        </label>
+        <label>
+          E-mailadres
+          <input name="email" type="email" autoComplete="email" required />
+        </label>
+        <button className="button" type="submit">Meld mij aan</button>
+        {status ? <p className="signup-feedback">{feedback[status] ?? feedback.error}</p> : null}
+      </form>
     </section>
   );
 }
@@ -152,7 +188,6 @@ export function PodcastOnePagerSection({
   episodes: PodcastEpisode[];
 }) {
   const featured = latest ?? episodes[0] ?? null;
-  const upcoming = episodes.find((episode) => episode.next_episode_date)?.next_episode_date ?? featured?.next_episode_date ?? null;
 
   if (!featured) return null;
 
@@ -160,56 +195,44 @@ export function PodcastOnePagerSection({
     <section className="podcast-module" id="podcast" aria-labelledby="podcast-title">
       <div className="podcast-shell">
         <div className="podcast-copy">
-          <p className="eyebrow">Podcast</p>
-          <h2 id="podcast-title">De podcast</h2>
-          <p>Een stuk verdriet. Een leven vol herinneringen. Iedereen rouwt anders. Verdriet verdient een stem.</p>
+          <p className="eyebrow hidden">Podcast</p>
+          <div className="podcast-instagram-frame" aria-label="Instagram reel van Stuk Verdriet">
+            <blockquote
+              className="instagram-media podcast-instagram-embed"
+              data-instgrm-permalink={podcastInstagramReelUrl}
+              data-instgrm-version="14"
+            >
+              <a href={podcastInstagramReelUrl} target="_blank" rel="noreferrer">
+                Bekijk de reel van Stuk Verdriet op Instagram
+              </a>
+            </blockquote>
+          </div>
+          <Script id="instagram-embed" src="https://www.instagram.com/embed.js" strategy="lazyOnload" />
         </div>
 
         <div className="podcast-app">
           <div className="podcast-now">
-            <div className="podcast-cover">
-              <span>Stuk Verdriet</span>
-              <Mic2 aria-hidden />
-              <small>De podcast</small>
-            </div>
             <div className="podcast-player-panel">
               <p className="eyebrow">Nieuwste aflevering</p>
               <h3>{featured.title}</h3>
               <EpisodeMeta episode={featured} />
               {featured.short_intro ? <p>{featured.short_intro}</p> : null}
-              <ModernAudioPlayer episode={featured} />
+              <ModernAudioPlayer episode={featured} showPlaceholderNote={false} />
               <PlatformLinks episode={featured} />
+              <EpisodeLinkCards episode={featured} />
             </div>
           </div>
+        </div>
 
-          <div className="podcast-utility-grid" aria-label="Podcastinformatie">
-            <div>
-              <Clock3 aria-hidden />
-              <span>Elke 14 dagen</span>
-              <strong>{upcoming ? `Volgende: ${formatDate(upcoming)}` : "Planning volgt"}</strong>
-            </div>
-            <div>
-              <Headphones aria-hidden />
-              <span>Direct luisteren</span>
-              <strong>{featured.audio_file_url ? "Audio beschikbaar" : "Audio wordt toegevoegd"}</strong>
-            </div>
-            <div>
-              <Shield aria-hidden />
-              <span>Rustig ingericht</span>
-              <strong>Geen drukke feed</strong>
-            </div>
+        <div className="episode-queue">
+          <div className="queue-header">
+            <h3>Afleveringen</h3>
+            <span>{seasons.length} seizoen</span>
           </div>
-
-          <div className="episode-queue">
-            <div className="queue-header">
-              <h3>Afleveringen</h3>
-              <span>{seasons.length} seizoen</span>
-            </div>
-            <div className="episode-stack">
-              {episodes.map((episode) => (
-                <EpisodeQueueItem key={episode.id} episode={episode} active={episode.id === featured.id} />
-              ))}
-            </div>
+          <div className="episode-stack">
+            {episodes.map((episode) => (
+              <EpisodeQueueItem key={episode.id} episode={episode} active={episode.id === featured.id} />
+            ))}
           </div>
         </div>
       </div>
@@ -241,6 +264,8 @@ export function StickySpotifyPlayer({ episode }: { episode: PodcastEpisode | nul
 }
 
 export function LatestEpisodeCard({ episode, compact = false }: { episode: PodcastEpisode; compact?: boolean }) {
+  const audioUrl = getEpisodeAudioUrl(episode);
+
   return (
     <article className={compact ? "latest-card floating" : "latest-card"}>
       <div className="icon-disc">
@@ -252,8 +277,9 @@ export function LatestEpisodeCard({ episode, compact = false }: { episode: Podca
         <EpisodeMeta episode={episode} />
         {episode.short_intro ? <p>{episode.short_intro}</p> : null}
         <PlatformLinks episode={episode} />
+        <EpisodeLinkCards episode={episode} />
       </div>
-      {episode.audio_file_url ? <audio controls src={episode.audio_file_url} /> : null}
+      <audio controls preload="metadata" src={audioUrl} />
       <Link className="text-link" href={`/podcast/${episode.slug}`}>
         Lees meer
       </Link>
@@ -261,33 +287,13 @@ export function LatestEpisodeCard({ episode, compact = false }: { episode: Podca
   );
 }
 
-export function ModernAudioPlayer({ episode }: { episode: PodcastEpisode }) {
-  if (episode.audio_file_url) {
-    return (
-      <div className="modern-player">
-        <audio controls preload="metadata" src={episode.audio_file_url} />
-      </div>
-    );
-  }
+export function ModernAudioPlayer({ episode, showPlaceholderNote = true }: { episode: PodcastEpisode; showPlaceholderNote?: boolean }) {
+  const audioUrl = getEpisodeAudioUrl(episode);
 
   return (
     <div className="modern-player">
-      <div className="player-controls">
-        <button type="button" aria-label="Audio nog niet beschikbaar" disabled>
-          <Pause aria-hidden />
-        </button>
-        <div className="player-timeline">
-          <div className="timeline-track">
-            <span style={{ width: "0%" }} />
-          </div>
-          <div className="timeline-meta">
-            <span>00:00</span>
-            <span>{episode.duration ?? "--:--"}</span>
-          </div>
-        </div>
-        <Volume2 aria-hidden className="volume-icon" />
-      </div>
-      <p className="player-note">Audio volgt zodra de aflevering klaarstaat.</p>
+      <audio controls preload="metadata" src={audioUrl} />
+      {showPlaceholderNote && !episode.audio_file_url ? <p className="player-note">Testaudio: vervang deze placeholder zodra de echte aflevering klaarstaat.</p> : null}
     </div>
   );
 }
@@ -296,7 +302,7 @@ function EpisodeQueueItem({ episode, active }: { episode: PodcastEpisode; active
   return (
     <article className={`queue-item${active ? " active" : ""}`}>
       <div className="queue-play">
-        {episode.audio_file_url ? <Play aria-hidden /> : <Headphones aria-hidden />}
+        {getEpisodeAudioUrl(episode) ? <Play aria-hidden /> : <Headphones aria-hidden />}
       </div>
       <div>
         <p className="eyebrow">S{episode.season_number} · E{episode.episode_number}</p>
@@ -304,7 +310,7 @@ function EpisodeQueueItem({ episode, active }: { episode: PodcastEpisode; active
         <EpisodeMeta episode={episode} />
       </div>
       <div className="queue-actions">
-        {episode.audio_file_url ? <Download aria-hidden /> : null}
+        {getEpisodeAudioUrl(episode) ? <Download aria-hidden /> : null}
         {episode.next_episode_date ? <span>{formatDate(episode.next_episode_date)}</span> : null}
       </div>
     </article>
@@ -339,6 +345,29 @@ export function PlatformLinks({ episode }: { episode: PodcastEpisode }) {
   );
 }
 
+export function EpisodeLinkCards({ episode }: { episode: PodcastEpisode }) {
+  const cards = episode.link_cards?.filter((card) => isMeaningfulLinkCard(card)) ?? [];
+  if (!cards.length) return null;
+  return (
+    <div className="episode-link-card-grid">
+      {cards.map((card, index) => (
+        <a key={`${card.url}-${index}`} href={card.url} target="_blank" rel="noreferrer">
+          <span>{card.type}</span>
+          <strong>{card.label}</strong>
+          {card.description ? <small>{card.description}</small> : null}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function isMeaningfulLinkCard(card: PodcastEpisode["link_cards"][number]) {
+  const label = card.label.trim().toLowerCase();
+  const url = card.url.trim();
+  if (!label || !url) return false;
+  return !(label === "luister binnenkort" && (url === "#podcast" || url === "/podcast"));
+}
+
 export function EpisodeList({ seasons, episodes }: { seasons: PodcastSeason[]; episodes: PodcastEpisode[] }) {
   return (
     <div className="season-list">
@@ -365,6 +394,8 @@ export function EpisodeList({ seasons, episodes }: { seasons: PodcastSeason[]; e
 }
 
 export function EpisodeCard({ episode }: { episode: PodcastEpisode }) {
+  const audioUrl = getEpisodeAudioUrl(episode);
+
   return (
     <article className="episode-card">
       {episode.image_url ? <Image src={episode.image_url} alt="" width={720} height={540} /> : null}
@@ -378,8 +409,10 @@ export function EpisodeCard({ episode }: { episode: PodcastEpisode }) {
             <Calendar size={16} aria-hidden /> Volgende aflevering beschikbaar op {formatDate(episode.next_episode_date)}
           </p>
         ) : null}
-        {episode.audio_file_url ? <audio controls src={episode.audio_file_url} /> : null}
+        <audio controls preload="metadata" src={audioUrl} />
+        {!episode.audio_file_url ? <p className="small-note">Testaudio: totdat de echte aflevering beschikbaar is.</p> : null}
         <PlatformLinks episode={episode} />
+        <EpisodeLinkCards episode={episode} />
         <Link className="text-link" href={`/podcast/${episode.slug}`}>
           Lees meer
         </Link>
@@ -389,33 +422,13 @@ export function EpisodeCard({ episode }: { episode: PodcastEpisode }) {
 }
 
 export function CommunityCategoryGrid({ categories }: { categories: CommunityCategory[] }) {
-  const themeImages: Record<string, string> = {
-    "rouw-algemeen": "/img/theme-rouw.jpg",
-    "voor-ouders": "/img/theme-ouders.jpg",
-    "voor-ayas": "/img/theme-ayas.png",
-    "naasten-en-familie": "/img/theme-naasten.jpg",
-    "voor-broers-en-zussen": "/img/theme-naasten.jpg",
-    "praktische-steun": "/img/theme-praktisch.jpg",
-    "vragen-en-antwoorden": "/img/theme-vragen.jpg",
-    "verhalen-en-herkenning": "/img/theme-herkenning.jpg"
-  };
-
-  return (
-    <div className="category-grid">
-      {categories.map((category) => (
-        <Link key={category.id} className="category-card category-card-linked" href={`/themas?theme=${category.slug}`}>
-          <Image src={themeImages[category.slug] ?? "/img/theme-rouw.jpg"} alt="" width={520} height={340} />
-          <h3>{category.title}</h3>
-          <p>{category.description}</p>
-        </Link>
-      ))}
-    </div>
-  );
+  return <CategoryCarousel categories={categories} />;
 }
 
 export function CommunityPostCard({ post }: { post: CommunityPost }) {
   return (
     <article className="post-card">
+      {post.image_url ? <Image className="post-card-image" src={post.image_url} alt="" width={720} height={420} /> : null}
       <p className="eyebrow">{post.category}</p>
       <h3>
         <Link href={`/community/${post.slug}`}>{post.title}</Link>
@@ -431,8 +444,85 @@ export function CommunityPostCard({ post }: { post: CommunityPost }) {
   );
 }
 
+export function CommunityFeedback({ submitted, error }: { submitted?: boolean; error?: string | null }) {
+  if (submitted) return <p className="notice">Je verhaal is ontvangen en staat klaar voor moderatie.</p>;
+  if (!error) return null;
+  const messages: Record<string, string> = {
+    "community-images": "Uploaden van de afbeelding is niet gelukt. Probeer een kleiner bestand of plaats je bericht zonder afbeelding.",
+    image: "De afbeelding moet JPG, JPEG, PNG of WEBP zijn en maximaal 4 MB groot zijn.",
+    "missing-fields": "Controleer of titel, categorie en bericht zijn ingevuld.",
+    storage: "Afbeeldingen uploaden is nog niet goed gekoppeld. Controleer de Supabase Storage bucket.",
+    supabase: "Community plaatsen vereist Supabase-configuratie."
+  };
+  return <p className="notice">{messages[error] ?? "Controleer de invoer en probeer het opnieuw."}</p>;
+}
+
+export function CommunityStoryForm({
+  categories,
+  isLoggedIn,
+  returnTo = "/community"
+}: {
+  categories: CommunityCategory[];
+  isLoggedIn: boolean;
+  returnTo?: "/community" | "/bijsluiter";
+}) {
+  if (!isLoggedIn) {
+    return (
+      <div className="story-form login-required-panel">
+        <p className="eyebrow">Inloggen vereist</p>
+        <h3>Deel je verhaal veilig</h3>
+        <p>Log in om een bericht te plaatsen. Zo houden we de community rustig, persoonlijk en goed te modereren.</p>
+        <Link className="button" href={`/login?next=${encodeURIComponent(returnTo)}`}>
+          Log in om te posten
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <form className="form-grid story-form" action={createCommunityPost} encType="multipart/form-data">
+      <input type="hidden" name="return_to" value={returnTo} readOnly />
+      <label>
+        Titel
+        <input name="title" required />
+      </label>
+      <label>
+        Categorie
+        <select name="category" required>
+          {categories.map((category) => (
+            <option key={category.id}>{category.title}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Zichtbare naam
+        <select name="author_display_type" defaultValue="first_name">
+          <option value="first_name">Voornaam</option>
+          <option value="real_name">Volledige naam</option>
+          <option value="anonymous">Anoniem</option>
+        </select>
+      </label>
+      <label>
+        Afbeelding
+        <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" />
+        <small>Optioneel. Maximaal 4 MB. JPG, JPEG, PNG of WEBP.</small>
+      </label>
+      <label>
+        Bericht
+        <textarea name="body" required />
+      </label>
+      <button className="button" type="submit">Verstuur ter goedkeuring</button>
+    </form>
+  );
+}
+
 export function HostCard({ host }: { host: HostProfile }) {
-  const imageUrl = host.name.toLowerCase().includes("susan") ? "/img/portretsuus.png" : host.image_url || null;
+  const hostName = host.name.toLowerCase();
+  const imageUrl = hostName.includes("susan")
+    ? "/img/portretsuus.png"
+    : hostName.includes("daniela")
+      ? "/img/portret-daniela.jpg"
+      : host.image_url || null;
 
   return (
     <article className="host-card">
@@ -493,4 +583,8 @@ function getSpotifyEmbedUrl(value: string) {
   } catch {
     return value;
   }
+}
+
+function getEpisodeAudioUrl(episode: PodcastEpisode) {
+  return episode.audio_file_url || podcastPlaceholderAudioUrl;
 }

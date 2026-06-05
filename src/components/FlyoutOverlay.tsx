@@ -4,10 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import { createCommunityPost } from "@/lib/actions";
 import { site, type OnepagerPanel } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
-import { CommunityPostCard, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
+import { CommunityFeedback, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
 
 type FlyoutOverlayProps = {
   initialPanel?: OnepagerPanel | null;
@@ -19,6 +18,7 @@ type FlyoutOverlayProps = {
   posts: CommunityPost[];
   hosts: HostProfile[];
   socialLinks: SocialLinks;
+  isLoggedIn: boolean;
   submitted?: boolean;
   error?: string | null;
 };
@@ -43,7 +43,7 @@ const themeImages: Record<string, string> = {
   "naasten-en-familie": "/img/theme-naasten.jpg",
   "voor-broers-en-zussen": "/img/theme-naasten.jpg",
   "praktische-steun": "/img/theme-praktisch.jpg",
-  "vragen-en-antwoorden": "/img/theme-vragen.jpg",
+  "vragen-en-antwoorden": "/img/theme-vragen-lieveheersbeestje.jpg",
   "verhalen-en-herkenning": "/img/theme-herkenning.jpg"
 };
 
@@ -60,6 +60,7 @@ export function FlyoutOverlay({
   posts,
   hosts,
   socialLinks,
+  isLoggedIn,
   submitted,
   error
 }: FlyoutOverlayProps) {
@@ -103,17 +104,13 @@ export function FlyoutOverlay({
           <h2 id="flyout-title">De podcast</h2>
           <p className="lead-text">{podcastIntro}</p>
           {featured ? (
-            <article className="flyout-feature">
-              <div className="podcast-cover compact-cover">
-                <span>Stuk Verdriet</span>
-                <small>De podcast</small>
-              </div>
+            <article className="flyout-feature podcast-flyout-feature">
               <div>
                 <p className="eyebrow">Nieuwste aflevering</p>
                 <h3>{featured.title}</h3>
                 <EpisodeMeta episode={featured} />
                 {featured.short_intro ? <p>{featured.short_intro}</p> : null}
-                <ModernAudioPlayer episode={featured} />
+                <ModernAudioPlayer episode={featured} showPlaceholderNote={false} />
                 <PlatformLinks episode={featured} />
               </div>
             </article>
@@ -184,42 +181,9 @@ export function FlyoutOverlay({
       return (
         <div className="flyout-content">
           <h2 id="flyout-title">{panel === "bijsluiter" ? "Deel je verhaal" : "Community en verhalen"}</h2>
-          <p className="lead-text">Je bericht wordt eerst gelezen door een beheerder. Zo blijft deze plek rustig, veilig en respectvol.</p>
-          {submitted ? <p className="notice">Je verhaal is ontvangen en staat klaar voor moderatie.</p> : null}
-          {error ? <p className="notice">Controleer of titel, categorie en bericht zijn ingevuld.</p> : null}
-          <div className="community-flyout-grid">
-            <div className="post-grid compact">
-              {posts.slice(0, 4).map((post) => (
-                <CommunityPostCard key={post.id} post={post} />
-              ))}
-            </div>
-            <form className="form-grid story-form" action={createCommunityPost}>
-              <label>
-                Titel
-                <input name="title" required />
-              </label>
-              <label>
-                Categorie
-                <select name="category" required>
-                  {categories.map((category) => (
-                    <option key={category.id}>{category.title}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Zichtbare naam
-                <select name="author_display_type" defaultValue="first_name">
-                  <option value="first_name">Voornaam</option>
-                  <option value="real_name">Volledige naam</option>
-                  <option value="anonymous">Anoniem</option>
-                </select>
-              </label>
-              <label>
-                Bericht
-                <textarea name="body" required />
-              </label>
-              <button className="button" type="submit">Verstuur ter goedkeuring</button>
-            </form>
+          <CommunityFeedback submitted={submitted} error={error} />
+          <div className="community-flyout-grid story-only-grid">
+            <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo={panel === "bijsluiter" ? "/bijsluiter" : "/community"} />
           </div>
         </div>
       );

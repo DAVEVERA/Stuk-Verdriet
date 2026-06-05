@@ -11,6 +11,13 @@ export type PodcastSeason = {
   status: ContentStatus;
 };
 
+export type PodcastLinkCard = {
+  label: string;
+  url: string;
+  description: string | null;
+  type: "link" | "spotify" | "podimo" | "apple" | "book" | "donation";
+};
+
 export type PodcastEpisode = {
   id: string;
   title: string;
@@ -27,6 +34,7 @@ export type PodcastEpisode = {
   publication_date: string | null;
   next_episode_date: string | null;
   duration: string | null;
+  link_cards: PodcastLinkCard[];
   featured_latest: boolean;
   status: ContentStatus;
   created_at?: string;
@@ -49,6 +57,7 @@ export type CommunityPost = {
   title: string;
   slug: string;
   body: string;
+  image_url: string | null;
   category: string;
   tags: string[];
   target_group: string | null;

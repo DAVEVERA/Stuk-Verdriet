@@ -1,8 +1,25 @@
 create extension if not exists pgcrypto;
 
-create type content_status as enum ('draft', 'scheduled', 'published', 'archived');
-create type community_status as enum ('pending', 'approved', 'rejected', 'archived');
-create type author_display_type as enum ('real_name', 'first_name', 'anonymous');
+do $$
+begin
+  create type content_status as enum ('draft', 'scheduled', 'published', 'archived');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type community_status as enum ('pending', 'approved', 'rejected', 'archived');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type author_display_type as enum ('real_name', 'first_name', 'anonymous');
+exception
+  when duplicate_object then null;
+end $$;
 
 create table if not exists podcast_seasons (
   id uuid primary key default gen_random_uuid(),
@@ -31,11 +48,21 @@ create table if not exists podcast_episodes (
   publication_date timestamptz,
   next_episode_date date,
   duration text,
+  link_cards jsonb not null default '[]',
   featured_latest boolean not null default false,
   status content_status not null default 'draft',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table podcast_episodes add column if not exists link_cards jsonb not null default '[]';
+
+insert into storage.buckets (id, name, public)
+values
+  ('podcast-audio', 'podcast-audio', true),
+  ('podcast-images', 'podcast-images', true),
+  ('community-images', 'community-images', true)
+on conflict (id) do update set public = excluded.public;
 
 create table if not exists host_profiles (
   id uuid primary key default gen_random_uuid(),
@@ -59,6 +86,16 @@ create table if not exists community_categories (
   display_order integer not null default 100
 );
 
+create table if not exists episode_signups (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null unique,
+  source text not null default 'homepage_episode_1',
+  status text not null default 'subscribed',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists community_posts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
@@ -67,6 +104,7 @@ create table if not exists community_posts (
   title text not null,
   slug text not null unique,
   body text not null,
+  image_url text,
   category text not null,
   tags text[] not null default '{}',
   target_group text,
@@ -76,6 +114,11 @@ create table if not exists community_posts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table community_posts add column if not exists image_url text;
+alter table episode_signups add column if not exists source text not null default 'homepage_episode_1';
+alter table episode_signups add column if not exists status text not null default 'subscribed';
+alter table episode_signups add column if not exists updated_at timestamptz not null default now();
 
 create table if not exists community_replies (
   id uuid primary key default gen_random_uuid(),
@@ -139,12 +182,24 @@ alter table community_posts enable row level security;
 alter table community_replies enable row level security;
 alter table community_supports enable row level security;
 alter table community_reports enable row level security;
+alter table episode_signups enable row level security;
 
+drop policy if exists "approved posts are public" on community_posts;
 create policy "approved posts are public" on community_posts for select using (status = 'approved');
+
+drop policy if exists "authenticated users create pending posts" on community_posts;
 create policy "authenticated users create pending posts" on community_posts for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
+
+drop policy if exists "approved replies are public" on community_replies;
 create policy "approved replies are public" on community_replies for select using (status = 'approved');
+
+drop policy if exists "authenticated users create pending replies" on community_replies;
 create policy "authenticated users create pending replies" on community_replies for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
+
+drop policy if exists "authenticated users support once" on community_supports;
 create policy "authenticated users support once" on community_supports for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists "authenticated users report content" on community_reports;
 create policy "authenticated users report content" on community_reports for insert to authenticated with check (auth.uid() = user_id);
 
 create or replace function refresh_post_counts(target_post_id uuid)
