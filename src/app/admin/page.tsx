@@ -72,7 +72,7 @@ export default async function AdminPage() {
         <div className="admin-grid wide">
           <AdminForm title="Site instellingen" action={saveSiteSettings}>
             <label>Logo URL<input name="logo_url" defaultValue="/brand/sverdriet_logo.webp" /></label>
-            <label>Homepage intro<textarea name="homepage_intro" placeholder="[HOMEPAGE_TEKST_WORDT_AANGELEVERD]" /></label>
+            <label>Homepage intro<textarea name="homepage_intro" placeholder="Intro voor de homepage" /></label>
             <label>Instagram<input name="instagram_url" /></label>
             <label>Facebook<input name="facebook_url" /></label>
             <label>TikTok<input name="tiktok_url" /></label>

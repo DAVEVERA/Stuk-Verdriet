@@ -134,10 +134,8 @@ export function Hero() {
         <p className="eyebrow">De podcast</p>
         <h1>{site.name}</h1>
         <p className="hero-tagline slogan-text">{site.tagline}</p>
-        <p className="placeholder">[HOMEPAGE_TEKST_WORDT_AANGELEVERD]</p>
         <div className="subtle-actions">
           <Link href="/podcast">Bekijk afleveringen</Link>
-          <Link href="/community">Naar de community</Link>
         </div>
       </div>
     </section>
