@@ -1028,41 +1028,44 @@ p {
 }
 
 .story-popout-layer {
-  align-items: stretch;
+  align-items: center;
   display: flex;
   inset: 0;
   justify-content: center;
   padding: 12px;
   position: fixed;
-  z-index: 90;
+  z-index: 120;
 }
 
 .story-popout-backdrop {
-  background: rgba(35, 52, 39, 0.68);
+  background: rgba(22, 32, 25, 0.78);
   border: 0;
   cursor: pointer;
   inset: 0;
   position: fixed;
+  z-index: 0;
 }
 
 .story-popout-panel {
-  background: var(--cream);
+  background: rgb(255, 253, 248);
   border: 1px solid rgba(62, 83, 65, 0.28);
-  box-shadow: 0 28px 80px rgba(28, 38, 31, 0.32);
+  box-shadow: 0 28px 90px rgba(18, 26, 20, 0.52);
   color: var(--pine);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  height: calc(100dvh - 24px);
   max-height: calc(100dvh - 24px);
   max-width: 920px;
   overflow: hidden;
   position: relative;
   width: min(100%, 920px);
+  z-index: 1;
 }
 
 .story-popout-header {
   align-items: start;
   background:
-    linear-gradient(135deg, rgba(255, 253, 248, 0.95), rgba(225, 216, 197, 0.84)),
+    linear-gradient(135deg, rgb(255, 253, 248), rgb(235, 228, 211)),
     radial-gradient(circle at top right, rgba(62, 83, 65, 0.18), transparent 46%);
   border-bottom: 1px solid rgba(62, 83, 65, 0.18);
   display: grid;
@@ -1087,7 +1090,7 @@ p {
 }
 
 .story-popout-deck {
-  color: var(--eucalyptus);
+  color: rgb(73, 92, 75);
   font-size: clamp(1rem, 2.8vw, 1.25rem);
   line-height: 1.55;
   margin-top: 14px;
@@ -1096,7 +1099,7 @@ p {
 
 .story-popout-close {
   align-items: center;
-  background: rgba(255, 253, 248, 0.82);
+  background: rgb(255, 253, 248);
   border: 1px solid rgba(62, 83, 65, 0.24);
   color: var(--pine);
   cursor: pointer;
@@ -1114,13 +1117,14 @@ p {
 }
 
 .story-popout-body {
+  background: rgb(255, 253, 248);
   overflow-y: auto;
   padding: clamp(22px, 5vw, 48px);
   scrollbar-color: rgba(62, 83, 65, 0.45) transparent;
 }
 
 .story-popout-body p {
-  color: rgba(42, 55, 44, 0.9);
+  color: rgb(40, 53, 43);
   font-size: clamp(1rem, 2.5vw, 1.08rem);
   line-height: 1.82;
   margin-inline: auto;
@@ -1132,7 +1136,7 @@ p {
 }
 
 .story-popout-intro {
-  color: var(--pine) !important;
+  color: rgb(43, 67, 49) !important;
   font-size: clamp(1.08rem, 3vw, 1.28rem) !important;
   font-weight: 700;
   line-height: 1.65 !important;
