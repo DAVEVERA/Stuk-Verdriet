@@ -85,7 +85,7 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
                 slideRefs.current[index] = node;
               }}
               className={`category-card category-card-linked${realIndex === 0 ? " featured" : ""}`}
-              href={`/themas?theme=${category.slug}`}
+              href={`/themas/${category.slug}`}
               aria-current={isPrimarySet && realIndex === activeRealIndex ? "true" : undefined}
               aria-hidden={isPrimarySet ? undefined : true}
               tabIndex={isPrimarySet ? undefined : -1}

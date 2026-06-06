@@ -2118,6 +2118,58 @@ textarea {
   font-size: 0.9rem;
 }
 
+.theme-article-detail {
+  align-items: start;
+}
+
+.theme-article-media {
+  display: grid;
+  gap: 14px;
+}
+
+.theme-article-copy {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.theme-article-copy h3 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  max-width: 16ch;
+}
+
+.theme-article-intro {
+  color: var(--eucalyptus);
+  font-size: clamp(1.03rem, 2vw, 1.22rem);
+  line-height: 1.72;
+}
+
+.theme-article-section {
+  border-top: 1px solid rgba(66, 86, 69, 0.14);
+  display: grid;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.theme-article-section h4 {
+  color: var(--pine);
+  font-size: clamp(1.24rem, 2.5vw, 1.7rem);
+  line-height: 1.16;
+}
+
+.theme-article-section p,
+.theme-article-section li {
+  color: var(--ink);
+  line-height: 1.78;
+}
+
+.theme-article-section ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
 .text-button {
   display: inline-flex;
   justify-self: start;
@@ -2438,18 +2490,20 @@ textarea {
 @media (max-width: 640px) {
   .hero {
     background:
-      linear-gradient(180deg, rgba(242, 239, 233, 0.16) 0%, rgba(242, 239, 233, 0.72) 42%, rgba(242, 239, 233, 0.96) 72%),
+      linear-gradient(90deg, rgba(242, 239, 233, 0.98) 0%, rgba(242, 239, 233, 0.82) 24%, rgba(242, 239, 233, 0.18) 54%, rgba(242, 239, 233, 0) 100%),
+      linear-gradient(180deg, rgba(242, 239, 233, 0.02) 0%, rgba(242, 239, 233, 0.08) 34%, rgba(242, 239, 233, 0.74) 60%, rgba(242, 239, 233, 0.98) 82%),
       url("/hero/headerduo-upscaled.png");
-    background-position: 76% 28px;
+    align-items: flex-start;
+    background-position: left top, left top, right -10px top 64px;
     background-repeat: no-repeat;
-    background-size: auto 54vh;
-    min-height: auto;
-    padding-bottom: 108px;
-    padding-top: 150px;
+    background-size: 100% 100%, 100% 100%, auto clamp(390px, 52svh, 500px);
+    min-height: max(100svh, 700px);
+    padding-bottom: 112px;
+    padding-top: clamp(400px, 58svh, 520px);
   }
 
   .hero-copy h1 {
-    max-width: 100%;
+    max-width: 10ch;
   }
 
   .hero-slogan-art {

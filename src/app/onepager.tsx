@@ -5,6 +5,7 @@ import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSi
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
+import { getThemeArticles } from "@/lib/theme-articles";
 
 type OnepagerProps = {
   initialPanel?: OnepagerPanel | null;
@@ -27,6 +28,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
     supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } })
   ]);
   const isLoggedIn = Boolean(authResult.data.user);
+  const themeArticles = getThemeArticles();
 
   return (
     <>
@@ -117,6 +119,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         seasons={seasons}
         episodes={episodes}
         categories={categories}
+        themeArticles={themeArticles}
         posts={posts}
         hosts={hosts}
         socialLinks={socialLinks}

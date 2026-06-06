@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { site, type OnepagerPanel } from "@/lib/site";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
-import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
+import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks, ThemeArticle, ThemeArticleBlock } from "@/types/content";
 import { CommunityFeedback, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
 
 type FlyoutOverlayProps = {
@@ -16,6 +16,7 @@ type FlyoutOverlayProps = {
   seasons: PodcastSeason[];
   episodes: PodcastEpisode[];
   categories: CommunityCategory[];
+  themeArticles: ThemeArticle[];
   posts: CommunityPost[];
   hosts: HostProfile[];
   socialLinks: SocialLinks;
@@ -46,6 +47,7 @@ export function FlyoutOverlay({
   seasons,
   episodes,
   categories,
+  themeArticles,
   posts,
   hosts,
   socialLinks,
@@ -59,6 +61,10 @@ export function FlyoutOverlay({
   const selectedTheme = useMemo(
     () => categories.find((category) => category.slug === activeTheme) ?? null,
     [activeTheme, categories]
+  );
+  const selectedThemeArticle = useMemo(
+    () => themeArticles.find((article) => article.slug === activeTheme) ?? null,
+    [activeTheme, themeArticles]
   );
 
   useEffect(() => {
@@ -140,15 +146,31 @@ export function FlyoutOverlay({
           <h2 id="flyout-title">Thema&apos;s</h2>
           <p className="lead-text">Kies een thema dat past bij jouw vraag, moment of herinnering. Elk onderwerp opent rustig bovenop de onepager.</p>
           {selectedTheme ? (
-            <article className="theme-detail">
-              <Image src={themeImages[selectedTheme.slug] ?? fallbackThemeImage} alt="" width={720} height={420} />
-              <div>
-                <p className="eyebrow">Thema</p>
-                <h3>{selectedTheme.title}</h3>
-                <p>{selectedTheme.description}</p>
+            <article className="theme-detail theme-article-detail">
+              <div className="theme-article-media">
+                <Image src={themeImages[selectedTheme.slug] ?? fallbackThemeImage} alt="" width={720} height={520} />
                 <button type="button" className="text-button" onClick={() => setActiveTheme(null)}>
                   Terug naar alle thema&apos;s
                 </button>
+              </div>
+              <div className="theme-article-copy">
+                <p className="eyebrow">Thema</p>
+                <h3>{selectedThemeArticle?.title ?? selectedTheme.title}</h3>
+                {selectedThemeArticle ? (
+                  <>
+                    {selectedThemeArticle.intro.map((paragraph) => (
+                      <p className="theme-article-intro" key={paragraph}>{paragraph}</p>
+                    ))}
+                    {selectedThemeArticle.sections.map((section) => (
+                      <section className="theme-article-section" key={section.heading}>
+                        <h4>{section.heading}</h4>
+                        {section.blocks.map((block, index) => renderThemeBlock(block, `${section.heading}-${index}`))}
+                      </section>
+                    ))}
+                  </>
+                ) : (
+                  <p>{selectedTheme.description}</p>
+                )}
               </div>
             </article>
           ) : (
@@ -233,5 +255,18 @@ export function FlyoutOverlay({
         </ul>
       </div>
     );
+  }
+
+  function renderThemeBlock(block: ThemeArticleBlock, key: string) {
+    if (block.type === "list") {
+      return (
+        <ul key={key}>
+          {block.items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      );
+    }
+    return <p key={key}>{block.content}</p>;
   }
 }

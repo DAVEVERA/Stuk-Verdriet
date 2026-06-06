@@ -115,3 +115,33 @@ export type SponsorLogo = {
   display_order: number;
   status: ContentStatus;
 };
+
+export type ThemeArticleBlock =
+  | {
+      type: "paragraph";
+      content: string;
+    }
+  | {
+      type: "list";
+      items: string[];
+    };
+
+export type ThemeArticleSection = {
+  heading: string;
+  blocks: ThemeArticleBlock[];
+};
+
+export type ThemeArticleSeo = {
+  title: string;
+  metaDescription: string;
+  slug: string;
+  cardText: string;
+};
+
+export type ThemeArticle = {
+  slug: string;
+  title: string;
+  intro: string[];
+  sections: ThemeArticleSection[];
+  seo: ThemeArticleSeo;
+};
