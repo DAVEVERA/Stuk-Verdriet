@@ -7,7 +7,7 @@ export const themeImages: Record<string, string> = {
   "praktische-steun": "/img/squares/poort.jpg",
   "vragen-en-antwoorden": "/img/squares/windpaardenbloem.JPG",
   "verhalen-en-herkenning": "/img/squares/boomenzon.JPG",
-  "podcast": "/img/themas/podcast.png",
+  "podcast": "/img/themas/podcast.jpg",
   "hulp-en-ondersteuning": "/img/themas/hulp-en-ondersteuning.png",
   "herinneren": "/img/themas/herinneren.png",
   "leven-na-verlies": "/img/themas/leven-na-verlies.png",

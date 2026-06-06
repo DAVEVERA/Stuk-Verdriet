@@ -57,21 +57,19 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
 
         <section className="aya-support-banner" aria-labelledby="aya-support-title">
           <div className="aya-banner-inner">
-            <div className="aya-brand-row">
-              <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
-                <Image src="/img/AYAFonds/aya_sage.png" alt="AYA" width={1131} height={417} />
-              </a>
-              <span>Partner in passende AYA-zorg</span>
-            </div>
             <div className="aya-banner-grid">
               <div className="aya-banner-copy">
-                <p className="eyebrow">Mede mogelijk gemaakt door</p>
+                <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
+                  <Image src="/img/AYAFonds/Embleem_logo_.webp" alt="AYA Fonds" width={300} height={204} />
+                </a>
+                <p className="eyebrow">Partner in passende AYA-zorg</p>
                 <h2 id="aya-support-title">Deze podcast wordt mede mogelijk gemaakt door AYAfonds.nl</h2>
                 <p>
                   AYAfonds zet zich in voor jongvolwassenen die leven met of na kanker. Met hun steun krijgen verhalen over
                   rouw, zorg en verder leven een plek waar ze gehoord mogen worden.
                 </p>
-                <div className="aya-banner-actions">
+                <blockquote>De juiste zorg om krachtig in het leven te blijven staan.</blockquote>
+                <div className="aya-banner-actions" aria-label="AYAfonds acties">
                   <a className="aya-donate-button" href="https://ayafonds.nl/doneer/" target="_self">
                     Doneer nu <Heart size={18} aria-hidden />
                   </a>
@@ -80,14 +78,19 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
                   </a>
                 </div>
               </div>
-              <div className="aya-statement" aria-hidden>
-                <Image
-                  src="/img/AYAFonds/text_sage.png"
-                  alt=""
-                  width={1699}
-                  height={926}
-                  sizes="(max-width: 900px) 88vw, 560px"
-                />
+              <div className="aya-donation-panel">
+                <div className="aya-qr-card">
+                  <Image src="/img/AYAFonds/donate-qr.png" alt="QR-code naar ayafonds.nl/doneer" width={512} height={512} />
+                  <div>
+                    <p className="eyebrow">Scan en steun</p>
+                    <h3>Doneer direct aan AYAfonds</h3>
+                    <p>Elke bijdrage helpt om zorg, herkenning en ondersteuning voor AYA&apos;s dichterbij te brengen.</p>
+                  </div>
+                </div>
+                <div className="aya-impact-note">
+                  <span aria-hidden>AYA</span>
+                  <p>Voor jongvolwassenen met kanker, en voor iedereen die naast hen staat.</p>
+                </div>
               </div>
             </div>
           </div>
