@@ -251,8 +251,13 @@ insert into community_categories (title, slug, description, icon, display_order)
   ('Rouw algemeen', 'rouw-algemeen', 'Ruimte voor herkenning, vragen en steun.', 'heart', 1),
   ('Voor ouders', 'voor-ouders', 'Voor ouders die leven met gemis.', 'users', 2),
   ('Voor AYA''s', 'voor-ayas', 'Voor jonge mensen die rouw meemaken.', 'user', 3),
-  ('Voor broers en zussen', 'voor-broers-en-zussen', 'Voor broers, zussen en andere naasten.', 'users', 4),
+  ('Naasten en familie', 'naasten-en-familie', 'Voor broers, zussen, partners, vrienden en andere naasten.', 'users', 4),
   ('Praktische steun', 'praktische-steun', 'Ervaringen en tips voor wat er geregeld moet worden.', 'leaf', 5),
   ('Vragen & antwoorden', 'vragen-en-antwoorden', 'Stel een vraag of reageer op die van een ander.', 'message', 6),
-  ('Verhalen & herkenning', 'verhalen-en-herkenning', 'Persoonlijke verhalen die mogen bestaan.', 'star', 7)
+  ('Verhalen & herkenning', 'verhalen-en-herkenning', 'Persoonlijke verhalen die mogen bestaan.', 'star', 7),
+  ('Podcast', 'podcast', 'Verhalen die gehoord mogen worden.', 'message', 8),
+  ('Hulp & ondersteuning', 'hulp-en-ondersteuning', 'Soms is er meer nodig dan tijd alleen.', 'shield', 9),
+  ('Herinneren', 'herinneren', 'Omdat liefde niet stopt waar het leven eindigt.', 'heart', 10),
+  ('Leven na verlies', 'leven-na-verlies', 'Verder leven zonder verder te hoeven gaan.', 'leaf', 11),
+  ('Voor de omgeving', 'voor-de-omgeving', 'Je hoeft niet de juiste woorden te hebben om er te zijn.', 'users', 12)
 on conflict (slug) do nothing;

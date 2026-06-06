@@ -831,25 +831,62 @@ p {
 
 .aya-support-banner {
   background:
-    linear-gradient(135deg, rgba(255, 253, 248, 0.08), rgba(255, 253, 248, 0) 42%),
-    #3f5944;
-  box-shadow: 0 26px 70px rgba(43, 49, 43, 0.14);
+    linear-gradient(135deg, rgba(255, 253, 248, 0.13), rgba(255, 253, 248, 0) 34%),
+    linear-gradient(180deg, #49664d 0%, #314a38 100%);
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  box-shadow: 0 30px 90px rgba(43, 49, 43, 0.18);
   color: var(--white);
-  display: grid;
-  gap: clamp(22px, 4vw, 42px);
-  margin: clamp(34px, 7vw, 92px) auto 0;
+  isolation: isolate;
+  margin: clamp(42px, 8vw, 104px) auto 0;
   max-width: 1320px;
   overflow: hidden;
-  padding: clamp(18px, 3vw, 34px) clamp(18px, 4vw, 56px) clamp(28px, 6vw, 64px);
   position: relative;
+}
+
+.aya-support-banner::before {
+  background:
+    linear-gradient(90deg, rgba(255, 253, 248, 0.08), rgba(255, 253, 248, 0)),
+    radial-gradient(circle at 88% 18%, rgba(255, 253, 248, 0.16), transparent 28%);
+  content: "";
+  inset: 0;
+  opacity: 0.9;
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+}
+
+.aya-banner-inner {
+  display: grid;
+  gap: clamp(28px, 5vw, 52px);
+  padding: clamp(20px, 3vw, 34px) clamp(18px, 5vw, 64px) clamp(30px, 6vw, 70px);
+  position: relative;
+}
+
+.aya-brand-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  justify-content: space-between;
+}
+
+.aya-brand-row span {
+  border: 1px solid rgba(255, 253, 248, 0.2);
+  color: rgba(255, 253, 248, 0.82);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 10px 12px;
+  text-transform: uppercase;
 }
 
 .aya-logo-link {
   display: block;
-  height: 54px;
+  height: 58px;
   justify-self: start;
   overflow: hidden;
-  width: 156px;
+  width: 162px;
 }
 
 .aya-logo-link img {
@@ -857,29 +894,62 @@ p {
   max-width: none;
   object-fit: none;
   object-position: left top;
-  transform: translate(-22px, -14px);
+  transform: translate(-18px, -12px);
   width: 1131px;
 }
 
-.aya-banner-content {
-  align-items: start;
+.aya-banner-grid {
+  align-items: end;
   display: grid;
-  gap: clamp(18px, 3vw, 30px);
-  justify-items: start;
+  gap: clamp(26px, 5vw, 68px);
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.aya-banner-content h2 {
+.aya-banner-copy {
+  display: grid;
+  gap: clamp(14px, 2.4vw, 22px);
+  max-width: 720px;
+}
+
+.aya-banner-copy .eyebrow {
+  color: rgba(255, 253, 248, 0.78);
+}
+
+.aya-banner-copy h2 {
   color: var(--white);
-  font-size: clamp(1.65rem, 6vw, 4.1rem);
-  line-height: 1.02;
-  max-width: 920px;
+  font-size: clamp(2rem, 9vw, 5.4rem);
+  line-height: 0.94;
+  max-width: 840px;
   text-wrap: balance;
 }
 
-.aya-banner-text {
+.aya-banner-copy p:not(.eyebrow) {
+  color: rgba(255, 253, 248, 0.86);
+  font-size: clamp(1rem, 2.2vw, 1.16rem);
+  line-height: 1.65;
+  max-width: 56ch;
+}
+
+.aya-banner-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.aya-statement {
+  background: rgba(255, 253, 248, 0.08);
+  border: 1px solid rgba(255, 253, 248, 0.14);
+  justify-self: stretch;
+  overflow: hidden;
+  padding: clamp(14px, 3vw, 26px);
+}
+
+.aya-statement img {
   display: block;
   height: auto;
-  max-width: min(100%, 920px);
+  opacity: 0.96;
   width: 100%;
 }
 
@@ -890,10 +960,10 @@ p {
   color: var(--pine);
   display: inline-flex;
   font-weight: 900;
-  gap: 10px;
+  gap: 9px;
   justify-content: center;
-  min-height: 48px;
-  padding: 12px 20px;
+  min-height: 50px;
+  padding: 12px 22px;
   text-decoration: none;
   transition: background 180ms ease, color 180ms ease, transform 180ms ease;
 }
@@ -909,6 +979,22 @@ p {
 .aya-donate-button span {
   font-size: 1.1em;
   line-height: 1;
+}
+
+.aya-secondary-link {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 253, 248, 0.62);
+  color: var(--white);
+  display: inline-flex;
+  font-weight: 800;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.aya-secondary-link:hover,
+.aya-secondary-link:focus-visible {
+  border-color: var(--white);
+  outline: none;
 }
 
 .contact-actions {
@@ -2061,6 +2147,15 @@ textarea {
     grid-template-columns: minmax(420px, 1.15fr) minmax(340px, 0.85fr);
   }
 
+  .aya-banner-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.78fr);
+  }
+
+  .aya-statement {
+    justify-self: end;
+    max-width: 560px;
+  }
+
   .podcast-admin-grid {
     grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
   }
@@ -2122,6 +2217,44 @@ textarea {
 
   .podcast-module {
     padding: clamp(42px, 12vw, 64px) clamp(14px, 5vw, 22px) clamp(72px, 16vw, 104px);
+  }
+
+  .aya-support-banner {
+    margin-inline: 14px;
+  }
+
+  .aya-brand-row {
+    align-items: flex-start;
+  }
+
+  .aya-brand-row span {
+    font-size: 0.68rem;
+    max-width: 190px;
+  }
+
+  .aya-logo-link {
+    height: 48px;
+    width: 132px;
+  }
+
+  .aya-logo-link img {
+    transform: translate(-18px, -12px) scale(0.82);
+    transform-origin: top left;
+  }
+
+  .aya-statement {
+    margin-inline: -2px;
+    padding: 12px;
+  }
+
+  .aya-banner-actions,
+  .aya-donate-button {
+    width: 100%;
+  }
+
+  .aya-secondary-link {
+    justify-content: center;
+    width: 100%;
   }
 
   .podcast-shell {

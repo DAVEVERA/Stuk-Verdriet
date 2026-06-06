@@ -31,6 +31,16 @@ function normalizeEpisode(episode: PodcastEpisode): PodcastEpisode {
   };
 }
 
+function normalizeCategory(category: CommunityCategory): CommunityCategory {
+  if (category.slug !== "voor-broers-en-zussen") return category;
+  return {
+    ...category,
+    title: "Naasten en familie",
+    slug: "naasten-en-familie",
+    description: "Voor broers, zussen, partners, vrienden en andere naasten."
+  };
+}
+
 async function fromTable<T>(table: string, fallback: T[], query = "status.eq.published") {
   const supabase = createSupabaseAdminClient();
   if (!supabase) return fallback;
@@ -69,7 +79,16 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
   if (!supabase) return fallbackCategories;
   const { data, error } = await supabase.from("community_categories").select("*").order("display_order");
   if (error || !data) return fallbackCategories;
-  return data as CommunityCategory[];
+  const categories = (data as CommunityCategory[]).map(normalizeCategory);
+  const knownSlugs = new Set(categories.map((category) => category.slug));
+  const missingFallbacks = fallbackCategories.filter((category) => !knownSlugs.has(category.slug));
+  const uniqueCategories = new Map<string, CommunityCategory>();
+  [...categories, ...missingFallbacks]
+    .sort((a, b) => a.display_order - b.display_order)
+    .forEach((category) => {
+      if (!uniqueCategories.has(category.slug)) uniqueCategories.set(category.slug, category);
+    });
+  return [...uniqueCategories.values()];
 }
 
 export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
