@@ -304,8 +304,8 @@ textarea {
   align-items: center;
   display: flex;
   max-width: none;
-  padding-bottom: clamp(104px, 11vw, 156px);
-  padding-top: clamp(160px, 16vw, 220px);
+  padding-bottom: clamp(100px, 11vw, 156px);
+  padding-top: clamp(100px, 16vw, 220px);
   position: relative;
 }
 
@@ -350,13 +350,17 @@ textarea {
   object-fit: cover;
 }
 
+.hero-slide-mobile-image {
+  display: none;
+}
+
 .hero-slide-image-duo {
-  object-position: 64% top;
+  object-position: 60% center;
 }
 
 .hero-slide-image-table,
 .hero-slide-image-close {
-  object-position: 58% center;
+  object-position: 50% center;
 }
 
 .hero-slider-wash {
@@ -1296,6 +1300,17 @@ p {
   width: 100%;
 }
 
+.host-card img,
+.host-placeholder {
+  aspect-ratio: 1 / 1;
+}
+
+.host-card img {
+  background: rgba(231, 220, 200, 0.56);
+  object-fit: contain;
+  object-position: center;
+}
+
 .category-card,
 .post-card,
 .admin-panel {
@@ -1328,7 +1343,7 @@ p {
   align-items: center;
   background: var(--pine);
   border: 1px solid var(--pine);
-  color: var(--cream);
+  color: var(--white);
   cursor: pointer;
   display: inline-flex;
   font: inherit;
@@ -1343,8 +1358,8 @@ p {
 
 .host-story-trigger:hover,
 .host-story-trigger:focus-visible {
-  background: transparent;
-  color: var(--pine);
+  background: var(--eucalyptus);
+  color: var(--white);
   outline: none;
   transform: translateY(-1px);
 }
@@ -2767,6 +2782,15 @@ textarea {
     background:
       linear-gradient(90deg, rgba(242, 239, 233, 0.16) 0%, rgba(242, 239, 233, 0.07) 24%, rgba(242, 239, 233, 0.01) 50%, rgba(242, 239, 233, 0) 100%),
       linear-gradient(180deg, rgba(242, 239, 233, 0) 0%, rgba(242, 239, 233, 0) 62%, rgba(231, 220, 200, 0.1) 72%, rgba(66, 86, 69, 0.36) 86%, #425645 100%);
+  }
+
+  .hero-slide-desktop-image {
+    display: none;
+  }
+
+  .hero-slide-mobile-image {
+    display: block;
+    object-position: center top;
   }
 
   .hero-slide-image-duo {

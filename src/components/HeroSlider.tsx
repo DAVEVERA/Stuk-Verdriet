@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 type HeroSlide = {
   image: string;
+  mobileImage: string;
   imageAlt: string;
   imageClassName: string;
   slogan: [string, string];
@@ -16,6 +17,7 @@ type HeroSlide = {
 const slides: HeroSlide[] = [
   {
     image: "/hero/headerduo-upscaled.png",
+    mobileImage: "/img/mobile/headerduo.png",
     imageAlt: "Susan en Daniela in een zachte bosrijke omgeving",
     imageClassName: "hero-slide-image-duo",
     slogan: ["Je staat er niet", "alleen voor."],
@@ -24,6 +26,7 @@ const slides: HeroSlide[] = [
   },
   {
     image: "/img/hero2.png",
+    mobileImage: "/img/mobile/headerduo.png",
     imageAlt: "Susan en Daniela samen aan tafel",
     imageClassName: "hero-slide-image-table",
     slogan: ["Verdriet verdient", "een stem."],
@@ -32,6 +35,7 @@ const slides: HeroSlide[] = [
   },
   {
     image: "/img/hero2.png",
+    mobileImage: "/img/mobile/headerduo.png",
     imageAlt: "Susan en Daniela in gesprekssfeer",
     imageClassName: "hero-slide-image-close",
     slogan: ["Verhalen geven", "houvast."],
@@ -63,7 +67,15 @@ export function HeroSlider({ siteName }: { siteName: string }) {
               fill
               priority={index === 0}
               sizes="100vw"
-              className={slide.imageClassName}
+              className={`hero-slide-desktop-image ${slide.imageClassName}`}
+            />
+            <Image
+              src={slide.mobileImage}
+              alt=""
+              fill
+              priority={index === 0}
+              sizes="100vw"
+              className="hero-slide-mobile-image"
             />
           </div>
         ))}
