@@ -40,6 +40,21 @@ const panelLabels: Record<OnepagerPanel, string> = {
 
 const podcastIntro = "Een stuk verdriet. Een leven vol herinneringen. Iedereen rouwt anders. Verdriet verdient een stem.";
 
+const themeSlogans: Record<string, string> = {
+  "rouw-algemeen": "Ruimte voor wat je draagt.",
+  "voor-ouders": "Liefde blijft ouder.",
+  "voor-ayas": "Jong leven, groot verhaal.",
+  "naasten-en-familie": "Ook jouw gemis telt.",
+  "praktische-steun": "Rust in wat geregeld moet worden.",
+  "vragen-en-antwoorden": "Vragen mogen zacht landen.",
+  "verhalen-en-herkenning": "Herkenning begint bij woorden.",
+  podcast: "Verhalen die gehoord mogen worden.",
+  "hulp-en-ondersteuning": "Je hoeft het niet alleen te dragen.",
+  herinneren: "Liefde zoekt een vorm.",
+  "leven-na-verlies": "Verder zonder te vergeten.",
+  "voor-de-omgeving": "Er zijn is soms genoeg."
+};
+
 export function FlyoutOverlay({
   initialPanel,
   initialTheme,
@@ -143,19 +158,23 @@ export function FlyoutOverlay({
     if (panel === "themas" || panel === "archief") {
       return (
         <div className="flyout-content">
-          <h2 id="flyout-title">Thema&apos;s</h2>
-          <p className="lead-text">Kies een thema dat past bij jouw vraag, moment of herinnering. Elk onderwerp opent rustig bovenop de onepager.</p>
           {selectedTheme ? (
             <article className="theme-detail theme-article-detail">
-              <div className="theme-article-media">
-                <Image src={themeImages[selectedTheme.slug] ?? fallbackThemeImage} alt="" width={720} height={520} />
-                <button type="button" className="text-button" onClick={() => setActiveTheme(null)}>
-                  Terug naar alle thema&apos;s
-                </button>
-              </div>
+              <header className="theme-article-hero">
+                <Image
+                  src={themeImages[selectedTheme.slug] ?? fallbackThemeImage}
+                  alt=""
+                  fill
+                  sizes="(max-width: 760px) calc(100vw - 40px), min(88vw, 1100px)"
+                  priority
+                />
+                <div className="theme-article-hero-copy">
+                  <p className="eyebrow">Thema</p>
+                  <h2 id="flyout-title">{selectedThemeArticle?.title ?? selectedTheme.title}</h2>
+                  <p className="theme-hero-slogan slogan-text">{themeSlogans[selectedTheme.slug] ?? selectedTheme.description}</p>
+                </div>
+              </header>
               <div className="theme-article-copy">
-                <p className="eyebrow">Thema</p>
-                <h3>{selectedThemeArticle?.title ?? selectedTheme.title}</h3>
                 {selectedThemeArticle ? (
                   <>
                     {selectedThemeArticle.intro.map((paragraph) => (
@@ -174,15 +193,18 @@ export function FlyoutOverlay({
               </div>
             </article>
           ) : (
-            <div className="theme-flyout-grid">
-              {categories.map((category) => (
-                <button type="button" className="theme-card" key={category.id} onClick={() => setActiveTheme(category.slug)}>
-                  <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={520} height={340} />
-                  <span>{category.title}</span>
-                  <small>{category.description}</small>
-                </button>
-              ))}
-            </div>
+            <>
+              <h2 id="flyout-title" className="sr-only">Thema&apos;s</h2>
+              <div className="theme-flyout-grid">
+                {categories.map((category) => (
+                  <button type="button" className="theme-card" key={category.id} onClick={() => setActiveTheme(category.slug)}>
+                    <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={520} height={340} />
+                    <span>{category.title}</span>
+                    <small>{category.description}</small>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       );

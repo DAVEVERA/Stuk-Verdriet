@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
+import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { createCommunityPost, subscribeEpisodeSignup } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
@@ -46,16 +47,6 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
       imageAlt: "Boekomslag Onvergetelijk van Matthijs Hermans en Hanneke Mijnster",
       qr: "/qr/onvergetelijk-thema.png",
       qrAlt: "QR-code naar het boek Onvergetelijk bij Thema"
-    },
-    {
-      title: "Actie voor Tycho",
-      name: "Radboud Oncologie Fonds",
-      text: "Steun Tycho's inzamelingsactie voor onderzoek naar darmkanker.",
-      href: "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho",
-      image: "/footer/tycho-over-mijn-lijk.png",
-      imageAlt: "Portret van Tycho bij zijn inzamelingsactie",
-      qr: "/qr/tycho-radboud.png",
-      qrAlt: "QR-code naar de inzamelingsactie van Tycho"
     }
   ];
 
@@ -109,6 +100,33 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
   );
 }
 
+export function TychoSupportSection() {
+  const href = "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho";
+
+  return (
+    <section className="tycho-support-section" aria-labelledby="tycho-support-title">
+      <div className="tycho-support-inner">
+        <a className="tycho-support-image" href={href} target="_blank" rel="noreferrer" aria-label="Actie voor Tycho openen">
+          <Image src="/footer/tycho-over-mijn-lijk.png" alt="Portret van Tycho bij zijn inzamelingsactie" width={720} height={540} />
+        </a>
+        <div className="tycho-support-copy">
+          <p className="eyebrow">Radboud Oncologie Fonds</p>
+          <h2 id="tycho-support-title">Actie voor Tycho</h2>
+          <p>Steun Tycho&apos;s inzamelingsactie voor onderzoek naar darmkanker.</p>
+          <div className="tycho-support-actions">
+            <a className="button" href={href} target="_blank" rel="noreferrer">
+              Steun de actie
+            </a>
+            <a className="tycho-support-qr" href={href} target="_blank" rel="noreferrer" aria-label="Open de inzamelingsactie via QR-link">
+              <Image src="/qr/tycho-radboud.png" alt="QR-code naar de inzamelingsactie van Tycho" width={180} height={180} />
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function SocialLinksList({ links }: { links: SocialLinks }) {
   const entries = [
     ["Instagram", links.instagram_url],
@@ -132,20 +150,7 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
 }
 
 export function Hero() {
-  return (
-    <section className="hero" id="home">
-      <div className="hero-copy">
-        <h1>{site.name}</h1>
-        <div className="hero-slogan-art slogan-text" aria-label={site.tagline}>
-          <span>Je staat er niet</span>
-          <span>alleen voor.</span>
-        </div>
-        <div className="subtle-actions">
-          <Link href="/podcast">Luister nu</Link>
-        </div>
-      </div>
-    </section>
-  );
+  return <HeroSlider siteName={site.name} />;
 }
 
 export function EpisodeSignupSection({ status }: { status?: string | null }) {

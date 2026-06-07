@@ -56,12 +56,13 @@ async function fromTable<T>(table: string, fallback: T[], query = "status.eq.pub
 
 export async function getPublishedSeasons(): Promise<PodcastSeason[]> {
   const seasons = await fromTable<PodcastSeason>("podcast_seasons", fallbackSeasons);
-  return seasons.sort((a, b) => a.season_number - b.season_number);
+  return (seasons.length ? seasons : fallbackSeasons).sort((a, b) => a.season_number - b.season_number);
 }
 
 export async function getPublishedEpisodes(): Promise<PodcastEpisode[]> {
   const episodes = await fromTable<PodcastEpisode>("podcast_episodes", fallbackEpisodes);
-  return episodes.map(normalizeEpisode).sort(newestFirst);
+  const source = episodes.length ? episodes : fallbackEpisodes;
+  return source.map(normalizeEpisode).sort(newestFirst);
 }
 
 export async function getLatestEpisode() {
