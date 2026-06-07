@@ -9,6 +9,7 @@ type HeroSlide = {
   mobileImage: string;
   imageAlt: string;
   imageClassName: string;
+  heroClassName: string;
   slogan: [string, string];
   cta: string;
   href: string;
@@ -20,25 +21,28 @@ const slides: HeroSlide[] = [
     mobileImage: "/img/mobile/headerduo.png",
     imageAlt: "Susan en Daniela in een zachte bosrijke omgeving",
     imageClassName: "hero-slide-image-duo",
+    heroClassName: "hero-state-duo",
     slogan: ["Je staat er niet", "alleen voor."],
     cta: "Luister nu",
     href: "/podcast"
   },
   {
-    image: "/img/hero2.png",
-    mobileImage: "/img/mobile/headerduo.png",
-    imageAlt: "Susan en Daniela samen aan tafel",
-    imageClassName: "hero-slide-image-table",
+    image: "/img/podcastopnamehero.png",
+    mobileImage: "/img/mobile/podcastopnameheromobiel.png",
+    imageAlt: "Susan en Daniela tijdens een podcastopname",
+    imageClassName: "hero-slide-image-podcast",
+    heroClassName: "hero-state-podcast",
     slogan: ["Verdriet verdient", "een stem."],
     cta: "Luister nu",
     href: "/podcast"
   },
   {
-    image: "/img/hero2.png",
-    mobileImage: "/img/mobile/headerduo.png",
-    imageAlt: "Susan en Daniela in gesprekssfeer",
-    imageClassName: "hero-slide-image-close",
-    slogan: ["Verhalen geven", "houvast."],
+    image: "/img/Laviehero.png",
+    mobileImage: "/img/mobile/Lavieheromobiel.png",
+    imageAlt: "Podcastopstelling bij La Vie met microfoons en een roze bank",
+    imageClassName: "hero-slide-image-lavie",
+    heroClassName: "hero-state-lavie",
+    slogan: ["Verhalen krijgen", "een plek."],
     cta: "Luister nu",
     href: "/podcast"
   }
@@ -57,7 +61,7 @@ export function HeroSlider({ siteName }: { siteName: string }) {
   }, []);
 
   return (
-    <section className="hero hero-slider" id="home" aria-label="Stuk Verdriet introductie">
+    <section className={`hero hero-slider ${activeSlide.heroClassName}`} id="home" aria-label="Stuk Verdriet introductie">
       <div className="hero-slide-stack" aria-hidden="true">
         {slides.map((slide, index) => (
           <div className={`hero-slide${index === activeIndex ? " active" : ""}`} key={`${slide.image}-${index}`}>
@@ -75,7 +79,7 @@ export function HeroSlider({ siteName }: { siteName: string }) {
               fill
               priority={index === 0}
               sizes="100vw"
-              className="hero-slide-mobile-image"
+              className={`hero-slide-mobile-image ${slide.imageClassName}`}
             />
           </div>
         ))}
