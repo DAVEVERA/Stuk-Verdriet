@@ -1,5 +1,6 @@
-import { Onepager } from "@/app/onepager";
+import { LegalTextPage } from "@/components/LegalTextPage";
+import { cookiePolicyText } from "@/lib/legal";
 
 export default function CookiesPage() {
-  return <Onepager initialPanel="cookies" />;
+  return <LegalTextPage title="Cookieverklaring Stuk Verdriet" text={cookiePolicyText} />;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import Script from "next/script";
 import { Header } from "@/components/Header";
+import { CookieConsent } from "@/components/CookieConsent";
 import { Footer } from "@/components/ui";
 import { getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   description: "Stuk Verdriet biedt herkenning, steun en verbinding voor iedereen die te maken heeft met rouw.",
   openGraph: {
     title: "Stuk Verdriet",
-    description: "Je staat er niet alleen voor.",
+    description: "Verdriet verdient een stem.",
     siteName: "Stuk Verdriet",
     images: ["/brand/sverdriet_logo.webp"],
     locale: "nl_NL",
@@ -60,24 +60,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="nl" className={`${jost.variable} ${slogan.variable}`}>
       <body>
-        {gaId ? (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        ) : null}
         <div className="site-shell">
           <Header />
           <main className="main">{children}</main>
           <Footer socialLinks={socialLinks} />
         </div>
+        <CookieConsent gaId={gaId} />
       </body>
     </html>
   );

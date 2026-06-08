@@ -1,6 +1,6 @@
 export const site = {
   name: "Stuk Verdriet",
-  tagline: "Je staat er niet alleen voor.",
+  tagline: "Verdriet verdient een stem.",
   email: "info@stukverdriet.nl",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   logo: "/brand/sverdriet_logo.webp",

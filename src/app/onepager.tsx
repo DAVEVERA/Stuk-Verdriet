@@ -49,7 +49,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
 
         <section className="community-story-section" id="community">
           <div className="community-visual">
-            <Image src="/img/PHOTO-2026-06-03-23-01-08(3).jpg" alt="Verrekijker als beeld voor zoeken naar herkenning en richting" fill sizes="(max-width: 900px) 100vw, 42vw" />
+            <Image src="/img/wegwijzer.png" alt="Wegwijzer met Stuk Verdriet op de pijl voor een berglandschap" fill sizes="(max-width: 900px) 100vw, 42vw" />
           </div>
           <div className="community-panel">
             <CommunityFeedback submitted={submitted} error={error} />

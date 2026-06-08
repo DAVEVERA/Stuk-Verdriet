@@ -63,6 +63,7 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
             {item.label}
           </Link>
         ))}
+        <Link href="/algemene-voorwaarden">Algemene voorwaarden</Link>
         <Link href="/privacy">Privacyverklaring</Link>
         <Link href="/communityrichtlijnen">Communityrichtlijnen</Link>
         <Link href="/cookies">Cookieverklaring</Link>
@@ -476,9 +477,10 @@ export function CommunityStoryForm({
   if (!isLoggedIn) {
     return (
       <div className="story-form login-required-panel">
-        <p className="eyebrow">Inloggen vereist</p>
-        <h3>Deel je verhaal veilig</h3>
-        <p>Log in om een bericht te plaatsen. Zo houden we de community rustig, persoonlijk en goed te modereren.</p>
+        <p>
+          Stuk Verdriet is een plek voor verhalen en vragen over rouw, verlies, ziekte, gemis en verder leven. Lees voor
+          je meedoet de <Link href="/communityrichtlijnen">communityrichtlijnen</Link>.
+        </p>
         <Link className="button" href={`/login?next=${encodeURIComponent(returnTo)}`}>
           Log in om te posten
         </Link>

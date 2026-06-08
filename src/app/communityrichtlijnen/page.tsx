@@ -1,5 +1,7 @@
-import { Onepager } from "@/app/onepager";
+import { LegalTextPage } from "@/components/LegalTextPage";
+import { readLegalDocument } from "@/lib/legal";
 
 export default function CommunityGuidelinesPage() {
-  return <Onepager initialPanel="communityrichtlijnen" />;
+  const text = readLegalDocument("Communityrichtlijnen Stuk Verdriet.txt");
+  return <LegalTextPage title="Communityrichtlijnen Stuk Verdriet" text={text} />;
 }

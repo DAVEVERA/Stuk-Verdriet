@@ -17,16 +17,6 @@ type HeroSlide = {
 
 const slides: HeroSlide[] = [
   {
-    image: "/hero/headerduo-upscaled.png",
-    mobileImage: "/img/mobile/headerduo.png",
-    imageAlt: "Susan en Daniela in een zachte bosrijke omgeving",
-    imageClassName: "hero-slide-image-duo",
-    heroClassName: "hero-state-duo",
-    slogan: ["Je staat er niet", "alleen voor."],
-    cta: "Luister nu",
-    href: "/podcast"
-  },
-  {
     image: "/img/podcastopnamehero.png",
     mobileImage: "/img/mobile/podcastopnameheromobiel.png",
     imageAlt: "Susan en Daniela tijdens een podcastopname",
@@ -42,7 +32,7 @@ const slides: HeroSlide[] = [
     imageAlt: "Podcastopstelling bij La Vie met microfoons en een roze bank",
     imageClassName: "hero-slide-image-lavie",
     heroClassName: "hero-state-lavie",
-    slogan: ["Verhalen krijgen", "een plek."],
+    slogan: ["Verdriet verdient", "een stem."],
     cta: "Luister nu",
     href: "/podcast"
   }

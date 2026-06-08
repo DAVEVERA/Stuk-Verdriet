@@ -1,5 +1,7 @@
-import { Onepager } from "@/app/onepager";
+import { LegalTextPage } from "@/components/LegalTextPage";
+import { readLegalDocument } from "@/lib/legal";
 
 export default function PrivacyPage() {
-  return <Onepager initialPanel="privacy" />;
+  const text = readLegalDocument("Privacyverklaring Stuk Verdriet.txt");
+  return <LegalTextPage title="Privacyverklaring Stuk Verdriet" text={text} />;
 }
