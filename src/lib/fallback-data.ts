@@ -52,7 +52,7 @@ export const fallbackCategories: CommunityCategory[] = [
   { id: "praktisch", title: "Praktische steun", slug: "praktische-steun", description: "Ervaringen en tips voor wat er geregeld moet worden.", icon: "leaf", display_order: 5 },
   { id: "vragen", title: "Vragen & antwoorden", slug: "vragen-en-antwoorden", description: "Stel een vraag of reageer op die van een ander.", icon: "message", display_order: 6 },
   { id: "verhalen", title: "Verhalen & herkenning", slug: "verhalen-en-herkenning", description: "Persoonlijke verhalen die mogen bestaan.", icon: "star", display_order: 7 },
-  { id: "podcast", title: "Podcast", slug: "podcast", description: "Verhalen die gehoord mogen worden.", icon: "message", display_order: 8 },
+  { id: "podcast", title: "Podcast", slug: "podcast", description: "Echte stemmen en eerlijke gesprekken over missen, liefhebben en verder leven.", icon: "message", display_order: 8 },
   { id: "hulp", title: "Hulp & ondersteuning", slug: "hulp-en-ondersteuning", description: "Soms is er meer nodig dan tijd alleen.", icon: "shield", display_order: 9 },
   { id: "herinneren", title: "Herinneren", slug: "herinneren", description: "Omdat liefde niet stopt waar het leven eindigt.", icon: "heart", display_order: 10 },
   { id: "leven-na-verlies", title: "Leven na verlies", slug: "leven-na-verlies", description: "Verder leven zonder verder te hoeven gaan.", icon: "leaf", display_order: 11 },

@@ -3,21 +3,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory } from "@/types/content";
 
 export function CategoryCarousel({ categories }: { categories: CommunityCategory[] }) {
   const count = categories.length;
-  const [activeIndex, setActiveIndex] = useState(() => categories.length);
-  const [transitionEnabled, setTransitionEnabled] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [slideOffsets, setSlideOffsets] = useState<number[]>([]);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const hasMultiple = count > 1;
-  const renderedCategories = useMemo(() => (hasMultiple ? [...categories, ...categories, ...categories] : categories), [categories, hasMultiple]);
-  const activeRealIndex = count ? ((activeIndex % count) + count) % count : 0;
-
-  const activeCategoryTitle = useMemo(() => categories[activeRealIndex]?.title ?? "thema", [activeRealIndex, categories]);
+  const activeRealIndex = count ? activeIndex : 0;
+  const activeCategoryTitle = categories[activeRealIndex]?.title ?? "thema";
 
   useEffect(() => {
     if (!hasMultiple) return;
@@ -25,75 +23,63 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
     if (prefersReducedMotion) return;
 
     const interval = window.setInterval(() => {
-      setTransitionEnabled(true);
-      setActiveIndex((current) => current + 1);
+      setActiveIndex((current) => (current + 1) % count);
     }, 4200);
 
     return () => window.clearInterval(interval);
   }, [count, hasMultiple]);
 
   useEffect(() => {
+    setActiveIndex((current) => (count ? Math.min(current, count - 1) : 0));
+  }, [count]);
+
+  useEffect(() => {
     function measureSlides() {
-      setSlideOffsets(renderedCategories.map((_, index) => slideRefs.current[index]?.offsetLeft ?? 0));
+      const viewportWidth = viewportRef.current?.clientWidth ?? 0;
+      const lastSlide = slideRefs.current[categories.length - 1];
+      const maxOffset = lastSlide ? Math.max(lastSlide.offsetLeft + lastSlide.offsetWidth - viewportWidth, 0) : 0;
+      setSlideOffsets(categories.map((_, index) => Math.min(slideRefs.current[index]?.offsetLeft ?? 0, maxOffset)));
     }
 
     measureSlides();
     window.addEventListener("resize", measureSlides);
     return () => window.removeEventListener("resize", measureSlides);
-  }, [renderedCategories]);
+  }, [categories]);
 
   function goTo(index: number) {
     if (!count) return;
-    setTransitionEnabled(true);
-    setActiveIndex(count + ((index % count) + count) % count);
+    setActiveIndex(((index % count) + count) % count);
   }
 
   function moveBy(amount: number) {
-    setTransitionEnabled(true);
-    setActiveIndex((current) => current + amount);
-  }
-
-  function handleTransitionEnd() {
-    if (!hasMultiple) return;
-    if (activeIndex >= count * 2 || activeIndex < count) {
-      setTransitionEnabled(false);
-      setActiveIndex(count + activeRealIndex);
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => setTransitionEnabled(true));
-      });
-    }
+    if (!count) return;
+    setActiveIndex((current) => ((current + amount) % count + count) % count);
   }
 
   return (
     <div className="category-carousel" aria-label="Thema's">
-      <div className="category-carousel-viewport">
+      <div className="category-carousel-viewport" ref={viewportRef}>
         <div
           className="category-grid"
-          onTransitionEnd={handleTransitionEnd}
           style={{
-            transform: `translateX(-${slideOffsets[activeIndex] ?? 0}px)`,
-            transition: transitionEnabled ? undefined : "none"
+            transform: `translateX(-${slideOffsets[activeRealIndex] ?? 0}px)`
           }}
         >
-          {renderedCategories.map((category, index) => {
-            const realIndex = count ? index % count : index;
-            const isPrimarySet = !hasMultiple || Math.floor(index / count) === 1;
+          {categories.map((category, index) => {
             return (
-            <Link
-              key={`${category.id}-${index}`}
-              ref={(node) => {
-                slideRefs.current[index] = node;
-              }}
-              className={`category-card category-card-linked${realIndex === 0 ? " featured" : ""}`}
-              href={`/themas/${category.slug}`}
-              aria-current={isPrimarySet && realIndex === activeRealIndex ? "true" : undefined}
-              aria-hidden={isPrimarySet ? undefined : true}
-              tabIndex={isPrimarySet ? undefined : -1}
-            >
-              <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={760} height={520} />
-              <h3>{category.title}</h3>
-              <p>{category.description}</p>
-            </Link>
+              <Link
+                key={category.id}
+                ref={(node) => {
+                  slideRefs.current[index] = node;
+                }}
+                className={`category-card category-card-linked${index === 0 ? " featured" : ""}`}
+                href={`/themas/${category.slug}`}
+                aria-current={index === activeRealIndex ? "true" : undefined}
+              >
+                <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={760} height={520} />
+                <h3>{category.title}</h3>
+                <p>{category.description}</p>
+              </Link>
             );
           })}
         </div>
