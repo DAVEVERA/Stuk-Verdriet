@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Archive, FileAudio, ImagePlus, Plus, Save, Search } from "lucide-react";
+import { Archive, FileAudio, ImagePlus, Palette, Plus, Save, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { archiveEpisode, moderatePost, saveEpisode, saveFaq, saveHost, saveSeason, saveSiteSettings } from "@/lib/actions";
-import type { PodcastEpisode, PodcastLinkCard, PodcastSeason } from "@/types/content";
+import { archiveEpisode, moderatePost, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings } from "@/lib/actions";
+import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
+import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, SiteDesignSettings } from "@/types/content";
 
 type AdminPost = {
   id: string;
@@ -27,6 +28,7 @@ type AdminDashboardProps = {
   seasons: PodcastSeason[];
   pendingPosts: AdminPost[];
   reports: AdminReport[];
+  sectionDesign: SiteDesignSettings;
   missingSupabase?: boolean;
   savedMessage?: string | null;
   errorMessage?: string | null;
@@ -58,6 +60,7 @@ const tabs = [
   ["seasons", "Seizoenen"],
   ["community", "Community"],
   ["site", "Site"],
+  ["sections", "Secties"],
   ["hosts", "Hosts"]
 ] as const;
 
@@ -69,10 +72,12 @@ const feedbackLabels: Record<string, string> = {
   faq: "FAQ",
   host: "host",
   season: "seizoen",
+  "section-design": "sectie ontwerp",
+  "section-design-save": "sectie ontwerp",
   site: "site instellingen"
 };
 
-export function AdminDashboard({ episodes, seasons, pendingPosts, reports, missingSupabase, savedMessage, errorMessage }: AdminDashboardProps) {
+export function AdminDashboard({ episodes, seasons, pendingPosts, reports, sectionDesign, missingSupabase, savedMessage, errorMessage }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number][0]>("podcast");
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
   const [query, setQuery] = useState("");
@@ -302,8 +307,88 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, missi
 
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
       {activeTab === "site" ? <SiteSettingsForm /> : null}
+      {activeTab === "sections" ? <SectionDesignEditor initialSettings={sectionDesign} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms /> : null}
     </section>
+  );
+}
+
+function SectionDesignEditor({ initialSettings }: { initialSettings: SiteDesignSettings }) {
+  const [settings, setSettings] = useState<SiteDesignSettings>(initialSettings);
+
+  function updateSection(section: SectionDesignKey, field: keyof SectionDesignSettings, value: string) {
+    setSettings((current) => ({
+      ...current,
+      [section]: {
+        ...mergeSectionDesign(current, section),
+        [field]: value
+      }
+    }));
+  }
+
+  return (
+    <form className="section-design-editor" action={saveSectionDesignSettings}>
+      <input type="hidden" name="section_styles" value={encodeSiteDesignSettings(settings)} readOnly />
+      <div className="editor-topbar">
+        <div>
+          <p className="eyebrow">No-code stijlbeheer</p>
+          <h2>Secties aanpassen</h2>
+          <p className="small-note">Kies per homepage-sectie veilige presets voor kleur, lettertype, ruimte, breedte en layout.</p>
+        </div>
+        <button className="button" type="submit">
+          <Save size={17} aria-hidden /> Secties opslaan
+        </button>
+      </div>
+
+      <div className="section-design-grid">
+        {sectionDesignSections.map((section) => {
+          const value = mergeSectionDesign(settings, section.key);
+          return (
+            <article className="section-design-card" key={section.key}>
+              <div className="section-design-card-header">
+                <Palette size={18} aria-hidden />
+                <h3>{section.label}</h3>
+              </div>
+              <div className="section-design-preview" style={{ backgroundColor: value.backgroundColor || undefined, color: value.textColor || undefined }}>
+                <span style={{ backgroundColor: value.accentColor || undefined }} />
+                <strong>{section.label}</strong>
+                <small>{value.layout} / {value.spacing}</small>
+              </div>
+              <div className="section-design-controls">
+                <label>Achtergrond<ColorInput value={value.backgroundColor} onChange={(next) => updateSection(section.key, "backgroundColor", next)} /></label>
+                <label>Tekst<ColorInput value={value.textColor} onChange={(next) => updateSection(section.key, "textColor", next)} /></label>
+                <label>Accent<ColorInput value={value.accentColor} onChange={(next) => updateSection(section.key, "accentColor", next)} /></label>
+                <label>Lettertype<SelectControl value={value.fontFamily} options={["brand", "display", "handwritten"]} onChange={(next) => updateSection(section.key, "fontFamily", next)} /></label>
+                <label>Grootte<SelectControl value={value.fontScale} options={["compact", "normal", "large"]} onChange={(next) => updateSection(section.key, "fontScale", next)} /></label>
+                <label>Ruimte<SelectControl value={value.spacing} options={["compact", "normal", "spacious"]} onChange={(next) => updateSection(section.key, "spacing", next)} /></label>
+                <label>Breedte<SelectControl value={value.maxWidth} options={["standard", "wide", "full"]} onChange={(next) => updateSection(section.key, "maxWidth", next)} /></label>
+                <label>Hoogte<SelectControl value={value.minHeight} options={["auto", "focus", "screen"]} onChange={(next) => updateSection(section.key, "minHeight", next)} /></label>
+                <label>Layout<SelectControl value={value.layout} options={["default", "centered", "split", "dense"]} onChange={(next) => updateSection(section.key, "layout", next)} /></label>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </form>
+  );
+}
+
+function ColorInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <span className="color-input">
+      <input type="color" value={value || "#ffffff"} onChange={(event) => onChange(event.target.value)} aria-label="Kleur kiezen" />
+      <button type="button" onClick={() => onChange("")}>Reset</button>
+    </span>
+  );
+}
+
+function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
+  return (
+    <select value={value} onChange={(event) => onChange(event.target.value)}>
+      {options.map((option) => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+    </select>
   );
 }
 

@@ -71,6 +71,7 @@ export type CommunityPost = {
 export type CommunityReply = {
   id: string;
   post_id: string;
+  user_id?: string | null;
   author_name: string | null;
   author_display_type: AuthorDisplayType;
   body: string;
@@ -106,6 +107,30 @@ export type SocialLinks = {
   podimo_url: string | null;
   apple_podcast_url: string | null;
 };
+
+export type SectionDesignKey =
+  | "hero"
+  | "signup"
+  | "podcast"
+  | "themes"
+  | "tycho"
+  | "community"
+  | "aya"
+  | "hosts";
+
+export type SectionDesignSettings = {
+  backgroundColor: string;
+  textColor: string;
+  accentColor: string;
+  fontFamily: "brand" | "display" | "handwritten";
+  fontScale: "compact" | "normal" | "large";
+  spacing: "compact" | "normal" | "spacious";
+  maxWidth: "standard" | "wide" | "full";
+  minHeight: "auto" | "focus" | "screen";
+  layout: "default" | "centered" | "split" | "dense";
+};
+
+export type SiteDesignSettings = Partial<Record<SectionDesignKey, Partial<SectionDesignSettings>>>;
 
 export type SponsorLogo = {
   id: string;

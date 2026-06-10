@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { PageIntro } from "@/components/ui";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
+import { getSiteDesignSettings } from "@/lib/content";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
@@ -24,6 +25,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (hasSupabaseEnv && !allowed) redirect("/login");
 
   const admin = createSupabaseAdminClient();
+  const sectionDesign = await getSiteDesignSettings();
   const [{ data: pendingPosts }, { data: reports }, { data: seasons }, { data: episodes }] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
@@ -43,6 +45,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
         pendingPosts={pendingPosts ?? []}
         reports={reports ?? []}
+        sectionDesign={sectionDesign}
         missingSupabase={!hasSupabaseEnv}
         savedMessage={saved ?? null}
         errorMessage={error ?? null}

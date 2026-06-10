@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeSectionDesign } from "@/lib/section-design";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type { PodcastLinkCard } from "@/types/content";
 
@@ -57,7 +58,7 @@ function fileExtension(file: File, fallback: string) {
 
 function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community" | "/bijsluiter") {
   const path = String(value ?? "").trim();
-  return path === "/bijsluiter" || path === "/community" ? path : fallback;
+  return path === "/bijsluiter" || path === "/community" || path.startsWith("/community/") ? path : fallback;
 }
 
 function isAllowedCommunityImage(file: File) {
@@ -390,12 +391,18 @@ export async function saveFaq(formData: FormData) {
 
 export async function saveSiteSettings(formData: FormData) {
   const supabase = await requireAdminClient();
+  const { data } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
+  const currentSocialLinks =
+    data?.social_links && typeof data.social_links === "object" && !Array.isArray(data.social_links)
+      ? (data.social_links as Record<string, unknown>)
+      : {};
   await supabase.from("site_settings").upsert(
     {
       id: "main",
       logo_url: String(formData.get("logo_url") ?? "").trim() || "/brand/sverdriet_logo.webp",
       homepage_intro: String(formData.get("homepage_intro") ?? "").trim() || null,
       social_links: {
+        section_styles: currentSocialLinks.section_styles ?? {},
         instagram_url: String(formData.get("instagram_url") ?? "").trim() || null,
         facebook_url: String(formData.get("facebook_url") ?? "").trim() || null,
         tiktok_url: String(formData.get("tiktok_url") ?? "").trim() || null,
@@ -410,4 +417,41 @@ export async function saveSiteSettings(formData: FormData) {
   revalidatePath("/contact");
   revalidatePath("/admin");
   redirect("/admin?saved=site");
+}
+
+export async function saveSectionDesignSettings(formData: FormData) {
+  const supabase = await requireAdminClient();
+  const rawSettings = String(formData.get("section_styles") ?? "{}");
+  let parsed: unknown = {};
+  try {
+    parsed = JSON.parse(rawSettings);
+  } catch {
+    redirect("/admin?error=section-design");
+  }
+
+  const { data } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
+  const currentSocialLinks =
+    data?.social_links && typeof data.social_links === "object" && !Array.isArray(data.social_links)
+      ? (data.social_links as Record<string, unknown>)
+      : {};
+
+  const result = await supabase.from("site_settings").upsert(
+    {
+      id: "main",
+      social_links: {
+        ...currentSocialLinks,
+        section_styles: normalizeSectionDesign(parsed)
+      },
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "id" }
+  );
+
+  if (result.error) redirect("/admin?error=section-design-save");
+  revalidatePath("/");
+  revalidatePath("/podcast");
+  revalidatePath("/themas");
+  revalidatePath("/community");
+  revalidatePath("/admin");
+  redirect("/admin?saved=section-design");
 }

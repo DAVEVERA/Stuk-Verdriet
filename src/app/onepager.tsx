@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
+import { SiteDesignStyles } from "@/components/SiteDesignStyles";
 import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
-import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSocialLinks } from "@/lib/content";
+import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { getThemeArticles } from "@/lib/theme-articles";
@@ -17,7 +18,7 @@ type OnepagerProps = {
 
 export async function Onepager({ initialPanel = null, initialTheme = null, submitted = false, error = null, signupStatus = null }: OnepagerProps) {
   const supabase = await createSupabaseServerClient();
-  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, authResult] = await Promise.all([
+  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, sectionDesign, authResult] = await Promise.all([
     getLatestEpisode(),
     getPublishedSeasons(),
     getPublishedEpisodes(),
@@ -25,6 +26,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
     getApprovedCommunityPosts(),
     getPublishedHosts(),
     getSocialLinks(),
+    getSiteDesignSettings(),
     supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } })
   ]);
   const isLoggedIn = Boolean(authResult.data.user);
@@ -32,6 +34,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
 
   return (
     <>
+      <SiteDesignStyles settings={sectionDesign} />
       <Hero />
       <div className="story-gradient-flow">
         <EpisodeSignupSection status={signupStatus} />
@@ -102,7 +105,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       </div>
 
       {hosts.length ? (
-        <section className="content-band" id="over">
+        <section className="content-band hosts-section" id="over">
           <div className="section-heading">
             <h2>Over de podcast makers</h2>
           </div>

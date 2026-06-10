@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { site, type OnepagerPanel } from "@/lib/site";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks, ThemeArticle, ThemeArticleBlock } from "@/types/content";
-import { CommunityFeedback, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
+import { CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
 
 type FlyoutOverlayProps = {
   initialPanel?: OnepagerPanel | null;
@@ -215,6 +215,13 @@ export function FlyoutOverlay({
         <div className="flyout-content">
           <h2 id="flyout-title">{panel === "bijsluiter" ? "Deel je verhaal" : "Community en verhalen"}</h2>
           <CommunityFeedback submitted={submitted} error={error} />
+          {panel === "community" && posts.length ? (
+            <div className="post-grid compact community-post-list">
+              {posts.map((post) => (
+                <CommunityPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : null}
           <div className="community-flyout-grid story-only-grid">
             <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo={panel === "bijsluiter" ? "/bijsluiter" : "/community"} />
           </div>

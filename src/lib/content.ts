@@ -3,19 +3,21 @@ import {
   fallbackEpisodes,
   fallbackFaqs,
   fallbackHosts,
-  fallbackPosts,
   fallbackSeasons,
   fallbackSocialLinks,
   fallbackSponsors
 } from "@/lib/fallback-data";
+import { normalizeSectionDesign } from "@/lib/section-design";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 import type {
   CommunityCategory,
   CommunityPost,
+  CommunityReply,
   FAQ,
   HostProfile,
   PodcastEpisode,
   PodcastSeason,
+  SiteDesignSettings,
   SocialLinks,
   SponsorLogo
 } from "@/types/content";
@@ -93,15 +95,32 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
 }
 
 export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
-  const posts = await fromTable<CommunityPost>("community_posts", fallbackPosts, "status.eq.approved");
+  const supabase = createSupabaseAdminClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("community_posts").select("*").eq("status", "approved");
+  if (error || !data) return [];
+  const posts = data as CommunityPost[];
   return posts
     .map((post) => ({ ...post, image_url: post.image_url ?? null }))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-export async function getCommunityPostBySlug(slug: string) {
+export async function getApprovedCommunityPostBySlug(slug: string) {
   const posts = await getApprovedCommunityPosts();
   return posts.find((post) => post.slug === slug) ?? null;
+}
+
+export async function getApprovedCommunityReplies(postId: string): Promise<CommunityReply[]> {
+  const supabase = createSupabaseAdminClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("community_replies")
+    .select("id,post_id,author_name,author_display_type,body,created_at,status")
+    .eq("post_id", postId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: true });
+  if (error || !data) return [];
+  return data as CommunityReply[];
 }
 
 export async function getPublishedHosts(): Promise<HostProfile[]> {
@@ -125,4 +144,12 @@ export async function getSocialLinks(): Promise<SocialLinks> {
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links) return fallbackSocialLinks;
   return data.social_links as SocialLinks;
+}
+
+export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {
+  const supabase = createSupabaseAdminClient();
+  if (!supabase) return {};
+  const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
+  if (error || !data?.social_links || typeof data.social_links !== "object") return {};
+  return normalizeSectionDesign((data.social_links as Record<string, unknown>).section_styles);
 }

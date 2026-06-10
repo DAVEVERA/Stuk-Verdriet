@@ -108,7 +108,7 @@ export function TychoSupportSection() {
     <section className="tycho-support-section" aria-labelledby="tycho-support-title">
       <div className="tycho-support-inner">
         <a className="tycho-support-image" href={href} target="_blank" rel="noreferrer" aria-label="Actie voor Tycho openen">
-          <Image src="/footer/tycho-over-mijn-lijk.png" alt="Portret van Tycho bij zijn inzamelingsactie" width={720} height={540} />
+          <Image src="/footer/tycho-section.jpg" alt="Portret van Tycho bij zijn inzamelingsactie" width={720} height={540} />
         </a>
         <div className="tycho-support-copy">
           <p className="eyebrow">Radboud Oncologie Fonds</p>
