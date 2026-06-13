@@ -19,12 +19,14 @@ import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
+import { SocialFollowTrigger } from "@/components/SocialFollowTrigger";
 import { createCommunityPost, subscribeEpisodeSignup } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
 const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
-const podcastInstagramReelUrl = "https://www.instagram.com/reel/DZJ5DJAoWQx/?utm_source=ig_embed&utm_campaign=loading";
+const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
+const podcastTikTokProfileUrl = "https://www.tiktok.com/@stuk.verdriet";
 
 export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
   const footerFeatures = [
@@ -201,23 +203,8 @@ export function PodcastOnePagerSection({
 
   return (
     <section className="podcast-module" id="podcast" aria-labelledby="podcast-title">
+      <h2 className="sr-only" id="podcast-title">Podcast</h2>
       <div className="podcast-shell">
-        <div className="podcast-copy">
-          <p className="eyebrow hidden">Podcast</p>
-          <div className="podcast-instagram-frame" aria-label="Instagram reel van Stuk Verdriet">
-            <blockquote
-              className="instagram-media podcast-instagram-embed"
-              data-instgrm-permalink={podcastInstagramReelUrl}
-              data-instgrm-version="14"
-            >
-              <a href={podcastInstagramReelUrl} target="_blank" rel="noreferrer">
-                Bekijk de reel van Stuk Verdriet op Instagram
-              </a>
-            </blockquote>
-          </div>
-          <Script id="instagram-embed" src="https://www.instagram.com/embed.js" strategy="lazyOnload" />
-        </div>
-
         <div className="podcast-app">
           <div className="podcast-now">
             <div className="podcast-player-panel">
@@ -244,6 +231,68 @@ export function PodcastOnePagerSection({
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+export function SocialEmbedSection() {
+  return (
+    <section className="social-embed-section" aria-labelledby="social-embed-title">
+      <div className="social-embed-inner">
+        <div className="social-embed-heading">
+          <p className="eyebrow">Volg mee</p>
+          <h2 id="social-embed-title">Stuk Verdriet op Instagram en TikTok</h2>
+        </div>
+
+        <div className="social-embed-grid">
+          <article className="social-embed-card">
+            <div className="social-embed-card-header">
+              <div>
+                <p className="eyebrow">Instagram</p>
+                <h3>@stukverdrietdepodcast</h3>
+              </div>
+              <SocialFollowTrigger platform="Instagram" href={podcastInstagramProfileUrl} />
+            </div>
+            <div className="social-embed-frame" aria-label="Instagram profiel van Stuk Verdriet">
+              <blockquote
+                className="instagram-media social-instagram-embed"
+                data-instgrm-permalink={podcastInstagramProfileUrl}
+                data-instgrm-version="14"
+              >
+                <a href={podcastInstagramProfileUrl} target="_blank" rel="noreferrer">
+                  Bekijk Stuk Verdriet op Instagram
+                </a>
+              </blockquote>
+            </div>
+          </article>
+
+          <article className="social-embed-card">
+            <div className="social-embed-card-header">
+              <div>
+                <p className="eyebrow">TikTok</p>
+                <h3>@stuk.verdriet</h3>
+              </div>
+              <SocialFollowTrigger platform="TikTok" href={podcastTikTokProfileUrl} />
+            </div>
+            <div className="social-embed-frame" aria-label="TikTok profiel van Stuk Verdriet">
+              <blockquote
+                className="tiktok-embed social-tiktok-embed"
+                cite={podcastTikTokProfileUrl}
+                data-unique-id="stuk.verdriet"
+                data-embed-type="creator"
+              >
+                <section>
+                  <a target="_blank" href={`${podcastTikTokProfileUrl}?refer=creator_embed`} rel="noreferrer">
+                    @stuk.verdriet
+                  </a>
+                </section>
+              </blockquote>
+            </div>
+          </article>
+        </div>
+      </div>
+      <Script id="instagram-embed" src="https://www.instagram.com/embed.js" strategy="lazyOnload" />
+      <Script id="tiktok-embed" src="https://www.tiktok.com/embed.js" strategy="lazyOnload" />
     </section>
   );
 }

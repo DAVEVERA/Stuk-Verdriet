@@ -7,6 +7,21 @@ import { useEffect, useRef, useState } from "react";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory } from "@/types/content";
 
+const overlayDescriptions: Record<string, string> = {
+  "rouw-algemeen": "Herkenning, vragen en steun.",
+  "voor-ouders": "Voor ouders die gemis dragen.",
+  "voor-ayas": "Voor jonge mensen in rouw.",
+  "naasten-en-familie": "Voor iedereen dichtbij.",
+  "praktische-steun": "Rust bij wat geregeld moet worden.",
+  "vragen-en-antwoorden": "Vraag, deel en lees mee.",
+  "verhalen-en-herkenning": "Verhalen die mogen bestaan.",
+  podcast: "Eerlijke gesprekken over gemis.",
+  "hulp-en-ondersteuning": "Als er meer nodig is.",
+  herinneren: "Liefde dichtbij houden.",
+  "leven-na-verlies": "Verder leven met gemis.",
+  "voor-de-omgeving": "Er zijn, ook zonder juiste woorden."
+};
+
 export function CategoryCarousel({ categories }: { categories: CommunityCategory[] }) {
   const count = categories.length;
   const [activeIndex, setActiveIndex] = useState(0);
@@ -14,7 +29,7 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const hasMultiple = count > 1;
-  const activeRealIndex = count ? activeIndex : 0;
+  const activeRealIndex = count ? Math.min(activeIndex, count - 1) : 0;
   const activeCategoryTitle = categories[activeRealIndex]?.title ?? "thema";
 
   useEffect(() => {
@@ -28,10 +43,6 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
 
     return () => window.clearInterval(interval);
   }, [count, hasMultiple]);
-
-  useEffect(() => {
-    setActiveIndex((current) => (count ? Math.min(current, count - 1) : 0));
-  }, [count]);
 
   useEffect(() => {
     function measureSlides() {
@@ -66,6 +77,8 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
           }}
         >
           {categories.map((category, index) => {
+            const overlayDescription = overlayDescriptions[category.slug] ?? category.description;
+
             return (
               <Link
                 key={category.id}
@@ -77,8 +90,10 @@ export function CategoryCarousel({ categories }: { categories: CommunityCategory
                 aria-current={index === activeRealIndex ? "true" : undefined}
               >
                 <Image src={themeImages[category.slug] ?? fallbackThemeImage} alt="" width={760} height={520} />
-                <h3>{category.title}</h3>
-                <p>{category.description}</p>
+                <div className="category-card-copy">
+                  <h3>{category.title}</h3>
+                  <p>{overlayDescription}</p>
+                </div>
               </Link>
             );
           })}

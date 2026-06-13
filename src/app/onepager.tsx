@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, SocialEmbedSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
@@ -39,11 +39,12 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       <div className="story-gradient-flow">
         <EpisodeSignupSection status={signupStatus} />
         <PodcastOnePagerSection latest={latest} seasons={seasons} episodes={episodes} />
+        <SocialEmbedSection />
         <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
 
         <section className="content-band image-band" id="themas">
           <div className="section-heading">
-            <h2>Praktisch, eerlijk en nuttig.</h2>
+            <h2>Waar heb je nu behoefte aan?</h2>
           </div>
           <CommunityCategoryGrid categories={categories} />
         </section>
