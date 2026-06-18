@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, SocialEmbedSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
@@ -39,7 +39,32 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       <div className="story-gradient-flow">
         <EpisodeSignupSection status={signupStatus} />
         <PodcastOnePagerSection latest={latest} seasons={seasons} episodes={episodes} />
-        <SocialEmbedSection />
+
+        <section className="aya-support-banner" aria-labelledby="aya-support-title">
+          <div className="aya-banner-inner">
+            <div className="aya-banner-copy">
+              <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
+                <Image src="/img/AYAFonds/Embleem_logo_paars.svg" alt="AYA Fonds" width={148} height={125} />
+              </a>
+              <h2 id="aya-support-title">Deze podcast is mogelijk gemaakt door het AYA Fonds.</h2>
+              <p>
+                Het AYA Fonds zet zich in voor betere mentale, sociale en fysieke zorg voor jongvolwassenen
+                met kanker (AYA&apos;s) en hun naasten. Met hun steun krijgen verhalen over rouw, zorg en
+                verder leven een plek waar ze gehoord mogen worden.
+              </p>
+              <p className="aya-cta-line">Geef voor jongvolwassenen met kanker.</p>
+              <div className="aya-banner-actions" aria-label="AYA Fonds acties">
+                <a className="aya-donate-button" href="https://ayafonds.nl/" target="_self">
+                  Meer over AYA Fonds
+                </a>
+                <a className="aya-donate-button aya-donate-primary" href="https://ayafonds.nl/doneer/" target="_self">
+                  Doneer direct aan AYA Fonds <Heart size={18} aria-hidden />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
 
         <section className="content-band image-band" id="themas">
@@ -59,47 +84,6 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
             <CommunityFeedback submitted={submitted} error={error} />
             <div className="community-story-grid">
               <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo="/community" />
-            </div>
-          </div>
-        </section>
-
-        <section className="aya-support-banner" aria-labelledby="aya-support-title">
-          <div className="aya-banner-inner">
-            <div className="aya-banner-grid">
-              <div className="aya-banner-copy">
-                <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
-                  <Image src="/img/AYAFonds/Embleem_logo_.webp" alt="AYA Fonds" width={300} height={204} />
-                </a>
-                <p className="eyebrow">Partner in passende AYA-zorg</p>
-                <h2 id="aya-support-title">Deze podcast wordt mede mogelijk gemaakt door AYAfonds.nl</h2>
-                <p>
-                  AYAfonds zet zich in voor jongvolwassenen die leven met of na kanker. Met hun steun krijgen verhalen over
-                  rouw, zorg en verder leven een plek waar ze gehoord mogen worden.
-                </p>
-                <blockquote>De juiste zorg om krachtig in het leven te blijven staan.</blockquote>
-                <div className="aya-banner-actions" aria-label="AYAfonds acties">
-                  <a className="aya-donate-button" href="https://ayafonds.nl/doneer/" target="_self">
-                    Doneer nu <Heart size={18} aria-hidden />
-                  </a>
-                  <a className="aya-secondary-link" href="https://ayafonds.nl/" target="_self">
-                    Meer over AYAfonds
-                  </a>
-                </div>
-              </div>
-              <div className="aya-donation-panel">
-                <div className="aya-qr-card">
-                  <Image src="/img/AYAFonds/donate-qr.png" alt="QR-code naar ayafonds.nl/doneer" width={512} height={512} />
-                  <div>
-                    <p className="eyebrow">Scan en steun</p>
-                    <h3>Doneer direct aan AYAfonds</h3>
-                    <p>Elke bijdrage helpt om zorg, herkenning en ondersteuning voor AYA&apos;s dichterbij te brengen.</p>
-                  </div>
-                </div>
-                <div className="aya-impact-note">
-                  <span aria-hidden>AYA</span>
-                  <p>Voor jongvolwassenen met kanker, en voor iedereen die naast hen staat.</p>
-                </div>
-              </div>
             </div>
           </div>
         </section>
