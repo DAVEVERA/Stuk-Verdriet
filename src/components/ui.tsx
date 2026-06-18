@@ -169,7 +169,7 @@ export function EpisodeSignupSection({ status }: { status?: string | null }) {
       <div className="episode-signup-copy">
         <p className="eyebrow">Aflevering 1</p>
         <h2 id="episode-signup-title">Mis het niet!</h2>
-        <p>Meld je aan en ben één van de eerste die aflevering 1 luisteren kan!</p>
+        <p>Meld je aan en wees een van de eersten die aflevering 1 kan luisteren.</p>
       </div>
       <form className="episode-signup-form" action={subscribeEpisodeSignup}>
         <input type="hidden" name="source" value="homepage_episode_1" readOnly />

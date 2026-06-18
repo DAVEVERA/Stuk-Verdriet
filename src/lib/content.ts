@@ -125,7 +125,8 @@ export async function getApprovedCommunityReplies(postId: string): Promise<Commu
 
 export async function getPublishedHosts(): Promise<HostProfile[]> {
   const hosts = await fromTable<HostProfile>("host_profiles", fallbackHosts);
-  return hosts.sort((a, b) => a.display_order - b.display_order);
+  const source = hosts.length ? hosts : fallbackHosts.filter((host) => host.status === "published");
+  return source.sort((a, b) => a.display_order - b.display_order);
 }
 
 export async function getPublishedFaqs(): Promise<FAQ[]> {

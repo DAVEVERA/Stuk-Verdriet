@@ -98,7 +98,7 @@ export const fallbackHosts: HostProfile[] = [
     bio: null,
     personal_motivation: null,
     display_order: 2,
-    status: "draft"
+    status: "published"
   }
 ];
 

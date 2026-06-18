@@ -39,6 +39,22 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       <div className="story-gradient-flow">
         <EpisodeSignupSection status={signupStatus} />
         <PodcastOnePagerSection latest={latest} seasons={seasons} episodes={episodes} />
+        <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
+
+        {hosts.length ? (
+          <section className="content-band hosts-section" id="over">
+            <div className="section-heading">
+              <h2>Over de podcastmakers</h2>
+            </div>
+            <div className="host-grid">
+              {hosts.map((host) => (
+                <HostCard key={host.id} host={host} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <TychoSupportSection />
 
         <section className="aya-support-banner" aria-labelledby="aya-support-title">
           <div className="aya-banner-inner">
@@ -65,7 +81,21 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           </div>
         </section>
 
-        <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
+        <section className="community-story-section" id="community" aria-labelledby="community-entry-title">
+          <div className="community-visual">
+            <Image src="/img/wegwijzer.png" alt="Wegwijzer met Stuk Verdriet op de pijl voor een berglandschap" fill sizes="(max-width: 900px) 100vw, 42vw" />
+          </div>
+          <div className="community-panel">
+            <div className="community-panel-heading">
+              <h2 id="community-entry-title">Ingang community</h2>
+              <p>Deel je verhaal, stel een vraag of lees mee met anderen die rouw en gemis herkennen.</p>
+            </div>
+            <CommunityFeedback submitted={submitted} error={error} />
+            <div className="community-story-grid">
+              <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo="/community" />
+            </div>
+          </div>
+        </section>
 
         <section className="content-band image-band" id="themas">
           <div className="section-heading">
@@ -73,34 +103,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           </div>
           <CommunityCategoryGrid categories={categories} />
         </section>
-
-        <TychoSupportSection />
-
-        <section className="community-story-section" id="community">
-          <div className="community-visual">
-            <Image src="/img/wegwijzer.png" alt="Wegwijzer met Stuk Verdriet op de pijl voor een berglandschap" fill sizes="(max-width: 900px) 100vw, 42vw" />
-          </div>
-          <div className="community-panel">
-            <CommunityFeedback submitted={submitted} error={error} />
-            <div className="community-story-grid">
-              <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo="/community" />
-            </div>
-          </div>
-        </section>
       </div>
-
-      {hosts.length ? (
-        <section className="content-band hosts-section" id="over">
-          <div className="section-heading">
-            <h2>Over de podcast makers</h2>
-          </div>
-          <div className="host-grid">
-            {hosts.map((host) => (
-              <HostCard key={host.id} host={host} />
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <FlyoutOverlay
         initialPanel={initialPanel}
