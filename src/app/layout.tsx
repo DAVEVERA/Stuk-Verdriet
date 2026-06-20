@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
 import { Footer } from "@/components/ui";
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Footer socialLinks={socialLinks} />
         </div>
         <CookieConsent gaId={gaId} />
+        <Analytics />
       </body>
     </html>
   );
