@@ -189,7 +189,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => setIsTranscriptOpen((open) => !open)} aria-expanded={isTranscriptOpen} aria-controls="hero-player-transcript">
+        <button type="button" onClick={() => setIsTranscriptOpen((open) => !open)} aria-expanded={isTranscriptOpen ? "true" : "false"} aria-controls="hero-player-transcript">
           <Captions size={16} aria-hidden />
           Transcript
         </button>

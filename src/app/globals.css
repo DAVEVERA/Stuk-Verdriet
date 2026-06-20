@@ -79,7 +79,7 @@ body:has(.coming-soon-page) .cookie-consent {
 }
 
 .coming-soon-page {
-  align-items: center;
+  align-items: start;
   background: #172118;
   color: var(--white);
   display: grid;
@@ -94,14 +94,13 @@ body:has(.coming-soon-page) .cookie-consent {
 .coming-soon-image {
   filter: saturate(0.94) contrast(1.04) brightness(0.88);
   object-fit: cover;
-  object-position: 76% center;
+  object-position: center 60%;
   z-index: -3;
 }
 
 .coming-soon-scrim {
   background:
-    linear-gradient(90deg, rgba(12, 18, 13, 0.92) 0%, rgba(24, 32, 24, 0.74) 32%, rgba(24, 32, 24, 0.2) 62%, rgba(24, 32, 24, 0.04) 100%),
-    linear-gradient(180deg, rgba(12, 18, 13, 0.22) 0%, rgba(12, 18, 13, 0.04) 44%, rgba(12, 18, 13, 0.46) 100%);
+    linear-gradient(180deg, rgba(12, 18, 13, 0.88) 0%, rgba(12, 18, 13, 0.62) 30%, rgba(12, 18, 13, 0.08) 58%, rgba(12, 18, 13, 0.04) 100%);
   inset: 0;
   position: absolute;
   z-index: -2;
@@ -110,7 +109,7 @@ body:has(.coming-soon-page) .cookie-consent {
 .coming-soon-content {
   margin: 0 auto;
   max-width: 1180px;
-  padding: 56px clamp(18px, 5vw, 72px);
+  padding: 48px clamp(18px, 5vw, 72px) 0;
   width: 100%;
 }
 
@@ -185,24 +184,23 @@ body:has(.coming-soon-page) .cookie-consent {
 
 @media (max-width: 760px) {
   .coming-soon-page {
-    align-items: end;
+    align-items: start;
     min-height: 100svh;
     padding: 22px 14px;
   }
 
   .coming-soon-image {
     filter: saturate(0.92) contrast(1.05) brightness(0.78);
-    object-position: 64% center;
+    object-position: center 55%;
   }
 
   .coming-soon-scrim {
     background:
-      linear-gradient(180deg, rgba(12, 18, 13, 0.28) 0%, rgba(12, 18, 13, 0.4) 38%, rgba(12, 18, 13, 0.92) 100%),
-      linear-gradient(90deg, rgba(12, 18, 13, 0.72) 0%, rgba(12, 18, 13, 0.16) 100%);
+      linear-gradient(180deg, rgba(12, 18, 13, 0.9) 0%, rgba(12, 18, 13, 0.65) 35%, rgba(12, 18, 13, 0.1) 60%, rgba(12, 18, 13, 0.04) 100%);
   }
 
   .coming-soon-content {
-    padding: 96px 4px 22px;
+    padding: 32px 4px 0;
   }
 
   .coming-soon-logo {
