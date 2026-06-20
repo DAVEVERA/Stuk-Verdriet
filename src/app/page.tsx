@@ -1,15 +1,29 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { Mail } from "lucide-react";
+import { Onepager } from "@/app/onepager";
 import { site } from "@/lib/site";
+import { siteMode } from "@/lib/site-mode";
 
-export const metadata: Metadata = {
+const activeSiteMode = process.env.SITE_MODE ?? siteMode;
+
+const comingSoonMetadata: Metadata = {
   title: "Bijna live",
   description: "Stuk Verdriet gaat bijna live. Binnenkort vind je hier de podcast en community over rouw, gemis en verder leven."
 };
 
-export default function ComingSoonPage() {
+const liveMetadata: Metadata = {
+  title: "Stuk Verdriet - podcast en community over rouw",
+  description: "Stuk Verdriet biedt herkenning, steun en verbinding voor iedereen die te maken heeft met rouw."
+};
+
+export const metadata: Metadata = activeSiteMode === "live" ? liveMetadata : comingSoonMetadata;
+
+type HomePageProps = {
+  searchParams?: Promise<{ signup?: string }>;
+};
+
+function ComingSoonPage() {
   return (
     <section className="coming-soon-page" aria-labelledby="coming-soon-title">
       <Image
@@ -34,11 +48,17 @@ export default function ComingSoonPage() {
             <Mail size={18} aria-hidden />
             Neem contact op
           </a>
-          <Link className="coming-soon-secondary" href="/start">
-            Bekijk preview
-          </Link>
         </div>
       </div>
     </section>
   );
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  if (activeSiteMode === "live") {
+    const params = await searchParams;
+    return <Onepager signupStatus={params?.signup ?? null} />;
+  }
+
+  return <ComingSoonPage />;
 }

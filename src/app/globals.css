@@ -159,8 +159,7 @@ body:has(.coming-soon-page) .cookie-consent {
   margin-top: 34px;
 }
 
-.coming-soon-primary,
-.coming-soon-secondary {
+.coming-soon-primary {
   align-items: center;
   border: 1px solid rgba(255, 253, 248, 0.34);
   border-radius: 8px;
@@ -179,13 +178,7 @@ body:has(.coming-soon-page) .cookie-consent {
   color: var(--pine);
 }
 
-.coming-soon-secondary {
-  background: rgba(255, 253, 248, 0.08);
-  color: var(--white);
-}
-
-.coming-soon-primary:hover,
-.coming-soon-secondary:hover {
+.coming-soon-primary:hover {
   border-color: rgba(255, 253, 248, 0.7);
   transform: translateY(-1px);
 }
@@ -242,8 +235,7 @@ body:has(.coming-soon-page) .cookie-consent {
     max-width: 25rem;
   }
 
-  .coming-soon-primary,
-  .coming-soon-secondary {
+  .coming-soon-primary {
     width: 100%;
   }
 }

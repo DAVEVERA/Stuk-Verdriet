@@ -19,3 +19,14 @@ Everything is exactly where it shouldn't be.
 
 Proceed carefully
 .
+
+## Temporary Launch Mode
+
+The public homepage is controlled by `SITE_MODE`.
+
+```bash
+npm run site:coming-soon
+npm run site:live
+```
+
+Use `npm run site:live` when the temporary “We zijn bijna live” page can be replaced by the real homepage.

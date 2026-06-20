@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "site:live": "node scripts/set-site-mode.mjs live",
+    "site:coming-soon": "node scripts/set-site-mode.mjs coming-soon"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
