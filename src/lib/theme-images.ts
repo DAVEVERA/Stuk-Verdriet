@@ -1,7 +1,7 @@
 export const themeImages: Record<string, string> = {
   "rouw-algemeen": "/img/themas/natuur.JPG",
   "voor-ouders": "/img/themas/tulpen.png",
-  "voor-ayas": "/img/themas/vlinder.png",
+  "voor-ayas": "/img/theme-ayas.png",
   "naasten-en-familie": "/img/themas/Bankje.png",
   "voor-broers-en-zussen": "/img/themas/natuur.JPG",
   "praktische-steun": "/img/themas/poort.jpg",

@@ -18,6 +18,14 @@ export type PodcastLinkCard = {
   type: "link" | "spotify" | "podimo" | "apple" | "book" | "donation";
 };
 
+export type PodcastTranscriptStatus = "missing" | "processing" | "ready" | "failed";
+
+export type PodcastTranscriptSegment = {
+  start: number;
+  end: number;
+  text: string;
+};
+
 export type PodcastEpisode = {
   id: string;
   title: string;
@@ -35,6 +43,12 @@ export type PodcastEpisode = {
   next_episode_date: string | null;
   duration: string | null;
   link_cards: PodcastLinkCard[];
+  transcript_status: PodcastTranscriptStatus;
+  transcript_language: string | null;
+  transcript_segments: PodcastTranscriptSegment[];
+  transcript_vtt_url: string | null;
+  transcript_operation_name: string | null;
+  transcript_generated_at: string | null;
   featured_latest: boolean;
   status: ContentStatus;
   created_at?: string;

@@ -49,6 +49,12 @@ create table if not exists podcast_episodes (
   next_episode_date date,
   duration text,
   link_cards jsonb not null default '[]',
+  transcript_status text not null default 'missing',
+  transcript_language text default 'nl-NL',
+  transcript_segments jsonb not null default '[]',
+  transcript_vtt_url text,
+  transcript_operation_name text,
+  transcript_generated_at timestamptz,
   featured_latest boolean not null default false,
   status content_status not null default 'draft',
   created_at timestamptz not null default now(),
@@ -56,6 +62,12 @@ create table if not exists podcast_episodes (
 );
 
 alter table podcast_episodes add column if not exists link_cards jsonb not null default '[]';
+alter table podcast_episodes add column if not exists transcript_status text not null default 'missing';
+alter table podcast_episodes add column if not exists transcript_language text default 'nl-NL';
+alter table podcast_episodes add column if not exists transcript_segments jsonb not null default '[]';
+alter table podcast_episodes add column if not exists transcript_vtt_url text;
+alter table podcast_episodes add column if not exists transcript_operation_name text;
+alter table podcast_episodes add column if not exists transcript_generated_at timestamptz;
 
 insert into storage.buckets (id, name, public)
 values

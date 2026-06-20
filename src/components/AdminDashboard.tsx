@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Archive, FileAudio, ImagePlus, Palette, Plus, Save, Search } from "lucide-react";
+import { Archive, Captions, FileAudio, ImagePlus, Palette, Plus, RefreshCw, Save, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { archiveEpisode, moderatePost, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings } from "@/lib/actions";
+import { archiveEpisode, moderatePost, refreshEpisodeTranscript, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
 import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, SiteDesignSettings } from "@/types/content";
 
@@ -51,6 +51,12 @@ const emptyEpisode: PodcastEpisode = {
   next_episode_date: null,
   duration: null,
   link_cards: [],
+  transcript_status: "missing",
+  transcript_language: "nl-NL",
+  transcript_segments: [],
+  transcript_vtt_url: null,
+  transcript_operation_name: null,
+  transcript_generated_at: null,
   featured_latest: false,
   status: "draft"
 };
@@ -74,7 +80,11 @@ const feedbackLabels: Record<string, string> = {
   season: "seizoen",
   "section-design": "sectie ontwerp",
   "section-design-save": "sectie ontwerp",
-  site: "site instellingen"
+  site: "site instellingen",
+  "transcript-started": "transcriptie gestart",
+  "transcript-ready": "transcriptie klaar",
+  "transcript-processing": "transcriptie wordt verwerkt",
+  "transcript-failed": "transcriptie mislukt"
 };
 
 export function AdminDashboard({ episodes, seasons, pendingPosts, reports, sectionDesign, missingSupabase, savedMessage, errorMessage }: AdminDashboardProps) {
@@ -123,6 +133,9 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, secti
       publication_date: String(formData.get("publication_date") ?? "") || null,
       next_episode_date: String(formData.get("next_episode_date") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
+      transcript_status: String(formData.get("transcript_status") ?? current.transcript_status) as PodcastEpisode["transcript_status"],
+      transcript_language: String(formData.get("transcript_language") ?? current.transcript_language) || "nl-NL",
+      transcript_vtt_url: String(formData.get("transcript_vtt_url") ?? current.transcript_vtt_url) || null,
       featured_latest: formData.get("featured_latest") === "on",
       status: String(formData.get("status") ?? "draft") as PodcastEpisode["status"]
     }));
@@ -256,6 +269,32 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, secti
                   <label>Podimo URL<input name="podimo_url" defaultValue={selectedEpisode.podimo_url ?? ""} /></label>
                 </div>
                 <label>Apple Podcasts URL<input name="apple_podcast_url" defaultValue={selectedEpisode.apple_podcast_url ?? ""} /></label>
+
+                <div className="transcript-admin-panel">
+                  <div>
+                    <p className="eyebrow">Google STT</p>
+                    <h3>Transcript</h3>
+                    <p className="small-note">
+                      Status: {selectedEpisode.transcript_status}
+                      {selectedEpisode.transcript_generated_at ? ` · ${new Date(selectedEpisode.transcript_generated_at).toLocaleString("nl-NL")}` : ""}
+                    </p>
+                  </div>
+                  <input type="hidden" name="transcript_status" defaultValue={selectedEpisode.transcript_status} />
+                  <input type="hidden" name="transcript_language" defaultValue={selectedEpisode.transcript_language ?? "nl-NL"} />
+                  <input type="hidden" name="transcript_vtt_url" defaultValue={selectedEpisode.transcript_vtt_url ?? ""} />
+                  {selectedEpisode.id ? (
+                    <div className="transcript-admin-actions">
+                      <button className="text-link" type="submit" formAction={startEpisodeTranscript.bind(null, selectedEpisode.id)}>
+                        <Captions size={17} aria-hidden /> Start transcriptie
+                      </button>
+                      <button className="text-link" type="submit" formAction={refreshEpisodeTranscript.bind(null, selectedEpisode.id)}>
+                        <RefreshCw size={17} aria-hidden /> Vernieuw status
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="small-note">Sla de aflevering eerst op voordat je transcriptie start.</p>
+                  )}
+                </div>
 
                 <div className="link-card-editor">
                   <div className="manager-header">
@@ -406,7 +445,7 @@ function EpisodePreview({ episode, linkCards }: { episode: PodcastEpisode; linkC
       </div>
       <div className="episode-link-card-grid">
         {linkCards.filter((card) => card.label && card.url).map((card, index) => (
-          <a key={`${card.url}-${index}`} href={card.url} target="_blank" rel="noreferrer">
+          <a key={`${card.url}-${index}`} href={card.url} target="_blank" rel="noopener noreferrer">
             <span>{card.type}</span>
             <strong>{card.label}</strong>
             {card.description ? <small>{card.description}</small> : null}

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, PodcastOnePagerSection, StickySpotifyPlayer, TychoSupportSection } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, Hero, HostCard, TychoSupportSection } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
@@ -35,12 +35,8 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
   return (
     <>
       <SiteDesignStyles settings={sectionDesign} />
-      <Hero />
+      <Hero latest={latest} episodes={episodes} />
       <div className="story-gradient-flow">
-        <EpisodeSignupSection status={signupStatus} />
-        <PodcastOnePagerSection latest={latest} seasons={seasons} episodes={episodes} />
-        <StickySpotifyPlayer episode={latest ?? episodes[0] ?? null} />
-
         {hosts.length ? (
           <section className="content-band hosts-section" id="over">
             <div className="section-heading">
@@ -103,6 +99,8 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           </div>
           <CommunityCategoryGrid categories={categories} />
         </section>
+
+        <EpisodeSignupSection status={signupStatus} />
       </div>
 
       <FlyoutOverlay

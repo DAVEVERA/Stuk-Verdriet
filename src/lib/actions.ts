@@ -1,10 +1,12 @@
 "use server";
 
+import { createSign } from "crypto";
+import { readFileSync } from "fs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
-import type { PodcastLinkCard } from "@/types/content";
+import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
 const communityImageMaxSize = 4 * 1024 * 1024;
@@ -100,6 +102,186 @@ async function requireAdminClient() {
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/admin?missing=service-role");
   return admin;
+}
+
+type GoogleServiceAccount = {
+  client_email: string;
+  private_key: string;
+};
+
+type SpeechOperation = {
+  name?: string;
+  done?: boolean;
+  error?: { message?: string };
+  response?: {
+    results?: Record<string, {
+      transcript?: {
+        results?: Array<{
+          resultEndOffset?: string;
+          alternatives?: Array<{
+            transcript?: string;
+            words?: Array<{
+              word?: string;
+              startOffset?: string;
+              endOffset?: string;
+            }>;
+          }>;
+        }>;
+      };
+    }>;
+  };
+};
+
+function base64Url(input: string | Buffer) {
+  return Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+function getGoogleServiceAccount(): GoogleServiceAccount | null {
+  const inline = process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT_JSON;
+  if (inline) {
+    try {
+      const account = JSON.parse(inline) as GoogleServiceAccount;
+      return account.client_email && account.private_key ? account : null;
+    } catch {
+      return null;
+    }
+  }
+
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!credentialsPath) return null;
+  try {
+    const account = JSON.parse(readFileSync(credentialsPath, "utf8")) as GoogleServiceAccount;
+    return account.client_email && account.private_key ? account : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getGoogleAccessToken() {
+  const account = getGoogleServiceAccount();
+  if (!account) throw new Error("missing-google-service-account");
+
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const claim = base64Url(
+    JSON.stringify({
+      iss: account.client_email,
+      scope: "https://www.googleapis.com/auth/cloud-platform",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now
+    })
+  );
+  const privateKey = account.private_key.replace(/\\n/g, "\n");
+  const signer = createSign("RSA-SHA256");
+  signer.update(`${header}.${claim}`);
+  signer.end();
+  const assertion = `${header}.${claim}.${base64Url(signer.sign(privateKey))}`;
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion
+    })
+  });
+  if (!response.ok) throw new Error("google-token");
+  const data = (await response.json()) as { access_token?: string };
+  if (!data.access_token) throw new Error("google-token");
+  return data.access_token;
+}
+
+function getGoogleSpeechConfig() {
+  const project = process.env.GOOGLE_CLOUD_PROJECT;
+  const location = process.env.GOOGLE_CLOUD_LOCATION ?? "global";
+  const bucket = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!project || !bucket) throw new Error("missing-google-config");
+  return {
+    project,
+    location,
+    bucket,
+    model: process.env.GOOGLE_SPEECH_MODEL ?? "chirp_2",
+    language: "nl-NL"
+  };
+}
+
+function absoluteAudioUrl(url: string) {
+  if (/^https?:\/\//i.test(url)) return url;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return new URL(url, siteUrl).toString();
+}
+
+function gcsPublicUrl(bucket: string, objectName: string) {
+  return `https://storage.googleapis.com/${bucket}/${objectName.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function extensionFromAudio(url: string, contentType: string | null) {
+  const pathExtension = new URL(url).pathname.split(".").pop()?.toLowerCase();
+  if (pathExtension && /^[a-z0-9]{2,8}$/.test(pathExtension)) return pathExtension;
+  if (contentType?.includes("mpeg")) return "mp3";
+  if (contentType?.includes("wav")) return "wav";
+  if (contentType?.includes("ogg")) return "ogg";
+  return "audio";
+}
+
+async function uploadGoogleStorageObject(bucket: string, objectName: string, body: BlobPart, contentType: string, token: string) {
+  const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(bucket)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": contentType
+    },
+    body: new Blob([body], { type: contentType })
+  });
+  if (!response.ok) throw new Error("gcs-upload");
+  return `gs://${bucket}/${objectName}`;
+}
+
+function offsetToSeconds(value?: string) {
+  if (!value) return 0;
+  const match = value.match(/^(\d+)(?:\.(\d+))?s$/);
+  if (!match) return 0;
+  return Number(match[1]) + Number(`0.${match[2] ?? "0"}`);
+}
+
+function parseSpeechSegments(operation: SpeechOperation): PodcastTranscriptSegment[] {
+  const files = Object.values(operation.response?.results ?? {});
+  return files.flatMap((file) =>
+    (file.transcript?.results ?? [])
+      .map((result) => {
+        const alternative = result.alternatives?.[0];
+        const text = alternative?.transcript?.trim() ?? "";
+        if (!text) return null;
+        const firstWord = alternative?.words?.[0];
+        const lastWord = alternative?.words?.[alternative.words.length - 1];
+        const start = offsetToSeconds(firstWord?.startOffset);
+        const end = offsetToSeconds(lastWord?.endOffset) || offsetToSeconds(result.resultEndOffset) || start + 4;
+        return { start, end: Math.max(end, start + 0.5), text };
+      })
+      .filter((segment): segment is PodcastTranscriptSegment => Boolean(segment))
+  );
+}
+
+function formatVttTime(seconds: number) {
+  const whole = Math.max(0, Math.floor(seconds));
+  const ms = Math.round((seconds - whole) * 1000);
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  const secs = whole % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+}
+
+function segmentsToVtt(segments: PodcastTranscriptSegment[]) {
+  return `WEBVTT\n\n${segments
+    .map((segment, index) => `${index + 1}\n${formatVttTime(segment.start)} --> ${formatVttTime(segment.end)}\n${segment.text}`)
+    .join("\n\n")}\n`;
+}
+
+async function getEpisodeForTranscript(admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>, episodeId: string) {
+  const { data, error } = await admin.from("podcast_episodes").select("*").eq("id", episodeId).single();
+  if (error || !data) throw new Error("episode-not-found");
+  return data as PodcastEpisode;
 }
 
 export async function signInWithProvider(provider: "google", formData?: FormData) {
@@ -349,6 +531,139 @@ export async function archiveEpisode(episodeId: string) {
   revalidatePath("/podcast");
   revalidatePath("/admin");
   redirect("/admin?saved=archived");
+}
+
+export async function startEpisodeTranscript(episodeId: string) {
+  const supabase = await requireAdminClient();
+  let target = "/admin?saved=transcript-started";
+  try {
+    const episode = await getEpisodeForTranscript(supabase, episodeId);
+    if (!episode.audio_file_url) throw new Error("missing-audio");
+
+    const config = getGoogleSpeechConfig();
+    const token = await getGoogleAccessToken();
+    const audioUrl = absoluteAudioUrl(episode.audio_file_url);
+    const audioResponse = await fetch(audioUrl);
+    if (!audioResponse.ok) throw new Error("audio-fetch");
+
+    const contentType = audioResponse.headers.get("content-type") ?? "application/octet-stream";
+    const extension = extensionFromAudio(audioUrl, contentType);
+    const audioBytes = new Uint8Array(await audioResponse.arrayBuffer());
+    const audioObject = `podcast-audio/${safePathPart(episode.slug)}/${Date.now()}-${safePathPart(episode.title)}.${extension}`;
+    const audioUri = await uploadGoogleStorageObject(config.bucket, audioObject, audioBytes, contentType, token);
+
+    const request = {
+      files: [{ uri: audioUri }],
+      config: {
+        features: { enableWordTimeOffsets: true },
+        autoDecodingConfig: {},
+        model: config.model,
+        languageCodes: [config.language]
+      },
+      recognitionOutputConfig: {
+        inlineResponseConfig: {}
+      }
+    };
+
+    const response = await fetch(
+      `https://speech.googleapis.com/v2/projects/${config.project}/locations/${config.location}/recognizers/_:batchRecognize`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(request)
+      }
+    );
+    if (!response.ok) throw new Error("speech-start");
+    const operation = (await response.json()) as SpeechOperation;
+    if (!operation.name) throw new Error("speech-operation");
+
+    await supabase
+      .from("podcast_episodes")
+      .update({
+        transcript_status: "processing",
+        transcript_language: config.language,
+        transcript_segments: [],
+        transcript_operation_name: operation.name,
+        transcript_generated_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", episodeId);
+
+    revalidatePath("/");
+    revalidatePath("/podcast");
+    revalidatePath("/admin");
+  } catch {
+    await supabase
+      .from("podcast_episodes")
+      .update({ transcript_status: "failed", updated_at: new Date().toISOString() })
+      .eq("id", episodeId);
+    revalidatePath("/admin");
+    target = "/admin?error=transcript-start";
+  }
+  redirect(target);
+}
+
+export async function refreshEpisodeTranscript(episodeId: string) {
+  const supabase = await requireAdminClient();
+  let target = "/admin?saved=transcript-ready";
+  try {
+    const episode = await getEpisodeForTranscript(supabase, episodeId);
+    if (!episode.transcript_operation_name) throw new Error("missing-operation");
+
+    const config = getGoogleSpeechConfig();
+    const token = await getGoogleAccessToken();
+    const operationUrl = `https://speech.googleapis.com/v2/${episode.transcript_operation_name}`;
+    const response = await fetch(operationUrl, {
+      headers: { authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error("speech-refresh");
+    const operation = (await response.json()) as SpeechOperation;
+
+    if (!operation.done) {
+      await supabase
+        .from("podcast_episodes")
+        .update({ transcript_status: "processing", updated_at: new Date().toISOString() })
+        .eq("id", episodeId);
+      revalidatePath("/admin");
+      target = "/admin?saved=transcript-processing";
+    } else {
+      if (operation.error) throw new Error(operation.error.message ?? "speech-operation-error");
+
+      const segments = parseSpeechSegments(operation);
+      if (!segments.length) throw new Error("empty-transcript");
+
+      const vtt = new TextEncoder().encode(segmentsToVtt(segments));
+      const vttObject = `podcast-transcripts/${safePathPart(episode.slug)}/transcript.vtt`;
+      await uploadGoogleStorageObject(config.bucket, vttObject, vtt, "text/vtt; charset=utf-8", token);
+
+      await supabase
+        .from("podcast_episodes")
+        .update({
+          transcript_status: "ready",
+          transcript_language: config.language,
+          transcript_segments: segments,
+          transcript_vtt_url: gcsPublicUrl(config.bucket, vttObject),
+          transcript_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", episodeId);
+
+      revalidatePath("/");
+      revalidatePath("/podcast");
+      revalidatePath("/admin");
+    }
+  } catch {
+    await supabase
+      .from("podcast_episodes")
+      .update({ transcript_status: "failed", updated_at: new Date().toISOString() })
+      .eq("id", episodeId);
+    revalidatePath("/admin");
+    target = "/admin?error=transcript-refresh";
+  }
+  redirect(target);
 }
 
 export async function saveHost(formData: FormData) {

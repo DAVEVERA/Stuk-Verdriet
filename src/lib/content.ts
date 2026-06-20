@@ -29,7 +29,13 @@ function newestFirst(a: PodcastEpisode, b: PodcastEpisode) {
 function normalizeEpisode(episode: PodcastEpisode): PodcastEpisode {
   return {
     ...episode,
-    link_cards: Array.isArray(episode.link_cards) ? episode.link_cards : []
+    link_cards: Array.isArray(episode.link_cards) ? episode.link_cards : [],
+    transcript_status: episode.transcript_status ?? "missing",
+    transcript_language: episode.transcript_language ?? "nl-NL",
+    transcript_segments: Array.isArray(episode.transcript_segments) ? episode.transcript_segments : [],
+    transcript_vtt_url: episode.transcript_vtt_url ?? null,
+    transcript_operation_name: episode.transcript_operation_name ?? null,
+    transcript_generated_at: episode.transcript_generated_at ?? null
   };
 }
 

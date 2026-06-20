@@ -9,7 +9,7 @@ export function SocialFollowTrigger({ platform, href }: SocialFollowTriggerProps
       className="social-follow-trigger"
       href={href}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       aria-label={`Volg Stuk Verdriet op ${platform}`}
     >
       Quick follow

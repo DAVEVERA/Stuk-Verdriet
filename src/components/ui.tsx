@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
+import { FamilyStoryPopout } from "@/components/FamilyStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { SocialFollowTrigger } from "@/components/SocialFollowTrigger";
@@ -79,7 +80,7 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
       <div className="footer-feature-grid" aria-label="Aanbevolen links">
         {footerFeatures.map((item) => (
           <article className="footer-feature" key={item.href}>
-            <a href={item.href} target="_blank" rel="noreferrer" aria-label={`${item.title} openen`}>
+            <a href={item.href} target="_blank" rel="noopener noreferrer" aria-label={`${item.title} openen`}>
               <Image src={item.image} alt={item.imageAlt} width={220} height={160} />
             </a>
             <div>
@@ -87,7 +88,7 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
               <h3>{item.title}</h3>
               <p>{item.text}</p>
             </div>
-            <a className="footer-qr" href={item.href} target="_blank" rel="noreferrer" aria-label={`${item.title} openen via QR-link`}>
+            <a className="footer-qr" href={item.href} target="_blank" rel="noopener noreferrer" aria-label={`${item.title} openen via QR-link`}>
               <Image src={item.qr} alt={item.qrAlt} width={112} height={112} />
             </a>
           </article>
@@ -95,7 +96,7 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
       </div>
       <p className="copyright">
         &copy; {new Date().getFullYear()} Stuk Verdriet - Met liefde gebouwd door{" "}
-        <a href="https://mnrv.nl" target="_blank" rel="noreferrer">
+        <a href="https://mnrv.nl" target="_blank" rel="noopener noreferrer">
           MNRV
         </a>
       </p>
@@ -109,7 +110,7 @@ export function TychoSupportSection() {
   return (
     <section className="tycho-support-section" aria-labelledby="tycho-support-title">
       <div className="tycho-support-inner">
-        <a className="tycho-support-image" href={href} target="_blank" rel="noreferrer" aria-label="Actie voor Tycho openen">
+        <a className="tycho-support-image" href={href} target="_blank" rel="noopener noreferrer" aria-label="Actie voor Tycho openen">
           <Image src="/footer/tycho-section.jpg" alt="Portret van Tycho bij zijn inzamelingsactie" width={720} height={540} />
         </a>
         <div className="tycho-support-copy">
@@ -117,10 +118,10 @@ export function TychoSupportSection() {
           <h2 id="tycho-support-title">Actie voor Tycho</h2>
           <p>Steun Tycho&apos;s inzamelingsactie voor onderzoek naar darmkanker.</p>
           <div className="tycho-support-actions">
-            <a className="button" href={href} target="_blank" rel="noreferrer">
+            <a className="button" href={href} target="_blank" rel="noopener noreferrer">
               Steun de actie
             </a>
-            <a className="tycho-support-qr" href={href} target="_blank" rel="noreferrer" aria-label="Open de inzamelingsactie via QR-link">
+            <a className="tycho-support-qr" href={href} target="_blank" rel="noopener noreferrer" aria-label="Open de inzamelingsactie via QR-link">
               <Image src="/qr/tycho-radboud.png" alt="QR-code naar de inzamelingsactie van Tycho" width={180} height={180} />
             </a>
           </div>
@@ -144,7 +145,7 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
   return (
     <div className="social-links">
       {entries.map(([label, href]) => (
-        <a key={label} href={href} rel="noreferrer" target="_blank">
+        <a key={label} href={href} rel="noopener noreferrer" target="_blank">
           {label}
         </a>
       ))}
@@ -152,8 +153,8 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
   );
 }
 
-export function Hero() {
-  return <HeroSlider siteName={site.name} />;
+export function Hero({ latest, episodes }: { latest: PodcastEpisode | null; episodes: PodcastEpisode[] }) {
+  return <HeroSlider siteName={site.name} latest={latest} episodes={episodes} />;
 }
 
 export function EpisodeSignupSection({ status }: { status?: string | null }) {
@@ -259,7 +260,7 @@ export function SocialEmbedSection() {
                 data-instgrm-permalink={podcastInstagramProfileUrl}
                 data-instgrm-version="14"
               >
-                <a href={podcastInstagramProfileUrl} target="_blank" rel="noreferrer">
+                <a href={podcastInstagramProfileUrl} target="_blank" rel="noopener noreferrer">
                   Bekijk Stuk Verdriet op Instagram
                 </a>
               </blockquote>
@@ -282,7 +283,7 @@ export function SocialEmbedSection() {
                 data-embed-type="creator"
               >
                 <section>
-                  <a target="_blank" href={`${podcastTikTokProfileUrl}?refer=creator_embed`} rel="noreferrer">
+                  <a target="_blank" href={`${podcastTikTokProfileUrl}?refer=creator_embed`} rel="noopener noreferrer">
                     @stuk.verdriet
                   </a>
                 </section>
@@ -394,7 +395,7 @@ export function PlatformLinks({ episode }: { episode: PodcastEpisode }) {
   return (
     <div className="platform-links">
       {links.map(([label, href]) => (
-        <a key={label} href={href} target="_blank" rel="noreferrer">
+        <a key={label} href={href} target="_blank" rel="noopener noreferrer">
           {label}
         </a>
       ))}
@@ -408,7 +409,7 @@ export function EpisodeLinkCards({ episode }: { episode: PodcastEpisode }) {
   return (
     <div className="episode-link-card-grid">
       {cards.map((card, index) => (
-        <a key={`${card.url}-${index}`} href={card.url} target="_blank" rel="noreferrer">
+        <a key={`${card.url}-${index}`} href={card.url} target="_blank" rel="noopener noreferrer">
           <span>{card.type}</span>
           <strong>{card.label}</strong>
           {card.description ? <small>{card.description}</small> : null}
@@ -578,6 +579,25 @@ export function HostCard({ host }: { host: HostProfile }) {
   const hostName = host.name.toLowerCase();
   const isSusan = hostName.includes("susan");
   const isDaniela = hostName.includes("daniela");
+  const familyCard = isSusan
+    ? {
+        deck: "Eva, dochter van Susan, blijft aanwezig in haar verhaal, humor en manier van leven.",
+        image: "/img/EVA_PORTRET.jpg",
+        imageAlt: "Portret van Eva",
+        name: "Eva",
+        relation: "Dochter van Susan",
+        storyKey: "eva" as const
+      }
+    : isDaniela
+      ? {
+          deck: "Tycho, zoon van Daniela, leeft voort in liefde, herinneringen en alles wat hij in beweging bracht.",
+          image: "/img/TYCHO_PORTRET.jpg",
+          imageAlt: "Portret van Tycho",
+          name: "Tycho",
+          relation: "Zoon van Daniela",
+          storyKey: "tycho" as const
+        }
+      : null;
   const imageUrl = hostName.includes("susan")
     ? "/img/portretsuus.png"
     : hostName.includes("daniela")
@@ -595,6 +615,17 @@ export function HostCard({ host }: { host: HostProfile }) {
         {isSusan ? <SusanStoryPopout /> : null}
         {isDaniela ? <DanielaStoryPopout /> : null}
       </div>
+      {familyCard ? (
+        <div className="host-family-card">
+          <Image src={familyCard.image} alt={familyCard.imageAlt} width={360} height={360} />
+          <div>
+            <p className="eyebrow">{familyCard.relation}</p>
+            <h4>{familyCard.name}</h4>
+            <p>{familyCard.deck}</p>
+            <FamilyStoryPopout storyKey={familyCard.storyKey} />
+          </div>
+        </div>
+      ) : null}
     </article>
   );
 }

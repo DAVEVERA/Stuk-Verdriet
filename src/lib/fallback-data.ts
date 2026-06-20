@@ -39,6 +39,12 @@ export const fallbackEpisodes: PodcastEpisode[] = [
     next_episode_date: "2026-07-02",
     duration: "00:06",
     link_cards: [],
+    transcript_status: "missing",
+    transcript_language: "nl-NL",
+    transcript_segments: [],
+    transcript_vtt_url: null,
+    transcript_operation_name: null,
+    transcript_generated_at: null,
     featured_latest: true,
     status: "published"
   }

@@ -1,16 +1,18 @@
 # Ralph Loop State
 
-status: active
-iteration: 0
+status: complete
+iteration: 2
 max_iterations: 10
-started_at: 2026-06-10T00:00:00+02:00
-task: Move Instagram out of the podcast section, add TikTok beside it in a new responsive social embeds section, add non-navigating follow trigger CTAs, and align category card copy.
+started_at: 2026-06-18T00:00:00+02:00
+task: Make butterflies roam calmly and realistically across the whole site, with wing motion, landings on cards/sections, and verified rendering.
 
 ## Completion Criteria
 
-- [x] Instagram is removed from the podcast section and placed below it with TikTok.
-- [x] Social embeds render in a balanced responsive grid with matching dimensions and follow trigger buttons.
-- [x] Category card titles and descriptions align consistently while keeping images readable.
+- [x] Butterfly canvas is mounted sitewide, not inside a single onepager section.
+- [x] Butterflies render visibly in the browser.
+- [x] Motion includes slow flight, approach, landed rest, and takeoff states.
+- [x] Landing targets are tied to visible cards/sections.
+- [x] Mobile density is reduced and `prefers-reduced-motion` is respected.
 - [x] Tests/build/lint pass or known exceptions documented.
 - [x] No unintended files changed.
 - [x] Final summary prepared.
@@ -19,24 +21,45 @@ task: Move Instagram out of the podcast section, add TikTok beside it in a new r
 
 ### Iteration 0
 
-Initial repo inspection.
+Initial repo inspection and prior implementation review.
 
 ### Iteration 1
 
 Plan:
-- Move social embeds into a new section and align category card copy.
+- Move the butterfly field to the root layout and fix the invisible Three.js render layer.
+- Add realistic behavior states: roaming, approach, landing, resting, and takeoff.
+- Verify with TypeScript, lint, and Playwright screenshots.
 
 Changes:
-- Added SocialEmbedSection and SocialFollowTrigger.
-- Removed Instagram from PodcastOnePagerSection.
-- Updated CategoryCarousel markup and CSS overlay behavior.
+- Updated `src/components/ButterflyField.tsx` with landing targets, slower autonomous movement, live element anchoring, wing pose states, and corrected camera/frustum setup.
+- Mounted `ButterflyField` in `src/app/layout.tsx` and removed the onepager-only mount.
+- Adjusted `.butterfly-field` CSS for sitewide overlay visibility while keeping pointer events disabled.
 
 Verification:
+- `npm run typecheck` - passed.
+- `npm run lint` - passed.
+- Playwright delayed screenshots under `output/playwright/` confirmed visible butterflies on desktop and mobile.
+
+Decision:
+- continue
+
+Next:
+- Run production build and final diff review.
+
+### Iteration 2
+
+Plan:
+- Run final production verification and review changed files.
+
+Changes:
+- Reduced butterfly density slightly after screenshot review so desktop/mobile stay calm.
+- Kept the sitewide root layout mount and stateful landing behavior.
+
+Verification:
+- `npm run typecheck` - passed.
 - `npm run lint` - passed.
 - `npm run build` - passed.
-- `npm run typecheck` - passed after `next build` regenerated `.next/types`.
-- HTTP smokecheck on `http://127.0.0.1:3010/` confirmed social section, TikTok embed, Instagram embed, category card copy, and Quick follow markup.
-- Browser plugin check - blocked because the in-app browser target `iab` is unavailable in this session.
+- Playwright delayed screenshots confirmed visible butterflies after fixing camera/frustum.
 
 Decision:
 - stop

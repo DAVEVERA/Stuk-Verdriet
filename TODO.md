@@ -2,17 +2,16 @@
 
 ## Goal
 
-Create a polished mobile-first social embed section and improve category card readability/alignment.
+Remove the butterfly layer and visible butterfly imagery from the site.
 
 ## Tasks
 
-- [x] Inspect current implementation
-- [x] Identify required changes
-- [x] Implement smallest safe change
-- [x] Run verification
-- [x] Fix failures
-- [x] Update documentation if needed
-- [x] Final review
+- [x] Remove the sitewide butterfly canvas from the root layout
+- [x] Remove butterfly field styling
+- [x] Delete unused butterfly runtime and texture asset
+- [x] Replace the AYA theme butterfly image
+- [x] Remove unused Three.js dependencies
+- [x] Run final verification
 
 ## Completion Marker
 

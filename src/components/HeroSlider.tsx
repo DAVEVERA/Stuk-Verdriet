@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HeroPodcastPlayer } from "@/components/HeroPodcastPlayer";
+import type { PodcastEpisode } from "@/types/content";
 
 type HeroSlide = {
   image: string;
@@ -11,8 +12,6 @@ type HeroSlide = {
   imageClassName: string;
   heroClassName: string;
   slogan: [string, string];
-  cta: string;
-  href: string;
 };
 
 const slides: HeroSlide[] = [
@@ -22,9 +21,7 @@ const slides: HeroSlide[] = [
     imageAlt: "Susan en Daniela tijdens een podcastopname",
     imageClassName: "hero-slide-image-podcast",
     heroClassName: "hero-state-podcast",
-    slogan: ["Verdriet verdient", "een stem."],
-    cta: "Luister nu",
-    href: "/podcast"
+    slogan: ["Verdriet verdient", "een stem."]
   },
   {
     image: "/img/Laviehero.png",
@@ -32,13 +29,19 @@ const slides: HeroSlide[] = [
     imageAlt: "Podcastopstelling bij La Vie met microfoons en een roze bank",
     imageClassName: "hero-slide-image-lavie",
     heroClassName: "hero-state-lavie",
-    slogan: ["Verdriet verdient", "een stem."],
-    cta: "Luister nu",
-    href: "/podcast"
+    slogan: ["Verdriet verdient", "een stem."]
+  },
+  {
+    image: "/hero/herostartbutterfly.png",
+    mobileImage: "/hero/herostartbutterfly.png",
+    imageAlt: "Een vlinder rust op een uitgestoken hand",
+    imageClassName: "hero-slide-image-butterfly",
+    heroClassName: "hero-state-butterfly",
+    slogan: ["Wat blijft,", "krijgt vleugels."]
   }
 ];
 
-export function HeroSlider({ siteName }: { siteName: string }) {
+export function HeroSlider({ siteName, latest, episodes }: { siteName: string; latest: PodcastEpisode | null; episodes: PodcastEpisode[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSlide = slides[activeIndex];
 
@@ -81,9 +84,6 @@ export function HeroSlider({ siteName }: { siteName: string }) {
           <span>{activeSlide.slogan[0]}</span>
           <span>{activeSlide.slogan[1]}</span>
         </div>
-        <div className="subtle-actions">
-          <Link href={activeSlide.href}>{activeSlide.cta}</Link>
-        </div>
         <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
           {slides.map((slide, index) => (
             <button
@@ -98,6 +98,7 @@ export function HeroSlider({ siteName }: { siteName: string }) {
           ))}
         </div>
       </div>
+      <HeroPodcastPlayer latest={latest} episodes={episodes} />
     </section>
   );
 }
