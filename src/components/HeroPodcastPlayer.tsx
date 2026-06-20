@@ -60,8 +60,12 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      await audio.play();
-      setIsPlaying(true);
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch {
+        setIsPlaying(false);
+      }
     } else {
       audio.pause();
       setIsPlaying(false);

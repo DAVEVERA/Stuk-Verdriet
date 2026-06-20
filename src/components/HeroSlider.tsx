@@ -55,58 +55,60 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
 
   return (
     <section className={`hero hero-slider ${activeSlide.heroClassName}`} id="home" aria-label="Stuk Verdriet introductie">
-      <div className="hero-slide-stack" aria-hidden="true">
-        {slides.map((slide, index) => (
-          <div className={`hero-slide${index === activeIndex ? " active" : ""}`} key={`${slide.image}-${index}`}>
-            <Image
-              src={slide.image}
-              alt=""
-              fill
-              priority={index === 0}
-              sizes="100vw"
-              className={`hero-slide-desktop-image ${slide.imageClassName}`}
-            />
-            <Image
-              src={slide.mobileImage}
-              alt=""
-              fill
-              priority={index === 0}
-              sizes="100vw"
-              className={`hero-slide-mobile-image ${slide.imageClassName}`}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="hero-slider-wash" aria-hidden="true" />
-      <div className="hero-copy">
-        <h1>{siteName}</h1>
-        <div className="hero-slogan-art slogan-text" aria-label={activeSlide.slogan.join(" ")}>
-          <span>{activeSlide.slogan[0]}</span>
-          <span>{activeSlide.slogan[1]}</span>
+      <div className="hero-visual">
+        <div className="hero-slide-stack" aria-hidden="true">
+          {slides.map((slide, index) => (
+            <div className={`hero-slide${index === activeIndex ? " active" : ""}`} key={`${slide.image}-${index}`}>
+              <Image
+                src={slide.image}
+                alt=""
+                fill
+                priority={index === 0}
+                sizes="100vw"
+                className={`hero-slide-desktop-image ${slide.imageClassName}`}
+              />
+              <Image
+                src={slide.mobileImage}
+                alt=""
+                fill
+                priority={index === 0}
+                sizes="100vw"
+                className={`hero-slide-mobile-image ${slide.imageClassName}`}
+              />
+            </div>
+          ))}
         </div>
-        <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
-          {slides.map((slide, index) =>
-            index === activeIndex ? (
-              <button
-                type="button"
-                role="tab"
-                aria-selected="true"
-                aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
-                className="active"
-                key={`${slide.slogan[0]}-${index}`}
-                onClick={() => setActiveIndex(index)}
-              />
-            ) : (
-              <button
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
-                key={`${slide.slogan[0]}-${index}`}
-                onClick={() => setActiveIndex(index)}
-              />
-            )
-          )}
+        <div className="hero-slider-wash" aria-hidden="true" />
+        <div className="hero-copy">
+          <h1>{siteName}</h1>
+          <div className="hero-slogan-art slogan-text" aria-label={activeSlide.slogan.join(" ")}>
+            <span>{activeSlide.slogan[0]}</span>
+            <span>{activeSlide.slogan[1]}</span>
+          </div>
+          <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
+            {slides.map((slide, index) =>
+              index === activeIndex ? (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
+                  className="active"
+                  key={`${slide.slogan[0]}-${index}`}
+                  onClick={() => setActiveIndex(index)}
+                />
+              ) : (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
+                  key={`${slide.slogan[0]}-${index}`}
+                  onClick={() => setActiveIndex(index)}
+                />
+              )
+            )}
+          </div>
         </div>
       </div>
       <HeroPodcastPlayer latest={latest} episodes={episodes} />
