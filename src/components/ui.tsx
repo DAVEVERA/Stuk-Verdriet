@@ -1,14 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import type { ReactNode } from "react";
 import {
   Calendar,
   Download,
   Headphones,
   Heart,
+  Instagram,
   Leaf,
   Mail,
   MessageCircle,
+  Music2,
   Play,
   Shield,
   Star,
@@ -21,13 +24,21 @@ import { FamilyStoryPopout } from "@/components/FamilyStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { SocialFollowTrigger } from "@/components/SocialFollowTrigger";
-import { createCommunityPost, subscribeEpisodeSignup } from "@/lib/actions";
+import { createCommunityPost, supportPost, subscribeEpisodeSignup } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
 const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
 const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
 const podcastTikTokProfileUrl = "https://www.tiktok.com/@stuk.verdriet";
+
+function TikTokIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M16.6 5.82c1.18.84 2.36 1.31 3.72 1.41v3.08a8.76 8.76 0 0 1-3.7-.82v5.67c0 3.18-2.58 5.76-5.76 5.76a5.76 5.76 0 0 1-2.2-11.08 5.8 5.8 0 0 1 2.2-.43c.33 0 .65.03.96.09v3.22a2.58 2.58 0 1 0 1.95 2.5V3.08h2.83v2.74Z" />
+    </svg>
+  );
+}
 
 export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
   const footerFeatures = [
@@ -133,20 +144,21 @@ export function TychoSupportSection() {
 
 export function SocialLinksList({ links }: { links: SocialLinks }) {
   const entries = [
-    ["Instagram", links.instagram_url],
-    ["Facebook", links.facebook_url],
-    ["TikTok", links.tiktok_url],
-    ["Spotify", links.spotify_url],
-    ["Podimo", links.podimo_url],
-    ["Apple Podcasts", links.apple_podcast_url]
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+    { label: "Instagram", href: links.instagram_url, className: "social-instagram", icon: <Instagram size={18} aria-hidden /> },
+    { label: "Spotify", href: links.spotify_url, className: "social-spotify", icon: <Music2 size={18} aria-hidden /> },
+    { label: "Mail", href: `mailto:${site.email}`, className: "social-mail", icon: <Mail size={18} aria-hidden /> },
+    { label: "TikTok", href: links.tiktok_url, className: "social-tiktok", icon: <TikTokIcon /> }
+  ].flatMap((entry): { className: string; href: string; icon: ReactNode; label: string }[] =>
+    entry.href ? [{ ...entry, href: entry.href }] : []
+  );
 
   if (!entries.length) return null;
   return (
-    <div className="social-links">
-      {entries.map(([label, href]) => (
-        <a key={label} href={href} rel="noopener noreferrer" target="_blank">
-          {label}
+    <div className="social-links brand-social-links" aria-label="Social media">
+      {entries.map(({ className, href, icon, label }) => (
+        <a className={`brand-social-link ${className}`} key={label} href={href} rel="noopener noreferrer" target={href.startsWith("mailto:") ? undefined : "_blank"} aria-label={label}>
+          {icon}
+          <span>{label}</span>
         </a>
       ))}
     </div>
@@ -483,21 +495,49 @@ export function CommunityCategoryGrid({ categories }: { categories: CommunityCat
   return <CategoryCarousel categories={categories} />;
 }
 
-export function CommunityPostCard({ post }: { post: CommunityPost }) {
+const postTypeLabels: Record<NonNullable<CommunityPost["post_type"]>, string> = {
+  story: "Verhaal",
+  question: "Vraag",
+  tip: "Tip",
+  link: "Handige link"
+};
+
+export function CommunityPostCard({ post, showActions = false }: { post: CommunityPost; showActions?: boolean }) {
+  const postType = post.post_type ?? "story";
   return (
     <article className="post-card">
       {post.image_url ? <Image className="post-card-image" src={post.image_url} alt="" width={720} height={420} /> : null}
-      <p className="eyebrow">{post.category}</p>
+      <p className="eyebrow">{postTypeLabels[postType]} · {post.category}</p>
       <h3>
         <Link href={`/community/${post.slug}`}>{post.title}</Link>
       </h3>
       <p>{post.body}</p>
+      {post.resource_url ? (
+        <a className="community-resource-link" href={post.resource_url} target="_blank" rel="noopener noreferrer">
+          {post.resource_label ?? "Bekijk gedeelde link"}
+        </a>
+      ) : null}
+      {post.tags?.length ? (
+        <div className="community-tag-list" aria-label="Tags">
+          {post.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+      ) : null}
       <div className="post-meta">
         <span>{displayAuthor(post.author_name, post.author_display_type)}</span>
         <span>{formatDate(post.created_at)}</span>
         <span>{post.reply_count} reacties</span>
         <span>{post.support_count} steun</span>
       </div>
+      {showActions ? (
+        <div className="community-card-actions">
+          <Link className="text-link" href={`/community/${post.slug}`}>Lees en reageer</Link>
+          <form action={supportPost.bind(null, post.id)}>
+            <button className="button" type="submit">Steun</button>
+          </form>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -542,6 +582,15 @@ export function CommunityStoryForm({
     <form className="form-grid story-form" action={createCommunityPost} encType="multipart/form-data">
       <input type="hidden" name="return_to" value={returnTo} readOnly />
       <label>
+        Wat wil je delen?
+        <select name="post_type" defaultValue="story">
+          <option value="story">Mijn verhaal</option>
+          <option value="question">Een vraag</option>
+          <option value="tip">Tip of handvat</option>
+          <option value="link">Handige link</option>
+        </select>
+      </label>
+      <label>
         Titel
         <input name="title" required />
       </label>
@@ -560,6 +609,30 @@ export function CommunityStoryForm({
           <option value="real_name">Volledige naam</option>
           <option value="anonymous">Anoniem</option>
         </select>
+      </label>
+      <label>
+        Voor wie is dit vooral?
+        <select name="target_group" defaultValue="">
+          <option value="">Iedereen</option>
+          <option value="ouders">Ouders</option>
+          <option value="ayas">AYA&apos;s en jonge mensen</option>
+          <option value="naasten">Naasten en familie</option>
+          <option value="vrienden">Vrienden en omgeving</option>
+        </select>
+      </label>
+      <label>
+        Handige link
+        <input name="resource_url" type="url" placeholder="https://..." />
+        <small>Optioneel. Deel bijvoorbeeld een hulporganisatie, artikel, boek of praktische bron.</small>
+      </label>
+      <label>
+        Linktekst
+        <input name="resource_label" placeholder="Bijvoorbeeld: Rouwzorg Nederland" />
+      </label>
+      <label>
+        Tags
+        <input name="tags" placeholder="rouw, praktische hulp, herkenning" />
+        <small>Optioneel. Scheid tags met komma&apos;s.</small>
       </label>
       <label>
         Afbeelding

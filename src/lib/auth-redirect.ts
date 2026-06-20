@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
 export function safeAuthNext(value: string | null) {
-  return value === "/bijsluiter" || value === "/community" ? value : "/community";
+  if (!value) return "/community";
+  if (value === "/bijsluiter" || value === "/community" || value.startsWith("/community/")) return value;
+  return "/community";
 }
 
 export async function handleAuthRedirect(request: Request) {

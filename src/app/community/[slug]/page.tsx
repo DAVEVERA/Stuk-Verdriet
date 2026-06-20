@@ -29,6 +29,18 @@ export default async function CommunityPostPage({ params }: CommunityPostPagePro
         <p className="eyebrow">{post.category}</p>
         <h1>{post.title}</h1>
         <p>{post.body}</p>
+        {post.resource_url ? (
+          <a className="community-resource-link" href={post.resource_url} target="_blank" rel="noopener noreferrer">
+            {post.resource_label ?? "Bekijk gedeelde link"}
+          </a>
+        ) : null}
+        {post.tags?.length ? (
+          <div className="community-tag-list" aria-label="Tags">
+            {post.tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
+        ) : null}
         <div className="post-meta">
           <span>{displayAuthor(post.author_name, post.author_display_type)}</span>
           <span>{formatDate(post.created_at)}</span>

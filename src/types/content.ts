@@ -73,6 +73,9 @@ export type CommunityPost = {
   body: string;
   image_url: string | null;
   category: string;
+  post_type?: "story" | "question" | "tip" | "link";
+  resource_url?: string | null;
+  resource_label?: string | null;
   tags: string[];
   target_group: string | null;
   created_at: string;

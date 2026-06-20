@@ -107,7 +107,14 @@ export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
   if (error || !data) return [];
   const posts = data as CommunityPost[];
   return posts
-    .map((post) => ({ ...post, image_url: post.image_url ?? null }))
+    .map((post) => ({
+      ...post,
+      image_url: post.image_url ?? null,
+      post_type: post.post_type ?? "story",
+      resource_url: post.resource_url ?? null,
+      resource_label: post.resource_label ?? null,
+      tags: Array.isArray(post.tags) ? post.tags : []
+    }))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 

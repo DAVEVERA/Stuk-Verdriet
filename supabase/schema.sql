@@ -118,6 +118,9 @@ create table if not exists community_posts (
   body text not null,
   image_url text,
   category text not null,
+  post_type text not null default 'story' check (post_type in ('story', 'question', 'tip', 'link')),
+  resource_url text,
+  resource_label text,
   tags text[] not null default '{}',
   target_group text,
   status community_status not null default 'pending',
@@ -128,6 +131,11 @@ create table if not exists community_posts (
 );
 
 alter table community_posts add column if not exists image_url text;
+alter table community_posts add column if not exists post_type text not null default 'story';
+alter table community_posts add column if not exists resource_url text;
+alter table community_posts add column if not exists resource_label text;
+alter table community_posts drop constraint if exists community_posts_post_type_check;
+alter table community_posts add constraint community_posts_post_type_check check (post_type in ('story', 'question', 'tip', 'link'));
 alter table episode_signups add column if not exists source text not null default 'homepage_episode_1';
 alter table episode_signups add column if not exists status text not null default 'subscribed';
 alter table episode_signups add column if not exists updated_at timestamptz not null default now();
@@ -158,6 +166,27 @@ create table if not exists community_reports (
   reason text not null,
   resolved_at timestamptz,
   created_at timestamptz not null default now()
+);
+
+create table if not exists email_outbox (
+  id uuid primary key default gen_random_uuid(),
+  template text not null check (
+    template in (
+      'community_post_submitted',
+      'community_reply_submitted',
+      'community_post_reply_received',
+      'community_post_support_received'
+    )
+  ),
+  recipient_email text not null,
+  recipient_user_id uuid references auth.users(id) on delete set null,
+  subject text not null,
+  payload jsonb not null default '{}',
+  status text not null default 'queued' check (status in ('queued', 'sent', 'failed')),
+  provider_message_id text,
+  error_message text,
+  created_at timestamptz not null default now(),
+  sent_at timestamptz
 );
 
 create table if not exists faqs (
@@ -191,10 +220,25 @@ create table if not exists site_settings (
 );
 
 alter table community_posts enable row level security;
+alter table community_categories enable row level security;
 alter table community_replies enable row level security;
 alter table community_supports enable row level security;
 alter table community_reports enable row level security;
 alter table episode_signups enable row level security;
+alter table email_outbox enable row level security;
+
+grant usage on schema public to anon, authenticated;
+grant select on community_categories to anon, authenticated;
+grant select on community_posts to anon, authenticated;
+grant insert on community_posts to authenticated;
+grant select on community_replies to anon, authenticated;
+grant insert on community_replies to authenticated;
+grant select on community_supports to authenticated;
+grant insert on community_supports to authenticated;
+grant insert on community_reports to authenticated;
+
+drop policy if exists "community categories are public" on community_categories;
+create policy "community categories are public" on community_categories for select using (true);
 
 drop policy if exists "approved posts are public" on community_posts;
 create policy "approved posts are public" on community_posts for select using (status = 'approved');
@@ -210,6 +254,9 @@ create policy "authenticated users create pending replies" on community_replies 
 
 drop policy if exists "authenticated users support once" on community_supports;
 create policy "authenticated users support once" on community_supports for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists "authenticated users see own supports" on community_supports;
+create policy "authenticated users see own supports" on community_supports for select to authenticated using (auth.uid() = user_id);
 
 drop policy if exists "authenticated users report content" on community_reports;
 create policy "authenticated users report content" on community_reports for insert to authenticated with check (auth.uid() = user_id);

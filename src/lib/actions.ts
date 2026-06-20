@@ -3,7 +3,9 @@
 import { createSign } from "crypto";
 import { readFileSync } from "fs";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { renderCommunityEmail, type CommunityEmailTemplate } from "@/lib/email-templates";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
@@ -61,6 +63,62 @@ function fileExtension(file: File, fallback: string) {
 function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community" | "/bijsluiter") {
   const path = String(value ?? "").trim();
   return path === "/bijsluiter" || path === "/community" || path.startsWith("/community/") ? path : fallback;
+}
+
+async function getRequestOrigin() {
+  const headerStore = await headers();
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  if (host) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
+
+function normalizePostType(value: FormDataEntryValue | null) {
+  const postType = String(value ?? "story").trim();
+  return ["story", "question", "tip", "link"].includes(postType) ? postType : "story";
+}
+
+function optionalUrl(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function queueCommunityEmail(
+  template: CommunityEmailTemplate,
+  recipientEmail: string | null | undefined,
+  payload: {
+    actionUrl?: string;
+    actorName?: string | null;
+    postTitle?: string | null;
+    recipientName?: string | null;
+    recipientUserId?: string | null;
+  }
+) {
+  if (!recipientEmail) return;
+  const admin = createSupabaseAdminClient();
+  if (!admin) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const rendered = renderCommunityEmail(template, { ...payload, siteUrl });
+  await admin.from("email_outbox").insert({
+    template,
+    recipient_email: recipientEmail,
+    recipient_user_id: payload.recipientUserId ?? null,
+    subject: rendered.subject,
+    payload: {
+      ...payload,
+      html: rendered.html,
+      preheader: rendered.preheader,
+      subject: rendered.subject,
+      text: rendered.text
+    }
+  });
 }
 
 function isAllowedCommunityImage(file: File) {
@@ -287,11 +345,11 @@ async function getEpisodeForTranscript(admin: NonNullable<ReturnType<typeof crea
 export async function signInWithProvider(provider: "google", formData?: FormData) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/login?missing=supabase");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = await getRequestOrigin();
   const next = safeReturnPath(formData?.get("next") ?? null, "/community");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${siteUrl}/redirect?next=${encodeURIComponent(next)}` }
+    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}` }
   });
   if (error || !data.url) redirect("/login?error=oauth");
   redirect(data.url);
@@ -300,7 +358,7 @@ export async function signInWithProvider(provider: "google", formData?: FormData
 export async function signInWithEmail(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/login?missing=supabase");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = await getRequestOrigin();
   const next = safeReturnPath(formData.get("next"), "/community");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!emailPattern.test(email)) redirect(`/login?next=${encodeURIComponent(next)}&error=email`);
@@ -314,6 +372,13 @@ export async function signInWithEmail(formData: FormData) {
 
   if (error) redirect(`/login?next=${encodeURIComponent(next)}&error=email-login`);
   redirect(`/login?next=${encodeURIComponent(next)}&sent=1`);
+}
+
+export async function signOut(formData?: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const next = safeReturnPath(formData?.get("next") ?? null, "/community");
+  if (supabase) await supabase.auth.signOut();
+  redirect(next);
 }
 
 export async function subscribeEpisodeSignup(formData: FormData) {
@@ -358,6 +423,14 @@ export async function createCommunityPost(formData: FormData) {
   const category = String(formData.get("category") ?? "").trim();
   const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
   const targetGroup = String(formData.get("target_group") ?? "").trim() || null;
+  const postType = normalizePostType(formData.get("post_type"));
+  const resourceUrl = optionalUrl(formData.get("resource_url"));
+  const resourceLabel = String(formData.get("resource_label") ?? "").trim() || null;
+  const tags = String(formData.get("tags") ?? "")
+    .split(",")
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 6);
 
   if (!title || !body || !category) redirect(`${returnPath}?error=missing-fields`);
 
@@ -380,8 +453,19 @@ export async function createCommunityPost(formData: FormData) {
     body,
     image_url: imageUrl,
     category,
+    post_type: postType,
+    resource_url: resourceUrl,
+    resource_label: resourceUrl ? resourceLabel ?? new URL(resourceUrl).hostname.replace(/^www\./, "") : null,
+    tags,
     target_group: targetGroup,
     status: "pending"
+  });
+
+  await queueCommunityEmail("community_post_submitted", user.email, {
+    actionUrl: "/community",
+    postTitle: title,
+    recipientName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
+    recipientUserId: user.id
   });
 
   revalidatePath("/");
@@ -403,6 +487,11 @@ export async function createCommunityReply(postId: string, formData: FormData) {
   const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
   if (!body) return;
 
+  const admin = createSupabaseAdminClient();
+  const { data: post } = admin
+    ? await admin.from("community_posts").select("title,slug,user_id").eq("id", postId).single()
+    : { data: null };
+
   await supabase.from("community_replies").insert({
     post_id: postId,
     user_id: user.id,
@@ -411,6 +500,27 @@ export async function createCommunityReply(postId: string, formData: FormData) {
     body,
     status: "pending"
   });
+
+  const actionUrl = post?.slug ? `/community/${post.slug}` : "/community";
+  const actorName = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null;
+
+  await queueCommunityEmail("community_reply_submitted", user.email, {
+    actionUrl,
+    postTitle: post?.title ?? null,
+    recipientName: actorName,
+    recipientUserId: user.id
+  });
+
+  if (admin && post?.user_id && post.user_id !== user.id) {
+    const { data: owner } = await admin.auth.admin.getUserById(post.user_id);
+    await queueCommunityEmail("community_post_reply_received", owner.user?.email, {
+      actionUrl,
+      actorName,
+      postTitle: post.title,
+      recipientName: owner.user?.user_metadata?.full_name ?? owner.user?.email?.split("@")[0] ?? null,
+      recipientUserId: post.user_id
+    });
+  }
 
   revalidatePath("/community");
 }
@@ -422,7 +532,23 @@ export async function supportPost(postId: string) {
     data: { user }
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  await supabase.from("community_supports").upsert({ post_id: postId, user_id: user.id });
+  const admin = createSupabaseAdminClient();
+  const { data: post } = admin
+    ? await admin.from("community_posts").select("title,slug,user_id").eq("id", postId).single()
+    : { data: null };
+  await supabase.from("community_supports").upsert({ post_id: postId, user_id: user.id }, { onConflict: "post_id,user_id", ignoreDuplicates: true });
+
+  if (admin && post?.user_id && post.user_id !== user.id) {
+    const { data: owner } = await admin.auth.admin.getUserById(post.user_id);
+    await queueCommunityEmail("community_post_support_received", owner.user?.email, {
+      actionUrl: post.slug ? `/community/${post.slug}` : "/community",
+      actorName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
+      postTitle: post.title,
+      recipientName: owner.user?.user_metadata?.full_name ?? owner.user?.email?.split("@")[0] ?? null,
+      recipientUserId: post.user_id
+    });
+  }
+
   revalidatePath("/community");
 }
 
