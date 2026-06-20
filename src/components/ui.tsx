@@ -17,6 +17,7 @@ import {
   Star,
   User,
   Users,
+  Youtube,
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
@@ -40,7 +41,7 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
+export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks }) {
   const footerFeatures = [
     {
       title: "Longeneeslijk",
@@ -86,7 +87,9 @@ export function Footer({ socialLinks }: { socialLinks: SocialLinks }) {
         <a className="quiet-link" href={`mailto:${site.email}`}>
           <Mail size={18} aria-hidden /> {site.email}
         </a>
-        <SocialLinksList links={socialLinks} />
+        <a className="footer-aya-link" href="https://ayafonds.nl/" target="_blank" rel="noopener noreferrer" aria-label="Bezoek AYA Fonds">
+          <Image src="/img/AYAFonds/Embleem_logo_paars.svg" alt="AYA Fonds" width={148} height={125} />
+        </a>
       </div>
       <div className="footer-feature-grid" aria-label="Aanbevolen links">
         {footerFeatures.map((item) => (
@@ -147,7 +150,8 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
     { label: "Instagram", href: links.instagram_url, className: "social-instagram", icon: <Instagram size={18} aria-hidden /> },
     { label: "Spotify", href: links.spotify_url, className: "social-spotify", icon: <Music2 size={18} aria-hidden /> },
     { label: "Mail", href: `mailto:${site.email}`, className: "social-mail", icon: <Mail size={18} aria-hidden /> },
-    { label: "TikTok", href: links.tiktok_url, className: "social-tiktok", icon: <TikTokIcon /> }
+    { label: "TikTok", href: links.tiktok_url, className: "social-tiktok", icon: <TikTokIcon /> },
+    { label: "YouTube Music", href: links.youtube_music_url, className: "social-youtube-music", icon: <Youtube size={19} aria-hidden /> }
   ].flatMap((entry): { className: string; href: string; icon: ReactNode; label: string }[] =>
     entry.href ? [{ ...entry, href: entry.href }] : []
   );

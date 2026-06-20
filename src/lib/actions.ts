@@ -848,6 +848,7 @@ export async function saveSiteSettings(formData: FormData) {
         facebook_url: String(formData.get("facebook_url") ?? "").trim() || null,
         tiktok_url: String(formData.get("tiktok_url") ?? "").trim() || null,
         spotify_url: String(formData.get("spotify_url") ?? "").trim() || null,
+        youtube_music_url: String(formData.get("youtube_music_url") ?? "").trim() || null,
         podimo_url: String(formData.get("podimo_url") ?? "").trim() || null,
         apple_podcast_url: String(formData.get("apple_podcast_url") ?? "").trim() || null
       }

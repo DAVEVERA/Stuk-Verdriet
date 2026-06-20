@@ -2,16 +2,16 @@
 
 ## Goal
 
-Remove the butterfly layer and visible butterfly imagery from the site.
+Build a centered-logo interactive header/navigation component.
 
 ## Tasks
 
-- [x] Remove the sitewide butterfly canvas from the root layout
-- [x] Remove butterfly field styling
-- [x] Delete unused butterfly runtime and texture asset
-- [x] Replace the AYA theme butterfly image
-- [x] Remove unused Three.js dependencies
-- [x] Run final verification
+- [x] Inspect current header and navigation styles
+- [x] Convert logo into the primary menu trigger
+- [x] Implement smooth centered expansion and staggered fade-in menu items
+- [x] Preserve mobile sidebar/social behavior
+- [x] Run lint, typecheck, and build
+- [x] Final review
 
 ## Completion Marker
 

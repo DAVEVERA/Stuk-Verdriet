@@ -161,12 +161,18 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, secti
       {savedMessage ? <p className="notice">Opgeslagen: {feedbackLabels[savedMessage] ?? savedMessage}.</p> : null}
       {errorMessage ? <p className="notice">Fout: {feedbackLabels[errorMessage] ?? errorMessage}. Controleer Supabase-configuratie, velden of storage buckets.</p> : null}
 
-      <div className="admin-tabs" role="tablist" aria-label="Admin onderdelen">
-        {tabs.map(([id, label]) => (
-          <button key={id} type="button" className={activeTab === id ? "active" : ""} onClick={() => setActiveTab(id)}>
-            {label}
-          </button>
-        ))}
+      <div className="admin-tabs" role="group" aria-label="Admin onderdelen">
+        {tabs.map(([id, label]) =>
+          activeTab === id ? (
+            <button key={id} type="button" aria-pressed="true" className="active" onClick={() => setActiveTab(id)}>
+              {label}
+            </button>
+          ) : (
+            <button key={id} type="button" aria-pressed="false" onClick={() => setActiveTab(id)}>
+              {label}
+            </button>
+          )
+        )}
       </div>
 
       {activeTab === "podcast" ? (
@@ -185,7 +191,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, secti
               <Search aria-hidden />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Zoeken op titel of slug" />
             </label>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter op status">
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter op status" title="Filter op status">
               <option value="all">Alle statussen</option>
               <option value="draft">Draft</option>
               <option value="scheduled">Scheduled</option>
@@ -306,7 +312,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, secti
                   </div>
                   {linkCards.map((card, index) => (
                     <div className="link-card-row" key={`${index}-${card.type}`}>
-                      <select value={card.type} onChange={(event) => updateCard(index, "type", event.target.value)}>
+                      <select value={card.type} onChange={(event) => updateCard(index, "type", event.target.value)} aria-label={`Type link widget ${index + 1}`} title={`Type link widget ${index + 1}`}>
                         {cardTypes.map((type) => <option key={type}>{type}</option>)}
                       </select>
                       <input value={card.label} onChange={(event) => updateCard(index, "label", event.target.value)} placeholder="Label" />
@@ -388,10 +394,13 @@ function SectionDesignEditor({ initialSettings }: { initialSettings: SiteDesignS
                 <Palette size={18} aria-hidden />
                 <h3>{section.label}</h3>
               </div>
-              <div className="section-design-preview" style={{ backgroundColor: value.backgroundColor || undefined, color: value.textColor || undefined }}>
-                <span style={{ backgroundColor: value.accentColor || undefined }} />
+              <div className="section-design-preview">
+                <span aria-hidden />
                 <strong>{section.label}</strong>
                 <small>{value.layout} / {value.spacing}</small>
+                <small>
+                  {value.backgroundColor || "standaard"} / {value.textColor || "standaard"} / {value.accentColor || "standaard"}
+                </small>
               </div>
               <div className="section-design-controls">
                 <label>Achtergrond<ColorInput value={value.backgroundColor} onChange={(next) => updateSection(section.key, "backgroundColor", next)} /></label>
@@ -423,7 +432,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (value: stri
 
 function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)}>
+    <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Preset kiezen" title="Preset kiezen">
       {options.map((option) => (
         <option key={option} value={option}>{option}</option>
       ))}
@@ -495,6 +504,7 @@ function SiteSettingsForm() {
       <label>Facebook<input name="facebook_url" /></label>
       <label>TikTok<input name="tiktok_url" /></label>
       <label>Spotify<input name="spotify_url" /></label>
+      <label>YouTube Music<input name="youtube_music_url" /></label>
       <label>Podimo<input name="podimo_url" /></label>
       <label>Apple Podcasts<input name="apple_podcast_url" /></label>
       <button className="button" type="submit">Opslaan</button>
@@ -540,7 +550,7 @@ function AdminForm({ title, action, children }: { title: string; action: (formDa
 
 function StatusSelect({ defaultValue = "draft" }: { defaultValue?: string }) {
   return (
-    <select name="status" defaultValue={defaultValue}>
+    <select name="status" defaultValue={defaultValue} aria-label="Status" title="Status">
       <option value="draft">draft</option>
       <option value="scheduled">scheduled</option>
       <option value="published">published</option>
@@ -551,11 +561,11 @@ function StatusSelect({ defaultValue = "draft" }: { defaultValue?: string }) {
 
 function SeasonSelect({ seasons, defaultValue }: { seasons: PodcastSeason[]; defaultValue: number }) {
   if (!seasons.length) {
-    return <input name="season_number" type="number" min="1" required defaultValue={defaultValue} />;
+    return <input name="season_number" type="number" min="1" required defaultValue={defaultValue} aria-label="Seizoensnummer" title="Seizoensnummer" />;
   }
 
   return (
-    <select name="season_number" defaultValue={String(defaultValue)}>
+    <select name="season_number" defaultValue={String(defaultValue)} aria-label="Seizoen" title="Seizoen">
       {seasons.map((season) => (
         <option key={season.id} value={season.season_number}>
           S{season.season_number} - {season.title}

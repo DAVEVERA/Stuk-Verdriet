@@ -121,6 +121,7 @@ export type SocialLinks = {
   facebook_url: string | null;
   tiktok_url: string | null;
   spotify_url: string | null;
+  youtube_music_url: string | null;
   podimo_url: string | null;
   apple_podcast_url: string | null;
 };

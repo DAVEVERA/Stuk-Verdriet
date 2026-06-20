@@ -1,19 +1,19 @@
 # Ralph Loop State
 
 status: complete
-iteration: 2
+iteration: 1
 max_iterations: 10
-started_at: 2026-06-18T00:00:00+02:00
-task: Make butterflies roam calmly and realistically across the whole site, with wing motion, landings on cards/sections, and verified rendering.
+started_at: 2026-06-20T13:30:00+02:00
+task: Build an interactive centered-logo navigation that expands smoothly into a horizontal navbar, while preserving mobile-first sidebar behavior and verification.
 
 ## Completion Criteria
 
-- [x] Butterfly canvas is mounted sitewide, not inside a single onepager section.
-- [x] Butterflies render visibly in the browser.
-- [x] Motion includes slow flight, approach, landed rest, and takeoff states.
-- [x] Landing targets are tied to visible cards/sections.
-- [x] Mobile density is reduced and `prefers-reduced-motion` is respected.
-- [x] Tests/build/lint pass or known exceptions documented.
+- [x] Logo is centered and acts as the menu trigger.
+- [x] Menu expands smoothly from the centered logo into a horizontal navbar.
+- [x] Menu items fade in subtly after expansion.
+- [x] Mobile navigation remains usable, thumb-friendly, and accessible.
+- [x] Reduced motion is respected.
+- [x] Lint/typecheck/build pass or known exceptions documented.
 - [x] No unintended files changed.
 - [x] Final summary prepared.
 
@@ -21,45 +21,23 @@ task: Make butterflies roam calmly and realistically across the whole site, with
 
 ### Iteration 0
 
-Initial repo inspection and prior implementation review.
+Initial repo inspection. Existing header uses a logo link, desktop nav, hamburger menu, and mobile sidebar. Current worktree already has unrelated social/deploy changes.
 
 ### Iteration 1
 
 Plan:
-- Move the butterfly field to the root layout and fix the invisible Three.js render layer.
-- Add realistic behavior states: roaming, approach, landing, resting, and takeoff.
-- Verify with TypeScript, lint, and Playwright screenshots.
+- Convert the header logo into the primary menu trigger.
+- Add centered closed state, expanding desktop navbar, fade-in items, and mobile sidebar compatibility.
 
 Changes:
-- Updated `src/components/ButterflyField.tsx` with landing targets, slower autonomous movement, live element anchoring, wing pose states, and corrected camera/frustum setup.
-- Mounted `ButterflyField` in `src/app/layout.tsx` and removed the onepager-only mount.
-- Adjusted `.butterfly-field` CSS for sitewide overlay visibility while keeping pointer events disabled.
+- Updated `src/components/Header.tsx` to use the logo as the trigger, close on Escape, and avoid hidden focusable nav items.
+- Updated `src/app/globals.css` with closed/open header states, orbit lines, staggered fades, mobile behavior, and reduced-motion support.
 
 Verification:
-- `npm run typecheck` - passed.
 - `npm run lint` - passed.
-- Playwright delayed screenshots under `output/playwright/` confirmed visible butterflies on desktop and mobile.
-
-Decision:
-- continue
-
-Next:
-- Run production build and final diff review.
-
-### Iteration 2
-
-Plan:
-- Run final production verification and review changed files.
-
-Changes:
-- Reduced butterfly density slightly after screenshot review so desktop/mobile stay calm.
-- Kept the sitewide root layout mount and stateful landing behavior.
-
-Verification:
 - `npm run typecheck` - passed.
-- `npm run lint` - passed.
 - `npm run build` - passed.
-- Playwright delayed screenshots confirmed visible butterflies after fixing camera/frustum.
+- Notes: Next still warns that `middleware.ts` is deprecated in favor of `proxy.ts`; it remains intentional because Vercel deployment previously failed without the middleware artifact.
 
 Decision:
 - stop

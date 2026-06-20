@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="nl" className={`${jost.variable} ${slogan.variable}`}>
       <body>
         <div className="site-shell">
-          <Header spotifyUrl={socialLinks.spotify_url} />
+          <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />
           <main className="main">{children}</main>
           <Footer socialLinks={socialLinks} />
         </div>

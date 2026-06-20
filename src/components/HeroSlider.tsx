@@ -29,7 +29,7 @@ const slides: HeroSlide[] = [
     imageAlt: "Podcastopstelling bij La Vie met microfoons en een roze bank",
     imageClassName: "hero-slide-image-lavie",
     heroClassName: "hero-state-lavie",
-    slogan: ["Verdriet verdient", "een stem."]
+    slogan: ["Woorden geven aan", "wat niet te bevatten is."]
   },
   {
     image: "/hero/herostartbutterfly.png",
@@ -37,7 +37,7 @@ const slides: HeroSlide[] = [
     imageAlt: "Een vlinder rust op een uitgestoken hand",
     imageClassName: "hero-slide-image-butterfly",
     heroClassName: "hero-state-butterfly",
-    slogan: ["Wat blijft,", "krijgt vleugels."]
+    slogan: ["Samen door wat niemand", "alleen zou moeten dragen."]
   }
 ];
 
@@ -85,17 +85,28 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
           <span>{activeSlide.slogan[1]}</span>
         </div>
         <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
-          {slides.map((slide, index) => (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={index === activeIndex}
-              aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
-              className={index === activeIndex ? "active" : ""}
-              key={`${slide.slogan[0]}-${index}`}
-              onClick={() => setActiveIndex(index)}
-            />
-          ))}
+          {slides.map((slide, index) =>
+            index === activeIndex ? (
+              <button
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
+                className="active"
+                key={`${slide.slogan[0]}-${index}`}
+                onClick={() => setActiveIndex(index)}
+              />
+            ) : (
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-label={`Toon slide ${index + 1}: ${slide.slogan.join(" ")}`}
+                key={`${slide.slogan[0]}-${index}`}
+                onClick={() => setActiveIndex(index)}
+              />
+            )
+          )}
         </div>
       </div>
       <HeroPodcastPlayer latest={latest} episodes={episodes} />

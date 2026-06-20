@@ -116,6 +116,7 @@ export const fallbackSocialLinks: SocialLinks = {
   facebook_url: null,
   tiktok_url: null,
   spotify_url: null,
+  youtube_music_url: null,
   podimo_url: null,
   apple_podcast_url: null
 };
