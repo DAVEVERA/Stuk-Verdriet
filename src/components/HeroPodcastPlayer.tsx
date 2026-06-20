@@ -42,6 +42,17 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
   const episode = playlist[selectedIndex] ?? playlist[0] ?? null;
   const segments = episode?.transcript_segments ?? [];
   const activeSegmentIndex = segments.findIndex((segment) => currentTime >= segment.start && currentTime < segment.end);
+  const transcriptToggle = isTranscriptOpen ? (
+    <button type="button" onClick={() => setIsTranscriptOpen(false)} aria-expanded="true" aria-controls="hero-player-transcript">
+      <Captions size={16} aria-hidden />
+      Transcript
+    </button>
+  ) : (
+    <button type="button" onClick={() => setIsTranscriptOpen(true)} aria-expanded="false" aria-controls="hero-player-transcript">
+      <Captions size={16} aria-hidden />
+      Transcript
+    </button>
+  );
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -189,10 +200,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => setIsTranscriptOpen((open) => !open)} aria-expanded={isTranscriptOpen ? "true" : "false"} aria-controls="hero-player-transcript">
-          <Captions size={16} aria-hidden />
-          Transcript
-        </button>
+        {transcriptToggle}
       </div>
 
       <div className="hero-player-signup-promo">

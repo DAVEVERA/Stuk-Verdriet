@@ -36,14 +36,14 @@ function ComingSoonPage() {
       />
       <div className="coming-soon-scrim" aria-hidden="true" />
       <div className="coming-soon-content">
-        <Image src={site.logo} alt="Stuk Verdriet" width={112} height={142} priority className="coming-soon-logo" />
+        <Image src={site.logo} alt="Stuk Verdriet" width={86} height={86} priority className="coming-soon-logo" />
         <p className="coming-soon-kicker">Stuk Verdriet</p>
         <h1 id="coming-soon-title">We zijn bijna live</h1>
         <p className="coming-soon-lead">
           De laatste details krijgen nu aandacht. Binnenkort vind je hier gesprekken, verhalen en een zachte plek
           voor rouw, gemis en verder leven.
         </p>
-        <div className="coming-soon-actions" aria-label="Tijdelijke acties">
+        <div className="coming-soon-actions">
           <a className="coming-soon-primary" href={`mailto:${site.email}`}>
             <Mail size={18} aria-hidden />
             Neem contact op

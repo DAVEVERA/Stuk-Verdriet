@@ -78,6 +78,7 @@ body:has(.coming-soon-page) .cookie-consent {
   overflow: hidden;
 }
 
+/* ===== COMING SOON — mobile base (320px+) ===== */
 .coming-soon-page {
   align-items: start;
   background: #172118;
@@ -86,21 +87,33 @@ body:has(.coming-soon-page) .cookie-consent {
   isolation: isolate;
   min-height: 100svh;
   overflow: hidden;
-  padding: 28px 18px;
+  padding: 20px 14px;
   position: relative;
   width: 100%;
 }
 
 .coming-soon-image {
-  filter: saturate(0.94) contrast(1.04) brightness(0.88);
+  filter: saturate(0.92) contrast(1.05) brightness(0.78);
   object-fit: cover;
-  object-position: center 60%;
+  object-position: center 55%;
   z-index: -3;
 }
 
 .coming-soon-scrim {
   background:
-    linear-gradient(180deg, rgba(12, 18, 13, 0.88) 0%, rgba(12, 18, 13, 0.62) 30%, rgba(12, 18, 13, 0.08) 58%, rgba(12, 18, 13, 0.04) 100%);
+    linear-gradient(
+      170deg,
+      rgba(12, 18, 13, 0.92) 0%,
+      rgba(12, 18, 13, 0.72) 28%,
+      rgba(12, 18, 13, 0.18) 54%,
+      rgba(12, 18, 13, 0.04) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(12, 18, 13, 0.3) 0%,
+      rgba(12, 18, 13, 0.1) 30%,
+      transparent 55%
+    );
   inset: 0;
   position: absolute;
   z-index: -2;
@@ -109,59 +122,63 @@ body:has(.coming-soon-page) .cookie-consent {
 .coming-soon-content {
   margin: 0 auto;
   max-width: 1180px;
-  padding: 48px clamp(18px, 5vw, 72px) 0;
+  padding: 18px 4px 0;
   width: 100%;
 }
 
 .coming-soon-logo {
-  background: rgba(255, 253, 248, 0.9);
-  border: 1px solid rgba(255, 253, 248, 0.62);
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(255, 253, 248, 0.48);
   border-radius: 999px;
-  box-shadow: 0 18px 48px rgba(8, 12, 9, 0.28);
-  height: 86px;
+  box-shadow: 0 14px 38px rgba(8, 12, 9, 0.24);
+  height: 64px;
   object-fit: contain;
-  padding: 8px;
-  width: 86px;
+  padding: 6px;
+  width: 64px;
 }
 
 .coming-soon-kicker {
-  color: rgba(255, 253, 248, 0.78);
-  font-size: 0.82rem;
+  color: rgba(255, 253, 248, 0.72);
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 28px 0 12px;
+  letter-spacing: 0.13em;
+  margin: 18px 0 8px;
   text-transform: uppercase;
 }
 
 .coming-soon-page h1 {
   color: var(--white);
-  font-size: 4.2rem;
-  line-height: 0.96;
+  font-size: 2.35rem;
+  line-height: 0.98;
   margin: 0;
   max-width: 10ch;
-  text-shadow: 0 22px 56px rgba(5, 9, 6, 0.46);
+  text-shadow: 0 18px 48px rgba(5, 9, 6, 0.42);
 }
 
 .coming-soon-lead {
-  color: rgba(255, 253, 248, 0.86);
-  font-size: 1.2rem;
-  line-height: 1.65;
-  margin: 24px 0 0;
-  max-width: 620px;
+  color: rgba(255, 253, 248, 0.84);
+  font-size: 0.92rem;
+  line-height: 1.52;
+  margin: 14px 0 0;
+  max-width: 30rem;
 }
 
 .coming-soon-actions {
-  align-items: center;
+  align-items: stretch;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 34px;
+  gap: 10px;
+  margin-top: 20px;
+  max-width: 25rem;
 }
 
 .coming-soon-primary {
   align-items: center;
+  background: var(--white);
   border: 1px solid rgba(255, 253, 248, 0.34);
   border-radius: 8px;
+  color: var(--pine);
   display: inline-flex;
   font-weight: 800;
   gap: 9px;
@@ -170,11 +187,7 @@ body:has(.coming-soon-page) .cookie-consent {
   padding: 12px 18px;
   text-decoration: none;
   transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
-}
-
-.coming-soon-primary {
-  background: var(--white);
-  color: var(--pine);
+  width: 100%;
 }
 
 .coming-soon-primary:hover {
@@ -182,69 +195,164 @@ body:has(.coming-soon-page) .cookie-consent {
   transform: translateY(-1px);
 }
 
-@media (max-width: 760px) {
+.coming-soon-primary:active {
+  opacity: 0.92;
+  transform: translateY(0);
+}
+
+.coming-soon-primary:focus-visible {
+  outline: 3px solid var(--pine);
+  outline-offset: 4px;
+}
+
+/* ===== 400px: larger phones ===== */
+@media (min-width: 400px) {
+  .coming-soon-logo {
+    height: 72px;
+    padding: 7px;
+    width: 72px;
+  }
+
+  .coming-soon-page h1 {
+    font-size: 2.8rem;
+  }
+
+  .coming-soon-lead {
+    font-size: 0.98rem;
+  }
+
+  .coming-soon-content {
+    padding-top: 24px;
+  }
+}
+
+/* ===== 640px: tablets ===== */
+@media (min-width: 640px) {
   .coming-soon-page {
-    align-items: start;
-    min-height: 100svh;
-    padding: 22px 14px;
+    padding: 24px 18px;
   }
 
   .coming-soon-image {
-    filter: saturate(0.92) contrast(1.05) brightness(0.78);
-    object-position: center 55%;
+    filter: saturate(0.93) contrast(1.04) brightness(0.84);
+    object-position: center 58%;
   }
 
   .coming-soon-scrim {
     background:
-      linear-gradient(180deg, rgba(12, 18, 13, 0.9) 0%, rgba(12, 18, 13, 0.65) 35%, rgba(12, 18, 13, 0.1) 60%, rgba(12, 18, 13, 0.04) 100%);
+      linear-gradient(
+        170deg,
+        rgba(12, 18, 13, 0.9) 0%,
+        rgba(12, 18, 13, 0.66) 28%,
+        rgba(12, 18, 13, 0.12) 54%,
+        rgba(12, 18, 13, 0.04) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(12, 18, 13, 0.26) 0%,
+        rgba(12, 18, 13, 0.08) 28%,
+        transparent 52%
+      );
   }
 
   .coming-soon-content {
-    padding: 32px 4px 0;
+    padding: 36px clamp(18px, 5vw, 72px) 0;
   }
 
   .coming-soon-logo {
-    height: 72px;
-    width: 72px;
+    height: 80px;
+    padding: 8px;
+    width: 80px;
   }
 
   .coming-soon-kicker {
-    font-size: 0.74rem;
-    margin-top: 22px;
+    font-size: 0.78rem;
+    margin: 22px 0 10px;
   }
 
   .coming-soon-page h1 {
-    font-size: 3rem;
-    max-width: 9ch;
+    font-size: 3.2rem;
   }
 
   .coming-soon-lead {
-    font-size: 1.02rem;
-    line-height: 1.55;
-    margin-top: 18px;
-    max-width: 30rem;
+    font-size: 1.08rem;
+    line-height: 1.58;
+    margin-top: 20px;
   }
 
   .coming-soon-actions {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 24px;
-    max-width: 25rem;
+    align-items: center;
+    flex-direction: row;
+    margin-top: 28px;
+    max-width: none;
   }
 
   .coming-soon-primary {
-    width: 100%;
+    width: auto;
   }
 }
 
-@media (max-width: 380px) {
+/* ===== 1024px: desktop ===== */
+@media (min-width: 1024px) {
+  .coming-soon-page {
+    padding: 28px 18px;
+  }
+
+  .coming-soon-image {
+    filter: saturate(0.94) contrast(1.04) brightness(0.86);
+    object-position: center 60%;
+  }
+
+  .coming-soon-scrim {
+    background:
+      linear-gradient(
+        168deg,
+        rgba(12, 18, 13, 0.9) 0%,
+        rgba(12, 18, 13, 0.68) 24%,
+        rgba(12, 18, 13, 0.14) 50%,
+        transparent 72%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(12, 18, 13, 0.28) 0%,
+        rgba(12, 18, 13, 0.08) 26%,
+        transparent 48%
+      ),
+      linear-gradient(
+        0deg,
+        rgba(12, 18, 13, 0.14) 0%,
+        transparent 12%
+      );
+  }
+
+  .coming-soon-content {
+    padding: 48px clamp(18px, 5vw, 72px) 0;
+  }
+
+  .coming-soon-logo {
+    height: 86px;
+    width: 86px;
+  }
+
+  .coming-soon-kicker {
+    font-size: 0.82rem;
+    margin: 26px 0 12px;
+  }
+
   .coming-soon-page h1 {
-    font-size: 2.55rem;
+    font-size: 4rem;
+    line-height: 0.96;
   }
 
   .coming-soon-lead {
-    font-size: 0.96rem;
+    font-size: 1.18rem;
+    line-height: 1.62;
+    margin-top: 24px;
+    max-width: 540px;
+  }
+
+  .coming-soon-actions {
+    gap: 12px;
+    margin-top: 34px;
   }
 }
 
@@ -2214,7 +2322,8 @@ p {
   .sidebar-nav a,
   .sidebar-social-link,
   .brand-social-link,
-  .brand-social-link svg {
+  .brand-social-link svg,
+  .coming-soon-primary {
     animation: none !important;
     transition: none !important;
   }
