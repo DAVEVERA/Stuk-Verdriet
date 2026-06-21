@@ -464,7 +464,26 @@ textarea {
   filter: drop-shadow(0 5px 11px rgba(43, 49, 43, 0.18));
   height: auto;
   object-fit: contain;
+  transform-origin: center;
   width: var(--header-logo-mark-size);
+}
+
+.site-header.nav-open .header-logo-trigger img {
+  animation: header-logo-spin 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes header-logo-spin {
+  0% {
+    transform: rotate(0deg) scale(0.96);
+  }
+
+  70% {
+    transform: rotate(340deg) scale(1.03);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 .desktop-nav {
@@ -5656,7 +5675,9 @@ textarea {
   .header-inner,
   .desktop-nav,
   .desktop-nav a,
-  .header-logo-trigger {
+  .header-logo-trigger,
+  .header-logo-trigger img {
+    animation: none !important;
     transition: none !important;
   }
 
