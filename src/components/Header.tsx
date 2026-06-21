@@ -47,7 +47,7 @@ const socialSidebarLinks = [
   },
   {
     label: "TikTok",
-    href: "https://www.tiktok.com/@stukverdrietdepodcast",
+    href: "https://www.tiktok.com/@stukverdrietdepodcast/",
     className: "sv-tiktok",
     icon: <TikTokIcon size={24} />
   },
