@@ -12,6 +12,7 @@ type HeroSlide = {
   imageClassName: string;
   heroClassName: string;
   slogan: [string, string];
+  mobileSlogan?: [string] | [string, string];
 };
 
 const slides: HeroSlide[] = [
@@ -21,7 +22,8 @@ const slides: HeroSlide[] = [
     imageAlt: "Susan en Daniela tijdens een podcastopname",
     imageClassName: "hero-slide-image-podcast",
     heroClassName: "hero-state-podcast",
-    slogan: ["Verdriet verdient", "een stem."]
+    slogan: ["Verdriet verdient", "een stem."],
+    mobileSlogan: ["Verdriet verdient een stem."]
   },
   {
     image: "/img/Laviehero.png",
@@ -37,13 +39,15 @@ const slides: HeroSlide[] = [
     imageAlt: "Een vlinder rust op een uitgestoken hand",
     imageClassName: "hero-slide-image-butterfly",
     heroClassName: "hero-state-butterfly",
-    slogan: ["Samen door wat niemand", "alleen zou moeten dragen."]
+    slogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
+    mobileSlogan: ["Samen door wat niemand", "alleen zou moeten dragen."]
   }
 ];
 
 export function HeroSlider({ siteName, latest, episodes }: { siteName: string; latest: PodcastEpisode | null; episodes: PodcastEpisode[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSlide = slides[activeIndex];
+  const mobileSlogan = activeSlide.mobileSlogan ?? activeSlide.slogan;
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -81,9 +85,14 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
         <div className="hero-slider-wash" aria-hidden="true" />
         <div className="hero-copy">
           <h1>{siteName}</h1>
-          <div className="hero-slogan-art slogan-text" aria-label={activeSlide.slogan.join(" ")}>
+          <div className="hero-slogan-art hero-slogan-art-desktop slogan-text" aria-label={activeSlide.slogan.join(" ")}>
             <span>{activeSlide.slogan[0]}</span>
             <span>{activeSlide.slogan[1]}</span>
+          </div>
+          <div className="hero-slogan-art hero-slogan-art-mobile slogan-text" aria-label={mobileSlogan.join(" ")}>
+            {mobileSlogan.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
           </div>
           <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
             {slides.map((slide, index) =>

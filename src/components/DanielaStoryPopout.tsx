@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 
@@ -11,6 +13,11 @@ const danielaStory = [
   {
     type: "quote",
     text: "Tycho liet geen indruk achter, maar een afdruk."
+  },
+  {
+    type: "visual",
+    image: "/story-visuals/daniela-community-action.png",
+    imageAlt: "Een rustige tafel met donatiekaarten, groen, een kaars en een notitieboek"
   },
   {
     text: "2025 was een jaar van leven tussen angst en hoop. Van steeds opnieuw proberen overeind te blijven, terwijl de grond onder ons wegzakte. En uiteindelijk moesten we in april onze lieve Tycho laten gaan. Onze zoon. Mijn baby. Mijn ventje. Onze allerliefste, ondeugendste, moedigste zoon en broertje."
@@ -156,9 +163,9 @@ export function DanielaStoryPopout() {
   return (
     <>
       <button className="host-story-trigger" type="button" onClick={() => setIsOpen(true)}>
-        Lees Daniela&apos;s verhaal
+        Daniela&apos;s verhaal
       </button>
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div className="story-popout-layer" role="dialog" aria-modal="true" aria-labelledby={titleId}>
           <button className="story-popout-backdrop" type="button" aria-label="Sluit verhaal" onClick={() => setIsOpen(false)} />
           <article className="story-popout-panel">
@@ -190,6 +197,14 @@ export function DanielaStoryPopout() {
                   );
                 }
 
+                if (block.type === "visual" && block.image && block.imageAlt) {
+                  return (
+                    <figure className="story-popout-visual" key={`${block.image}-${index}`}>
+                      <Image src={block.image} alt={block.imageAlt} width={1280} height={720} sizes="(max-width: 760px) calc(100vw - 48px), 720px" />
+                    </figure>
+                  );
+                }
+
                 return (
                   <p className={block.type === "intro" || block.type === "note" ? "story-popout-intro" : undefined} key={`${block.text}-${index}`}>
                     {block.text}
@@ -198,7 +213,8 @@ export function DanielaStoryPopout() {
               })}
             </div>
           </article>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

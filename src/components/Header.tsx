@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Instagram, Mail, Music2, X, Youtube } from "lucide-react";
+import { Instagram, Music2, X } from "lucide-react";
 import { site } from "@/lib/site";
 import type { SocialLinks } from "@/types/content";
 
@@ -24,24 +24,58 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
   );
 }
 
+function GoFundMeIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12 2.8c.36 0 .67.25.74.61l.44 2.45 2.03-1.5a.75.75 0 1 1 .89 1.2l-2.03 1.51 2.49.92a.75.75 0 0 1-.52 1.41l-2.48-.92v2.52a.75.75 0 0 1-1.5 0V8.48l-2.48.92a.75.75 0 1 1-.52-1.41l2.49-.92-2.03-1.51a.75.75 0 1 1 .89-1.2l2.03 1.5.44-2.45c.07-.36.38-.61.74-.61Zm0 10.05c3.18 0 5.75 1.92 5.75 4.28S15.18 21.4 12 21.4s-5.75-1.91-5.75-4.27S8.82 12.85 12 12.85Zm0 1.78c-2.02 0-3.66 1.12-3.66 2.5s1.64 2.5 3.66 2.5 3.66-1.12 3.66-2.5-1.64-2.5-3.66-2.5Z" />
+    </svg>
+  );
+}
+
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast" },
   { href: "/themas", label: "Thema's" }
 ];
 
-export function Header({ socialLinks, spotifyUrl }: { socialLinks: SocialLinks; spotifyUrl?: string | null }) {
+const socialSidebarLinks = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/stukverdrietdepodcast/",
+    className: "sv-instagram",
+    icon: <Instagram size={24} aria-hidden />
+  },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@stukverdrietdepodcast",
+    className: "sv-tiktok",
+    icon: <TikTokIcon size={24} />
+  },
+  {
+    label: "Spotify",
+    href: "https://open.spotify.com/search/stuk%20verdriet%20de%20podcast",
+    className: "sv-spotify",
+    icon: <SpotifyIcon size={24} />
+  },
+  {
+    label: "GoFundMe",
+    href: "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken",
+    className: "sv-gofundme",
+    icon: <GoFundMeIcon size={24} />
+  }
+];
+
+export function Header({ socialLinks: _socialLinks, spotifyUrl }: { socialLinks: SocialLinks; spotifyUrl?: string | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const navTabIndex = open ? undefined : -1;
   const sidebarSocials = [
-    { label: "Instagram", href: socialLinks.instagram_url, className: "sidebar-social-instagram", icon: <Instagram size={18} aria-hidden /> },
-    { label: "TikTok", href: socialLinks.tiktok_url, className: "sidebar-social-tiktok", icon: <TikTokIcon /> },
-    { label: "Mail", href: `mailto:${site.email}`, className: "sidebar-social-mail", icon: <Mail size={18} aria-hidden /> },
-    { label: "Spotify", href: socialLinks.spotify_url ?? spotifyUrl ?? null, className: "sidebar-social-spotify", icon: <Music2 size={18} aria-hidden /> },
-    { label: "YouTube Music", href: socialLinks.youtube_music_url, className: "sidebar-social-youtube", icon: <Youtube size={19} aria-hidden /> }
-  ].flatMap((entry) => (entry.href ? [{ ...entry, href: entry.href }] : []));
+    { label: "Instagram", href: socialSidebarLinks[0].href, className: "sidebar-social-instagram", icon: <Instagram size={18} aria-hidden /> },
+    { label: "TikTok", href: socialSidebarLinks[1].href, className: "sidebar-social-tiktok", icon: <TikTokIcon /> },
+    { label: "Spotify", href: socialSidebarLinks[2].href, className: "sidebar-social-spotify", icon: <Music2 size={18} aria-hidden /> },
+    { label: "GoFundMe", href: socialSidebarLinks[3].href, className: "sidebar-social-gofundme", icon: <GoFundMeIcon size={18} /> }
+  ];
 
   function openSidebar() {
     setHasOpened(true);
@@ -117,6 +151,20 @@ export function Header({ socialLinks, spotifyUrl }: { socialLinks: SocialLinks; 
 
   return (
     <>
+      <nav className="sv-social-sidebar" aria-label="Social media en doneren">
+        <div className="sv-social-tab" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        {socialSidebarLinks.map((link) => (
+          <a className={`sv-social-link ${link.className}`} href={link.href} key={link.label} rel="noopener noreferrer" target="_blank" aria-label={link.label}>
+            {link.icon}
+            <span>{link.label}</span>
+          </a>
+        ))}
+      </nav>
+
       <header className={`site-header${open ? " nav-open" : ""}`}>
         <div className="header-inner">
           {logoTrigger}

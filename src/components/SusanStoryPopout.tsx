@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 
@@ -11,6 +13,11 @@ const susanStory = [
   {
     type: "quote",
     text: "Eva maakte zich zorgen. Hoe het verder moest met mij als zij er niet meer zou zijn."
+  },
+  {
+    type: "visual",
+    image: "/story-visuals/susan-memory-room.png",
+    imageAlt: "Een rustige woonkamer met herinneringsbrieven, thee en zacht daglicht"
   },
   {
     text: "Ze had gezien hoe ik in 2018 na het plotselinge overlijden van Mart, de vriend van mijn dochter Anne, mezelf compleet voorbijliep in zorgen en rouwen. Dat wilde Eva voorkomen. Ze wilde me in bescherming nemen. Eva heeft me daarom ook een tijdje niet altijd alles verteld. Ze wilde niet dat ik me druk zou maken. En ik sprak mijn angsten en mijn verdriet ook niet altijd uit naar haar, want daar wilde ik haar weer niet mee belasten."
@@ -83,9 +90,9 @@ export function SusanStoryPopout() {
   return (
     <>
       <button className="host-story-trigger" type="button" onClick={() => setIsOpen(true)}>
-        Lees Susan&apos;s verhaal
+        Susans verhaal
       </button>
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div className="story-popout-layer" role="dialog" aria-modal="true" aria-labelledby={titleId}>
           <button className="story-popout-backdrop" type="button" aria-label="Sluit verhaal" onClick={() => setIsOpen(false)} />
           <article className="story-popout-panel">
@@ -117,6 +124,14 @@ export function SusanStoryPopout() {
                   );
                 }
 
+                if (block.type === "visual" && block.image && block.imageAlt) {
+                  return (
+                    <figure className="story-popout-visual" key={`${block.image}-${index}`}>
+                      <Image src={block.image} alt={block.imageAlt} width={1280} height={720} sizes="(max-width: 760px) calc(100vw - 48px), 720px" />
+                    </figure>
+                  );
+                }
+
                 return (
                   <p className={block.type === "intro" ? "story-popout-intro" : undefined} key={`${block.text}-${index}`}>
                     {block.text}
@@ -125,7 +140,8 @@ export function SusanStoryPopout() {
               })}
             </div>
           </article>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

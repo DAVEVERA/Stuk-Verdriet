@@ -1,11 +1,15 @@
 "use client";
 
+import Image from "next/image";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 
 type StoryBlock = {
-  type?: "intro" | "quote" | "note";
+  type?: "intro" | "quote" | "note" | "visual";
   heading?: string;
+  image?: string;
+  imageAlt?: string;
   text?: string;
 };
 
@@ -19,7 +23,7 @@ type FamilyStory = {
 
 const familyStories = {
   eva: {
-    buttonLabel: "Lees Eva's verhaal",
+    buttonLabel: "Eva's verhaal",
     deck: "Over echtheid, liefde, humor en leven terwijl later ineens onder druk komt te staan.",
     kicker: "Over Eva",
     title: "Eva Hermans-Kroot",
@@ -31,6 +35,11 @@ const familyStories = {
       {
         type: "quote",
         text: "Ze was geen symbool omdat ze ziek was. Ze werd een symbool omdat ze, midden in die ziekte, zo ongelooflijk levend bleef."
+      },
+      {
+        type: "visual",
+        image: "/story-visuals/eva-present-moment.png",
+        imageAlt: "Een zonverlichte tafel met bloemen, een puzzel, een boek en zachte groene details"
       },
       {
         text: "Eva had alles in zich van iemand die nog moest beginnen. Jong, scherp, grappig, verliefd, vol plannen. Een vrouw aan het begin van haar volwassen leven. Een leven waarin je normaal gesproken nog denkt dat later vanzelf komt. Later trouwen. Later reizen. Later rust nemen. Later zeggen wat je voelt. Later doen wat echt belangrijk is."
@@ -78,7 +87,7 @@ const familyStories = {
     ]
   },
   tycho: {
-    buttonLabel: "Lees Tycho's verhaal",
+    buttonLabel: "Tycho's verhaal",
     deck: "Over humor, levenslust, moed en een korte aanwezigheid die een lang spoor trekt.",
     kicker: "Over Tycho",
     title: "Tycho Reijnders",
@@ -90,6 +99,11 @@ const familyStories = {
       {
         type: "quote",
         text: "Tycho Reijnders werd niet oud. Maar hij werd wel groot."
+      },
+      {
+        type: "visual",
+        image: "/story-visuals/tycho-legacy-motion.png",
+        imageAlt: "Een warme tafel met koptelefoon, fietssleutelhanger, kaars en herinneringsobjecten"
       },
       {
         text: "Hij was jong. Veel te jong. Vierentwintig jaar. Een leeftijd waarop dromen normaal gesproken nog alle kanten op schieten. Studeren, reizen, vrienden, liefde, toekomstplannen, fouten maken, opnieuw beginnen. Tycho had dat allemaal nog moeten kunnen doen."
@@ -162,7 +176,7 @@ export function FamilyStoryPopout({ storyKey }: { storyKey: keyof typeof familyS
       <button className="host-story-trigger" type="button" onClick={() => setIsOpen(true)}>
         {story.buttonLabel}
       </button>
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div className="story-popout-layer" role="dialog" aria-modal="true" aria-labelledby={titleId}>
           <button className="story-popout-backdrop" type="button" aria-label="Sluit verhaal" onClick={() => setIsOpen(false)} />
           <article className="story-popout-panel">
@@ -194,6 +208,14 @@ export function FamilyStoryPopout({ storyKey }: { storyKey: keyof typeof familyS
                   );
                 }
 
+                if (block.type === "visual" && block.image && block.imageAlt) {
+                  return (
+                    <figure className="story-popout-visual" key={`${block.image}-${index}`}>
+                      <Image src={block.image} alt={block.imageAlt} width={1280} height={720} sizes="(max-width: 760px) calc(100vw - 48px), 720px" />
+                    </figure>
+                  );
+                }
+
                 return (
                   <p className={block.type === "intro" || block.type === "note" ? "story-popout-intro" : undefined} key={`${block.text}-${index}`}>
                     {block.text}
@@ -202,7 +224,8 @@ export function FamilyStoryPopout({ storyKey }: { storyKey: keyof typeof familyS
               })}
             </div>
           </article>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

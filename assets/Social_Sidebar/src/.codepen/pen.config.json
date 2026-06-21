@@ -1,0 +1,22 @@
+{
+  "blocks": {
+    "classic-1": {
+      "createdAt": "2026-06-21T15:38:25.783118351Z",
+      "disabled": false,
+      "name": "classic-1",
+      "version": "latest"
+    },
+    "fingerprint-1": {
+      "createdAt": "2026-06-21T15:38:25.783118351Z",
+      "disabled": false,
+      "name": "fingerprint-1",
+      "version": "latest"
+    },
+    "validate-1": {
+      "createdAt": "2026-06-21T15:38:25.783118351Z",
+      "disabled": false,
+      "name": "validate-1",
+      "version": "latest"
+    }
+  }
+}

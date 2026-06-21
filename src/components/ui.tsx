@@ -67,12 +67,12 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
 
   return (
     <footer className="footer">
-      <div>
+      <div className="footer-brand">
         <Image src={site.logo} alt="" width={76} height={76} />
         <h2>{site.name}</h2>
         <p className="slogan-text">{site.tagline}</p>
       </div>
-      <div className="footer-links">
+      <nav className="footer-links" aria-label="Footer navigatie">
         {navigation.map((item) => (
           <Link key={item.href} href={item.href}>
             {item.label}
@@ -82,7 +82,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
         <Link href="/privacy">Privacyverklaring</Link>
         <Link href="/communityrichtlijnen">Communityrichtlijnen</Link>
         <Link href="/cookies">Cookieverklaring</Link>
-      </div>
+      </nav>
       <div className="footer-contact">
         <a className="quiet-link" href={`mailto:${site.email}`}>
           <Mail size={18} aria-hidden /> {site.email}

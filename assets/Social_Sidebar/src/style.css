@@ -1,0 +1,393 @@
+/* STUK VERDRIET SOCIAL SIDEBAR */
+/* Geen body styling. Geen pagina-achtergrond. Alleen deze component. */
+
+.sv-social-sidebar,
+.sv-social-sidebar *,
+.sv-social-sidebar *::before,
+.sv-social-sidebar *::after {
+  box-sizing: border-box;
+}
+
+.sv-social-sidebar {
+  --sv-cream: #f7f4ef;
+  --sv-sand: #e7dfd2;
+  --sv-warm-white: #fffaf4;
+  --sv-sage: #8fa48f;
+  --sv-sage-dark: #536b5a;
+  --sv-earth: #a6512e;
+  --sv-terracotta: #b96a4f;
+  --sv-brown: #4a3824;
+  --sv-shadow: rgba(74, 56, 36, 0.18);
+
+  position: fixed;
+  left: 0;
+  top: 50%;
+  z-index: 9999;
+
+  width: 72px;
+  padding: 12px 9px;
+  gap: 9px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  transform: translate(-54px, -50%);
+
+  border-radius: 0 26px 26px 0;
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 250, 244, 0.97),
+    rgba(231, 223, 210, 0.94)
+  );
+
+  border-top: 1px solid rgba(255, 250, 244, 0.95);
+  border-right: 1px solid rgba(166, 81, 46, 0.2);
+  border-bottom: 1px solid rgba(74, 56, 36, 0.1);
+
+  box-shadow: 0 18px 38px var(--sv-shadow), 0 4px 12px rgba(74, 56, 36, 0.1),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  transition: transform 0.68s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.68s cubic-bezier(0.19, 1, 0.22, 1),
+    background 0.68s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.sv-social-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: -1;
+
+  border-radius: 0 21px 21px 0;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.46),
+    rgba(255, 255, 255, 0.12)
+  );
+
+  pointer-events: none;
+}
+
+.sv-social-sidebar::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 18px;
+  bottom: 18px;
+
+  width: 2px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(166, 81, 46, 0.32),
+    rgba(143, 164, 143, 0.36),
+    transparent
+  );
+
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.sv-social-sidebar:hover,
+.sv-social-sidebar:focus-within {
+  transform: translate(0, -50%);
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 250, 244, 0.99),
+    rgba(231, 223, 210, 0.97)
+  );
+
+  box-shadow: 0 24px 48px rgba(74, 56, 36, 0.22),
+    0 8px 18px rgba(74, 56, 36, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.sv-social-tab {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+
+  width: 9px;
+  height: 46px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  transform: translateY(-50%);
+  pointer-events: none;
+
+  opacity: 1;
+  transition: opacity 0.38s ease, transform 0.38s ease;
+}
+
+.sv-social-tab span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+
+  background: rgba(83, 107, 90, 0.72);
+  box-shadow: 0 1px 2px rgba(74, 56, 36, 0.14);
+}
+
+.sv-social-sidebar:hover .sv-social-tab,
+.sv-social-sidebar:focus-within .sv-social-tab {
+  opacity: 0;
+  transform: translate(8px, -50%);
+}
+
+.sv-social-link {
+  width: 52px;
+  height: 52px;
+
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 17px;
+
+  text-decoration: none;
+  color: var(--sv-sage-dark);
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 250, 244, 0.98),
+    rgba(231, 223, 210, 0.92)
+  );
+
+  border: 1px solid rgba(74, 56, 36, 0.1);
+
+  box-shadow: 0 7px 16px rgba(74, 56, 36, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+
+  opacity: 0.96;
+
+  transform: translateX(-7px) scale(0.96);
+
+  transition: transform 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    color 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    background 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    border-color 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    opacity 0.48s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.sv-social-sidebar:hover .sv-social-link,
+.sv-social-sidebar:focus-within .sv-social-link {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+}
+
+.sv-social-sidebar:hover .sv-social-link:nth-of-type(1),
+.sv-social-sidebar:focus-within .sv-social-link:nth-of-type(1) {
+  transition-delay: 0.03s;
+}
+
+.sv-social-sidebar:hover .sv-social-link:nth-of-type(2),
+.sv-social-sidebar:focus-within .sv-social-link:nth-of-type(2) {
+  transition-delay: 0.07s;
+}
+
+.sv-social-sidebar:hover .sv-social-link:nth-of-type(3),
+.sv-social-sidebar:focus-within .sv-social-link:nth-of-type(3) {
+  transition-delay: 0.11s;
+}
+
+.sv-social-sidebar:hover .sv-social-link:nth-of-type(4),
+.sv-social-sidebar:focus-within .sv-social-link:nth-of-type(4) {
+  transition-delay: 0.15s;
+}
+
+.sv-social-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: radial-gradient(
+    circle at 28% 18%,
+    rgba(255, 255, 255, 0.72),
+    transparent 36%
+  );
+
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.sv-social-link::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+
+  height: 1px;
+  border-radius: 999px;
+
+  background: rgba(166, 81, 46, 0.16);
+  opacity: 0;
+
+  transform: scaleX(0.4);
+  transition: opacity 0.38s ease, transform 0.38s ease;
+}
+
+.sv-social-link:hover,
+.sv-social-link:focus-visible {
+  transform: translateX(5px) scale(1.055);
+
+  color: var(--sv-hover-color);
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 250, 244, 1),
+    var(--sv-hover-bg)
+  );
+
+  border-color: var(--sv-hover-border);
+
+  box-shadow: 0 12px 24px rgba(74, 56, 36, 0.18),
+    0 3px 8px rgba(74, 56, 36, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.sv-social-link:hover::after,
+.sv-social-link:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.sv-social-link:focus-visible {
+  outline: 2px solid rgba(166, 81, 46, 0.38);
+  outline-offset: 3px;
+}
+
+.sv-social-link:active {
+  transform: translateX(3px) scale(0.97);
+  transition-duration: 0.14s;
+}
+
+.sv-social-icon {
+  width: 27px;
+  height: 27px;
+
+  display: block;
+  position: relative;
+  z-index: 2;
+
+  fill: currentColor;
+
+  filter: drop-shadow(0 1px 2px rgba(74, 56, 36, 0.18));
+
+  transition: transform 0.48s cubic-bezier(0.19, 1, 0.22, 1),
+    filter 0.48s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.sv-social-icon path,
+.sv-social-icon circle,
+.sv-social-icon rect {
+  fill: currentColor;
+}
+
+.sv-social-link:hover .sv-social-icon,
+.sv-social-link:focus-visible .sv-social-icon {
+  animation: sv-soft-pop 0.54s cubic-bezier(0.19, 1, 0.22, 1) both;
+  filter: drop-shadow(0 3px 5px rgba(74, 56, 36, 0.2));
+}
+
+/* Platformen vertaald naar Stuk Verdriet-huisstijl, dus niet schreeuwerig neon */
+.sv-instagram {
+  --sv-hover-color: #a6512e;
+  --sv-hover-bg: rgba(185, 106, 79, 0.18);
+  --sv-hover-border: rgba(166, 81, 46, 0.28);
+}
+
+.sv-tiktok {
+  --sv-hover-color: #314238;
+  --sv-hover-bg: rgba(143, 164, 143, 0.22);
+  --sv-hover-border: rgba(83, 107, 90, 0.28);
+}
+
+.sv-spotify {
+  --sv-hover-color: #536b5a;
+  --sv-hover-bg: rgba(143, 164, 143, 0.24);
+  --sv-hover-border: rgba(83, 107, 90, 0.28);
+}
+
+.sv-gofundme {
+  --sv-hover-color: #4a3824;
+  --sv-hover-bg: rgba(231, 223, 210, 0.92);
+  --sv-hover-border: rgba(74, 56, 36, 0.2);
+}
+
+@keyframes sv-soft-pop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  42% {
+    transform: translateY(-4px) scale(1.08);
+  }
+
+  72% {
+    transform: translateY(1px) scale(0.98);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .sv-social-sidebar {
+    width: 66px;
+    padding: 10px 7px;
+    gap: 8px;
+    transform: translate(-50px, -50%);
+    border-radius: 0 23px 23px 0;
+  }
+
+  .sv-social-link {
+    width: 49px;
+    height: 49px;
+    border-radius: 16px;
+  }
+
+  .sv-social-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-social-sidebar,
+  .sv-social-link,
+  .sv-social-icon,
+  .sv-social-tab {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .sv-social-sidebar,
+  .sv-social-sidebar:hover,
+  .sv-social-sidebar:focus-within {
+    transform: translate(0, -50%);
+  }
+
+  .sv-social-link,
+  .sv-social-link:hover,
+  .sv-social-link:focus-visible {
+    transform: none;
+  }
+}
