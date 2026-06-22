@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Instagram } from "lucide-react";
 import { Onepager } from "@/app/onepager";
 import { site } from "@/lib/site";
 import { siteMode } from "@/lib/site-mode";
@@ -23,19 +22,6 @@ type HomePageProps = {
   searchParams?: Promise<{ signup?: string }>;
 };
 
-const comingSoonSocials = {
-  instagram: "https://www.instagram.com/stukverdrietdepodcast/",
-  tiktok: "https://www.tiktok.com/@stukverdrietdepodcast/"
-};
-
-function TikTokIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-      <path d="M16.6 5.82c1.18.84 2.36 1.31 3.72 1.41v3.08a8.76 8.76 0 0 1-3.7-.82v5.67c0 3.18-2.58 5.76-5.76 5.76a5.76 5.76 0 0 1-2.2-11.08 5.8 5.8 0 0 1 2.2-.43c.33 0 .65.03.96.09v3.22a2.58 2.58 0 1 0 1.95 2.5V3.08h2.83v2.74Z" />
-    </svg>
-  );
-}
-
 function ComingSoonPage() {
   return (
     <section className="coming-soon-page" aria-labelledby="coming-soon-title">
@@ -53,19 +39,9 @@ function ComingSoonPage() {
         <h1 id="coming-soon-title">We zijn bijna live</h1>
         <p className="coming-soon-lead">
           Hier ontstaat een plek waar rouw niet weggestopt hoeft te worden. Met eerlijke gesprekken, herkenbare verhalen
-          en ruimte voor gemis, liefde en verder leven. Voor iedereen die iets of iemand mist — en wil voelen: ik sta hier
+          en ruimte voor gemis, liefde en verder leven. Voor iedereen die iets of iemand mist - en wil voelen: ik sta hier
           niet alleen in. Binnenkort meer.
         </p>
-        <div className="coming-soon-actions">
-          <a className="coming-soon-primary coming-soon-social-instagram" href={comingSoonSocials.instagram} target="_blank" rel="noopener noreferrer">
-            <Instagram size={18} aria-hidden />
-            Instagram
-          </a>
-          <a className="coming-soon-primary coming-soon-social-tiktok" href={comingSoonSocials.tiktok} target="_blank" rel="noopener noreferrer">
-            <TikTokIcon size={18} />
-            TikTok
-          </a>
-        </div>
       </div>
       <p className="coming-soon-credit">
         Gebouwd door MNRV. <span>&quot;Veel projecten bouw ik met m&apos;n hoofd, deze bouw ik met m&apos;n hart&quot;</span>
