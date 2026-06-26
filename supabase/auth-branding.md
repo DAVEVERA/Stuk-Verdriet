@@ -7,8 +7,8 @@ Gebruik deze waarden in Supabase Auth en Google Cloud OAuth, zodat bezoekers nie
 - Project name: `Stuk Verdriet`
 - Site URL: productie-URL van de website
 - Redirect URLs:
-  - `https://stukverdriet.nl/auth/callback`
-  - `https://joustukverdrietwdomein.nl/redirect`
+  - `https://stukverdriet.com/auth/callback`
+  - `https://stukverdriet.com/redirect`
   - `http://localhost:3000/auth/callback`
   - `http://localhost:3000/redirect`
 - Email sender name: `Stuk Verdriet`
