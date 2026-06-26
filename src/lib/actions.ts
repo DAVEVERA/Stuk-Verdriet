@@ -68,9 +68,9 @@ function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community"
 async function getRequestOrigin() {
   const headerStore = await headers();
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  const proto = headerStore.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
   if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
 }
 
 function normalizePostType(value: FormDataEntryValue | null) {

@@ -779,7 +779,7 @@ textarea {
 .hero-slide-image-butterfly {
   filter: saturate(0.88) contrast(1.04) brightness(0.9);
   object-position: 72% center;
-  transform: translateX(-10%) scaleX(-1) scale(1.14);
+  transform: translateX(-10%) scaleX(-1) scale(1.24);
   transform-origin: center center;
 }
 
@@ -4711,6 +4711,12 @@ textarea {
   .sidebar-overlay,
   .mobile-sidebar {
     display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-state-butterfly .hero-copy {
+    top: 40%;
   }
 }
 

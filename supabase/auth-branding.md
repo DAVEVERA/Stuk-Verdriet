@@ -7,12 +7,12 @@ Gebruik deze waarden in Supabase Auth en Google Cloud OAuth, zodat bezoekers nie
 - Project name: `Stuk Verdriet`
 - Site URL: productie-URL van de website
 - Redirect URLs:
-  - `https://jouwdomein.nl/auth/callback`
-  - `https://jouwdomein.nl/redirect`
+  - `https://stukverdriet.nl/auth/callback`
+  - `https://joustukverdrietwdomein.nl/redirect`
   - `http://localhost:3000/auth/callback`
   - `http://localhost:3000/redirect`
 - Email sender name: `Stuk Verdriet`
-- Email sender address: bijvoorbeeld `community@stukverdriet.nl`
+- Email sender address: bijvoorbeeld `@stukverdriet.nl`
 - Magic link template: `supabase/email-templates/magic-link.html`
 - Password recovery template: `supabase/email-templates/reset-password.html`
 
