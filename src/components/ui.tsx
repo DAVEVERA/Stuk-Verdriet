@@ -32,6 +32,11 @@ import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, Pod
 const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
 const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
 const podcastTikTokProfileUrl = "https://www.tiktok.com/@stuk.verdriet";
+const tychoSupportUrl = "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho";
+const gofundmeGoalBarUrl =
+  "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-goal-bar?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3";
+const gofundmeQrCodeUrl =
+  "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-qr-code?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3";
 
 function TikTokIcon({ size = 18 }: { size?: number }) {
   return (
@@ -119,7 +124,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
 }
 
 export function TychoSupportSection() {
-  const href = "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho";
+  const href = tychoSupportUrl;
 
   return (
     <section className="tycho-support-section" aria-labelledby="tycho-support-title">
@@ -139,6 +144,36 @@ export function TychoSupportSection() {
               <Image src="/qr/tycho-radboud.png" alt="QR-code naar de inzamelingsactie van Tycho" width={180} height={180} />
             </a>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function GoFundMeSupportSection() {
+  return (
+    <section className="gofundme-support-section" aria-labelledby="gofundme-support-title">
+      <div className="gofundme-support-inner">
+        <div className="section-heading">
+          <p className="eyebrow">Samen dragen we mee</p>
+          <h2 id="gofundme-support-title">Steun het gezin van Tycho</h2>
+        </div>
+        <div className="gofundme-widget-card gofundme-widget-card--goal">
+          <div className="gofundme-widget-goal-frame">
+            <iframe
+              src={gofundmeGoalBarUrl}
+              title="Doelbalk inzamelingsactie"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <iframe
+            className="gofundme-widget-qr-inline"
+            src={gofundmeQrCodeUrl}
+            title="QR-code om te doneren"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </div>
     </section>
@@ -699,7 +734,14 @@ export function HostCard({ host }: { host: HostProfile }) {
             <p className="eyebrow">{familyCard.relation}</p>
             <h4>{familyCard.name}</h4>
             <p>{familyCard.deck}</p>
-            <FamilyStoryPopout storyKey={familyCard.storyKey} />
+            <div className="host-family-card-actions">
+              <FamilyStoryPopout storyKey={familyCard.storyKey} />
+              {familyCard.storyKey === "tycho" ? (
+                <a className="button" href={tychoSupportUrl} target="_blank" rel="noopener noreferrer">
+                  Steun Tycho&apos;s inzamelingsactie
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

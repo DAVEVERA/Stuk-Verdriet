@@ -12,7 +12,7 @@ Gebruik deze waarden in Supabase Auth en Google Cloud OAuth, zodat bezoekers nie
   - `http://localhost:3000/auth/callback`
   - `http://localhost:3000/redirect`
 - Email sender name: `Stuk Verdriet`
-- Email sender address: bijvoorbeeld `@stukverdriet.nl`
+- Email sender address: bijvoorbeeld `@stukverdriet.com`
 - Magic link template: `supabase/email-templates/magic-link.html`
 - Password recovery template: `supabase/email-templates/reset-password.html`
 
