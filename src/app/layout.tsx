@@ -67,6 +67,9 @@ export const metadata: Metadata = {
     images: ["/brand/sverdriet_logo.webp"],
     locale: "nl_NL",
     type: "website"
+  },
+  verification: {
+    google: "OFa22mraECpgkeSyodVbzq9wLtrXCJAXhZqthNt0Xps"
   }
 };
 
