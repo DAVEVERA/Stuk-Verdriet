@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import Script from "next/script";
 import type { ReactNode } from "react";
 import {
   Calendar,
@@ -20,6 +19,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
+import { ConsentScript } from "@/components/ConsentScript";
 import { DanielaStoryPopout } from "@/components/DanielaStoryPopout";
 import { FamilyStoryPopout } from "@/components/FamilyStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
@@ -123,41 +123,10 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
   );
 }
 
-export function TychoSupportSection() {
-  const href = tychoSupportUrl;
-
-  return (
-    <section className="tycho-support-section" aria-labelledby="tycho-support-title">
-      <div className="tycho-support-inner">
-        <a className="tycho-support-image" href={href} target="_blank" rel="noopener noreferrer" aria-label="Actie voor Tycho openen">
-          <Image src="/footer/tycho-section.jpg" alt="Portret van Tycho bij zijn inzamelingsactie" width={720} height={540} />
-        </a>
-        <div className="tycho-support-copy">
-          <p className="eyebrow">Radboud Oncologie Fonds</p>
-          <h2 id="tycho-support-title">Actie voor Tycho</h2>
-          <p>Steun Tycho&apos;s inzamelingsactie voor onderzoek naar darmkanker.</p>
-          <div className="tycho-support-actions">
-            <a className="button" href={href} target="_blank" rel="noopener noreferrer">
-              Steun de actie
-            </a>
-            <a className="tycho-support-qr" href={href} target="_blank" rel="noopener noreferrer" aria-label="Open de inzamelingsactie via QR-link">
-              <Image src="/qr/tycho-radboud.png" alt="QR-code naar de inzamelingsactie van Tycho" width={180} height={180} />
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function GoFundMeSupportSection() {
   return (
-    <section className="gofundme-support-section" aria-labelledby="gofundme-support-title">
+    <section className="gofundme-support-section" aria-label="Steun het gezin van Tycho">
       <div className="gofundme-support-inner">
-        <div className="section-heading">
-          <p className="eyebrow">Samen dragen we mee</p>
-          <h2 id="gofundme-support-title">Steun het gezin van Tycho</h2>
-        </div>
         <div className="gofundme-widget-card gofundme-widget-card--goal">
           <div className="gofundme-widget-goal-frame">
             <iframe
@@ -212,6 +181,7 @@ export function EpisodeSignupSection({ status }: { status?: string | null }) {
   const feedback: Record<string, string> = {
     error: "Aanmelden lukte niet. Probeer het nog eens.",
     invalid: "Vul je naam en een geldig e-mailadres in.",
+    "rate-limited": "Er zijn te veel aanmeldpogingen. Probeer het later opnieuw.",
     storage: "Aanmelden is nog niet gekoppeld aan Supabase.",
     subscribed: "Je staat op de lijst. We laten je weten wanneer aflevering 1 klaarstaat."
   };
@@ -343,8 +313,8 @@ export function SocialEmbedSection() {
           </article>
         </div>
       </div>
-      <Script id="instagram-embed" src="https://www.instagram.com/embed.js" strategy="lazyOnload" />
-      <Script id="tiktok-embed" src="https://www.tiktok.com/embed.js" strategy="lazyOnload" />
+      <ConsentScript id="instagram-embed" src="https://www.instagram.com/embed.js" />
+      <ConsentScript id="tiktok-embed" src="https://www.tiktok.com/embed.js" />
     </section>
   );
 }

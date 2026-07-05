@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { AdminDashboard } from "@/components/AdminDashboard";
 import { PageIntro } from "@/components/ui";
+import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";

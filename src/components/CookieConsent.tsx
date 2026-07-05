@@ -1,48 +1,23 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { Cookie, Settings, ShieldCheck, X } from "lucide-react";
+import { saveCookieConsent, useCookieConsent, type ConsentChoice } from "@/hooks/useCookieConsent";
 
 type CookieConsentProps = {
   gaId?: string;
 };
 
-type ConsentChoice = "necessary" | "all";
-type ConsentSnapshot = ConsentChoice | "unset" | "pending";
-
-const storageKey = "stukverdriet-cookie-consent";
-const consentChangeEvent = "stukverdriet-cookie-consent-change";
-
-function getConsentSnapshot(): ConsentSnapshot {
-  const stored = window.localStorage.getItem(storageKey);
-  if (stored === "necessary" || stored === "all") return stored;
-  return "unset";
-}
-
-function getServerConsentSnapshot(): ConsentSnapshot {
-  return "pending";
-}
-
-function subscribeToConsentChanges(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener(consentChangeEvent, callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener(consentChangeEvent, callback);
-  };
-}
-
 export function CookieConsent({ gaId }: CookieConsentProps) {
-  const storedChoice = useSyncExternalStore(subscribeToConsentChanges, getConsentSnapshot, getServerConsentSnapshot);
+  const storedChoice = useCookieConsent();
   const [showDetails, setShowDetails] = useState(false);
   const choice = storedChoice === "necessary" || storedChoice === "all" ? storedChoice : null;
   const isReady = storedChoice !== "pending";
 
   function saveChoice(nextChoice: ConsentChoice) {
-    window.localStorage.setItem(storageKey, nextChoice);
-    window.dispatchEvent(new Event(consentChangeEvent));
+    saveCookieConsent(nextChoice);
   }
 
   const canLoadAnalytics = choice === "all" && Boolean(gaId);

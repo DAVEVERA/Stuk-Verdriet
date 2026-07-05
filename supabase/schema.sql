@@ -168,27 +168,6 @@ create table if not exists community_reports (
   created_at timestamptz not null default now()
 );
 
-create table if not exists email_outbox (
-  id uuid primary key default gen_random_uuid(),
-  template text not null check (
-    template in (
-      'community_post_submitted',
-      'community_reply_submitted',
-      'community_post_reply_received',
-      'community_post_support_received'
-    )
-  ),
-  recipient_email text not null,
-  recipient_user_id uuid references auth.users(id) on delete set null,
-  subject text not null,
-  payload jsonb not null default '{}',
-  status text not null default 'queued' check (status in ('queued', 'sent', 'failed')),
-  provider_message_id text,
-  error_message text,
-  created_at timestamptz not null default now(),
-  sent_at timestamptz
-);
-
 create table if not exists faqs (
   id uuid primary key default gen_random_uuid(),
   question text not null,
@@ -220,14 +199,22 @@ create table if not exists site_settings (
 );
 
 alter table community_posts enable row level security;
+alter table podcast_seasons enable row level security;
+alter table podcast_episodes enable row level security;
+alter table host_profiles enable row level security;
 alter table community_categories enable row level security;
 alter table community_replies enable row level security;
 alter table community_supports enable row level security;
 alter table community_reports enable row level security;
 alter table episode_signups enable row level security;
-alter table email_outbox enable row level security;
+alter table faqs enable row level security;
+alter table sponsor_logos enable row level security;
+alter table site_settings enable row level security;
 
 grant usage on schema public to anon, authenticated;
+grant select on podcast_seasons to anon, authenticated;
+grant select on podcast_episodes to anon, authenticated;
+grant select on host_profiles to anon, authenticated;
 grant select on community_categories to anon, authenticated;
 grant select on community_posts to anon, authenticated;
 grant insert on community_posts to authenticated;
@@ -236,18 +223,31 @@ grant insert on community_replies to authenticated;
 grant select on community_supports to authenticated;
 grant insert on community_supports to authenticated;
 grant insert on community_reports to authenticated;
+grant insert on episode_signups to anon, authenticated;
+grant select on faqs to anon, authenticated;
+grant select on sponsor_logos to anon, authenticated;
+grant select on site_settings to anon, authenticated;
+
+drop policy if exists "published seasons are public" on podcast_seasons;
+create policy "published seasons are public" on podcast_seasons for select to anon, authenticated using (status = 'published');
+
+drop policy if exists "published episodes are public" on podcast_episodes;
+create policy "published episodes are public" on podcast_episodes for select to anon, authenticated using (status = 'published');
+
+drop policy if exists "published hosts are public" on host_profiles;
+create policy "published hosts are public" on host_profiles for select to anon, authenticated using (status = 'published');
 
 drop policy if exists "community categories are public" on community_categories;
-create policy "community categories are public" on community_categories for select using (true);
+create policy "community categories are public" on community_categories for select to anon, authenticated using (true);
 
 drop policy if exists "approved posts are public" on community_posts;
-create policy "approved posts are public" on community_posts for select using (status = 'approved');
+create policy "approved posts are public" on community_posts for select to anon, authenticated using (status = 'approved');
 
 drop policy if exists "authenticated users create pending posts" on community_posts;
 create policy "authenticated users create pending posts" on community_posts for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
 
 drop policy if exists "approved replies are public" on community_replies;
-create policy "approved replies are public" on community_replies for select using (status = 'approved');
+create policy "approved replies are public" on community_replies for select to anon, authenticated using (status = 'approved');
 
 drop policy if exists "authenticated users create pending replies" on community_replies;
 create policy "authenticated users create pending replies" on community_replies for insert to authenticated with check (status = 'pending' and auth.uid() = user_id);
@@ -261,12 +261,29 @@ create policy "authenticated users see own supports" on community_supports for s
 drop policy if exists "authenticated users report content" on community_reports;
 create policy "authenticated users report content" on community_reports for insert to authenticated with check (auth.uid() = user_id);
 
+drop policy if exists "public users can join episode signup list" on episode_signups;
+create policy "public users can join episode signup list" on episode_signups for insert to anon, authenticated with check (true);
+
+drop policy if exists "published faqs are public" on faqs;
+create policy "published faqs are public" on faqs for select to anon, authenticated using (status = 'published');
+
+drop policy if exists "published sponsor logos are public" on sponsor_logos;
+create policy "published sponsor logos are public" on sponsor_logos for select to anon, authenticated using (status = 'published');
+
+drop policy if exists "site settings are public" on site_settings;
+create policy "site settings are public" on site_settings for select to anon, authenticated using (id = 'main');
+
 create or replace function refresh_post_counts(target_post_id uuid)
 returns void
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
+  if target_post_id is null then
+    return;
+  end if;
+
   update community_posts
   set
     reply_count = (select count(*) from community_replies where post_id = target_post_id and status = 'approved'),
@@ -276,9 +293,12 @@ begin
 end;
 $$;
 
+revoke execute on function refresh_post_counts(uuid) from public, anon, authenticated;
+
 create or replace function refresh_reply_count_trigger()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   perform refresh_post_counts(coalesce(new.post_id, old.post_id));
@@ -289,6 +309,7 @@ $$;
 create or replace function refresh_support_count_trigger()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   perform refresh_post_counts(coalesce(new.post_id, old.post_id));

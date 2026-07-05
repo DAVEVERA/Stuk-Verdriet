@@ -36,6 +36,23 @@ const slogan = localFont({
   display: "swap"
 });
 
+const figtree = localFont({
+  src: [
+    {
+      path: "../../assets/fonts/figtree/Figtree-VariableFont_wght.ttf",
+      style: "normal",
+      weight: "300 900"
+    },
+    {
+      path: "../../assets/fonts/figtree/Figtree-Italic-VariableFont_wght.ttf",
+      style: "italic",
+      weight: "300 900"
+    }
+  ],
+  variable: "--font-figtree",
+  display: "swap"
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
@@ -58,7 +75,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
-    <html lang="nl" className={`${jost.variable} ${slogan.variable}`}>
+    <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`}>
       <body>
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />

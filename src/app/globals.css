@@ -1448,7 +1448,6 @@ p {
 }
 
 .story-gradient-flow > .content-band,
-.story-gradient-flow > .tycho-support-section,
 .story-gradient-flow > .aya-support-banner,
 .story-gradient-flow > .community-story-section,
 .story-gradient-flow > .image-band,
@@ -3232,105 +3231,6 @@ textarea {
   padding: 18px;
 }
 
-.tycho-support-section {
-  background: transparent;
-  margin: 0;
-  padding: clamp(28px, 5vw, 58px) max(clamp(18px, 4vw, 56px), calc((100vw - 1240px) / 2 + clamp(18px, 4vw, 56px))) clamp(20px, 4vw, 44px);
-  position: relative;
-  z-index: 2;
-}
-
-.tycho-support-section::before,
-.tycho-support-section::after {
-  content: "";
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  width: 100%;
-  z-index: -1;
-}
-
-.tycho-support-section::before {
-  background: transparent;
-  height: clamp(58px, 8vw, 110px);
-  top: calc(clamp(58px, 8vw, 110px) * -1);
-}
-
-.tycho-support-section::after {
-  background: transparent;
-  bottom: calc(clamp(58px, 8vw, 110px) * -1);
-  height: clamp(58px, 8vw, 110px);
-}
-
-.tycho-support-inner {
-  align-items: stretch;
-  background: rgba(255, 253, 248, 0.16);
-  border: 0;
-  box-shadow: none;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  display: grid;
-  gap: 0;
-  margin: 0 auto;
-  max-width: 1240px;
-}
-
-.tycho-support-image {
-  display: block;
-  min-height: clamp(260px, 42vw, 460px);
-  overflow: hidden;
-  position: relative;
-}
-
-.tycho-support-image img {
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-.tycho-support-copy {
-  align-content: center;
-  display: grid;
-  gap: 14px;
-  padding: clamp(24px, 4vw, 50px);
-}
-
-.tycho-support-copy h2 {
-  font-size: clamp(2rem, 5vw, 4.2rem);
-  max-width: 12ch;
-}
-
-.tycho-support-copy p:not(.eyebrow) {
-  color: var(--eucalyptus);
-  font-size: clamp(1.03rem, 2vw, 1.25rem);
-  max-width: 42ch;
-}
-
-.tycho-support-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 8px;
-}
-
-.tycho-support-qr {
-  align-items: center;
-  background: var(--white);
-  border: 1px solid rgba(66, 86, 69, 0.16);
-  display: inline-flex;
-  height: 118px;
-  justify-content: center;
-  padding: 10px;
-  width: 118px;
-}
-
-.tycho-support-qr img {
-  height: 96px;
-  object-fit: contain;
-  width: 96px;
-}
-
 .gofundme-support-section {
   background: transparent;
   position: relative;
@@ -3341,10 +3241,6 @@ textarea {
 .gofundme-support-inner {
   margin-inline: auto;
   max-width: 1180px;
-}
-
-.gofundme-support-inner .section-heading {
-  margin-bottom: clamp(10px, 2vw, 16px);
 }
 
 .gofundme-widget-card {
@@ -4515,9 +4411,6 @@ textarea {
     width: 68px;
   }
 
-  .tycho-support-inner {
-    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
-  }
 }
 
 @media (max-width: 640px) {

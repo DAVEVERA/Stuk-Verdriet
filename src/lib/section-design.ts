@@ -5,7 +5,6 @@ export const sectionDesignSections: { key: SectionDesignKey; label: string; sele
   { key: "signup", label: "Aanmelden", selector: ".episode-signup-section" },
   { key: "podcast", label: "Podcast", selector: ".podcast-module" },
   { key: "themes", label: "Thema's", selector: ".image-band" },
-  { key: "tycho", label: "Actie voor Tycho", selector: ".tycho-support-section" },
   { key: "community", label: "Community formulier", selector: ".community-story-section" },
   { key: "aya", label: "AYA Fonds", selector: ".aya-support-banner" },
   { key: "hosts", label: "Podcast makers", selector: ".hosts-section" }

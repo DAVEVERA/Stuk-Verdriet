@@ -8,7 +8,7 @@ import {
   fallbackSponsors
 } from "@/lib/fallback-data";
 import { normalizeSectionDesign } from "@/lib/section-design";
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { createSupabasePublicClient } from "@/lib/supabase";
 import type {
   CommunityCategory,
   CommunityPost,
@@ -50,7 +50,7 @@ function normalizeCategory(category: CommunityCategory): CommunityCategory {
 }
 
 async function fromTable<T>(table: string, fallback: T[], query = "status.eq.published") {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return fallback;
   const request = supabase.from(table).select("*");
   if (query) {
@@ -84,7 +84,7 @@ export async function getEpisodeBySlug(slug: string) {
 }
 
 export async function getCommunityCategories(): Promise<CommunityCategory[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return fallbackCategories;
   const { data, error } = await supabase.from("community_categories").select("*").order("display_order");
   if (error || !data) return fallbackCategories;
@@ -101,7 +101,7 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
 }
 
 export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return [];
   const { data, error } = await supabase.from("community_posts").select("*").eq("status", "approved");
   if (error || !data) return [];
@@ -124,7 +124,7 @@ export async function getApprovedCommunityPostBySlug(slug: string) {
 }
 
 export async function getApprovedCommunityReplies(postId: string): Promise<CommunityReply[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return [];
   const { data, error } = await supabase
     .from("community_replies")
@@ -153,7 +153,7 @@ export async function getPublishedSponsors(): Promise<SponsorLogo[]> {
 }
 
 export async function getSocialLinks(): Promise<SocialLinks> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return fallbackSocialLinks;
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links) return fallbackSocialLinks;
@@ -161,7 +161,7 @@ export async function getSocialLinks(): Promise<SocialLinks> {
 }
 
 export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabasePublicClient();
   if (!supabase) return {};
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links || typeof data.social_links !== "object") return {};

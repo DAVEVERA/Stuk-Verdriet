@@ -2,12 +2,12 @@
 
 import { createSign } from "crypto";
 import { readFileSync } from "fs";
+import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { renderCommunityEmail, type CommunityEmailTemplate } from "@/lib/email-templates";
 import { normalizeSectionDesign } from "@/lib/section-design";
-import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
+import { adminEmailList, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
@@ -15,6 +15,17 @@ const communityImageMaxSize = 4 * 1024 * 1024;
 const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const signupRateLimit = new Map<string, { count: number; resetAt: number }>();
+const signupRateLimitWindowMs = 10 * 60 * 1000;
+const signupRateLimitMax = 5;
+
+type EpisodeSignupPayload = {
+  name: string;
+  email: string;
+  source: string;
+  status: "subscribed";
+  updated_at: string;
+};
 
 function slugify(value: string) {
   return value
@@ -73,6 +84,76 @@ async function getRequestOrigin() {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
 }
 
+async function assertSameOriginRequest() {
+  const headerStore = await headers();
+  const origin = headerStore.get("origin");
+  if (!origin) return true;
+  return origin === (await getRequestOrigin());
+}
+
+async function requestIpAddress() {
+  const headerStore = await headers();
+  return (
+    headerStore
+      .get("x-forwarded-for")
+      ?.split(",")
+      .map((part) => part.trim())
+      .find(Boolean) ??
+    headerStore.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function consumeSignupRateLimit(key: string) {
+  const now = Date.now();
+  const current = signupRateLimit.get(key);
+  if (!current || current.resetAt <= now) {
+    signupRateLimit.set(key, { count: 1, resetAt: now + signupRateLimitWindowMs });
+    return true;
+  }
+
+  if (current.count >= signupRateLimitMax) return false;
+  current.count += 1;
+  return true;
+}
+
+async function queueLocalEpisodeSignup(payload: EpisodeSignupPayload, reason: string) {
+  await mkdir("output", { recursive: true });
+  await appendFile(
+    "output/episode-signups.local.jsonl",
+    `${JSON.stringify({
+      ...payload,
+      queued_at: new Date().toISOString(),
+      reason
+    })}\n`,
+    "utf8"
+  );
+}
+
+async function saveEpisodeSignup(payload: EpisodeSignupPayload) {
+  const publicClient = createSupabasePublicClient();
+  if (!publicClient) return { ok: false, reason: "missing-supabase" };
+
+  const { error } = await publicClient.from("episode_signups").insert(payload);
+  if (!error || error.code === "23505") return { ok: true, reason: "public" };
+
+  console.error("[signup] public insert failed", { code: error.code, message: error.message });
+
+  const admin = createSupabaseAdminClient();
+  if (admin) {
+    const { error: adminError } = await admin.from("episode_signups").upsert(payload, { onConflict: "email" });
+    if (!adminError) return { ok: true, reason: "admin-fallback" };
+    console.error("[signup] admin fallback failed", { code: adminError.code, message: adminError.message });
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    await queueLocalEpisodeSignup(payload, error.code ?? "public-insert-failed");
+    return { ok: true, reason: "local-dev-queue" };
+  }
+
+  return { ok: false, reason: error.code ?? "public-insert-failed" };
+}
+
 function normalizePostType(value: FormDataEntryValue | null) {
   const postType = String(value ?? "story").trim();
   return ["story", "question", "tip", "link"].includes(postType) ? postType : "story";
@@ -87,38 +168,6 @@ function optionalUrl(value: FormDataEntryValue | null) {
   } catch {
     return null;
   }
-}
-
-async function queueCommunityEmail(
-  template: CommunityEmailTemplate,
-  recipientEmail: string | null | undefined,
-  payload: {
-    actionUrl?: string;
-    actorName?: string | null;
-    postTitle?: string | null;
-    recipientName?: string | null;
-    recipientUserId?: string | null;
-  }
-) {
-  if (!recipientEmail) return;
-  const admin = createSupabaseAdminClient();
-  if (!admin) return;
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const rendered = renderCommunityEmail(template, { ...payload, siteUrl });
-  await admin.from("email_outbox").insert({
-    template,
-    recipient_email: recipientEmail,
-    recipient_user_id: payload.recipientUserId ?? null,
-    subject: rendered.subject,
-    payload: {
-      ...payload,
-      html: rendered.html,
-      preheader: rendered.preheader,
-      subject: rendered.subject,
-      text: rendered.text
-    }
-  });
 }
 
 function isAllowedCommunityImage(file: File) {
@@ -387,22 +436,21 @@ export async function subscribeEpisodeSignup(formData: FormData) {
   const source = String(formData.get("source") ?? "homepage_episode_1").trim() || "homepage_episode_1";
 
   if (!name || !emailPattern.test(email)) redirect("/?signup=invalid#aanmelden");
+  if (!(await assertSameOriginRequest())) redirect("/?signup=invalid#aanmelden");
+  const ip = await requestIpAddress();
+  if (!consumeSignupRateLimit(`signup:ip:${ip}`) || !consumeSignupRateLimit(`signup:email:${email}`)) {
+    redirect("/?signup=rate-limited#aanmelden");
+  }
 
-  const supabase = createSupabaseAdminClient();
-  if (!supabase) redirect("/?signup=storage#aanmelden");
+  const result = await saveEpisodeSignup({
+    name,
+    email,
+    source,
+    status: "subscribed",
+    updated_at: new Date().toISOString()
+  });
 
-  const { error } = await supabase.from("episode_signups").upsert(
-    {
-      name,
-      email,
-      source,
-      status: "subscribed",
-      updated_at: new Date().toISOString()
-    },
-    { onConflict: "email" }
-  );
-
-  if (error) redirect("/?signup=error#aanmelden");
+  if (!result.ok) redirect("/?signup=error#aanmelden");
 
   revalidatePath("/");
   redirect("/?signup=subscribed#aanmelden");
@@ -461,13 +509,6 @@ export async function createCommunityPost(formData: FormData) {
     status: "pending"
   });
 
-  await queueCommunityEmail("community_post_submitted", user.email, {
-    actionUrl: "/community",
-    postTitle: title,
-    recipientName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
-    recipientUserId: user.id
-  });
-
   revalidatePath("/");
   revalidatePath("/community");
   revalidatePath("/bijsluiter");
@@ -487,11 +528,6 @@ export async function createCommunityReply(postId: string, formData: FormData) {
   const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
   if (!body) return;
 
-  const admin = createSupabaseAdminClient();
-  const { data: post } = admin
-    ? await admin.from("community_posts").select("title,slug,user_id").eq("id", postId).single()
-    : { data: null };
-
   await supabase.from("community_replies").insert({
     post_id: postId,
     user_id: user.id,
@@ -500,27 +536,6 @@ export async function createCommunityReply(postId: string, formData: FormData) {
     body,
     status: "pending"
   });
-
-  const actionUrl = post?.slug ? `/community/${post.slug}` : "/community";
-  const actorName = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null;
-
-  await queueCommunityEmail("community_reply_submitted", user.email, {
-    actionUrl,
-    postTitle: post?.title ?? null,
-    recipientName: actorName,
-    recipientUserId: user.id
-  });
-
-  if (admin && post?.user_id && post.user_id !== user.id) {
-    const { data: owner } = await admin.auth.admin.getUserById(post.user_id);
-    await queueCommunityEmail("community_post_reply_received", owner.user?.email, {
-      actionUrl,
-      actorName,
-      postTitle: post.title,
-      recipientName: owner.user?.user_metadata?.full_name ?? owner.user?.email?.split("@")[0] ?? null,
-      recipientUserId: post.user_id
-    });
-  }
 
   revalidatePath("/community");
 }
@@ -532,22 +547,7 @@ export async function supportPost(postId: string) {
     data: { user }
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const admin = createSupabaseAdminClient();
-  const { data: post } = admin
-    ? await admin.from("community_posts").select("title,slug,user_id").eq("id", postId).single()
-    : { data: null };
   await supabase.from("community_supports").upsert({ post_id: postId, user_id: user.id }, { onConflict: "post_id,user_id", ignoreDuplicates: true });
-
-  if (admin && post?.user_id && post.user_id !== user.id) {
-    const { data: owner } = await admin.auth.admin.getUserById(post.user_id);
-    await queueCommunityEmail("community_post_support_received", owner.user?.email, {
-      actionUrl: post.slug ? `/community/${post.slug}` : "/community",
-      actorName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
-      postTitle: post.title,
-      recipientName: owner.user?.user_metadata?.full_name ?? owner.user?.email?.split("@")[0] ?? null,
-      recipientUserId: post.user_id
-    });
-  }
 
   revalidatePath("/community");
 }

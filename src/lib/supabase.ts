@@ -13,6 +13,13 @@ export function createSupabaseBrowserClient() {
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
+export function createSupabasePublicClient() {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
+
 export async function createSupabaseServerClient() {
   if (!supabaseUrl || !supabaseAnonKey) return null;
   const cookieStore = await cookies();

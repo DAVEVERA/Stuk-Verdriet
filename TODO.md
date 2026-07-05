@@ -2,16 +2,20 @@
 
 ## Goal
 
-Remove the butterfly layer and visible butterfly imagery from the site.
+Clean, harden, and reorganize the Stuk Verdriet codebase without changing the website design or content.
 
 ## Tasks
 
-- [x] Remove the sitewide butterfly canvas from the root layout
-- [x] Remove butterfly field styling
-- [x] Delete unused butterfly runtime and texture asset
-- [x] Replace the AYA theme butterfly image
-- [x] Remove unused Three.js dependencies
-- [x] Run final verification
+- [x] Inspect current implementation
+- [x] Replace duplicate middleware with the current Next proxy convention
+- [x] Add production security headers
+- [x] Reduce public-page dependence on the Supabase service role
+- [x] Harden signup abuse controls
+- [x] Harden Supabase SQL function privileges
+- [x] Gate third-party embed scripts behind cookie consent
+- [x] Reorganize misplaced or legacy files safely
+- [x] Run verification
+- [x] Final review
 
 ## Completion Marker
 

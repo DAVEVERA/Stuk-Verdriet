@@ -131,7 +131,6 @@ export type SectionDesignKey =
   | "signup"
   | "podcast"
   | "themes"
-  | "tycho"
   | "community"
   | "aya"
   | "hosts";

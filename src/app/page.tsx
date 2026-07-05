@@ -26,6 +26,7 @@ type HomePageProps = {
 const signupFeedback: Record<string, string> = {
   error: "Aanmelden lukte niet. Probeer het nog eens.",
   invalid: "Vul je naam en een geldig e-mailadres in.",
+  "rate-limited": "Er zijn te veel aanmeldpogingen. Probeer het later opnieuw.",
   storage: "Aanmelden is nog niet gekoppeld.",
   subscribed: "Je staat op de lijst! We laten het je weten."
 };
