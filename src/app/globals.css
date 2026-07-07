@@ -5602,3 +5602,57 @@ textarea {
   height: 100%;
   object-fit: contain;
 }
+
+/* Footer Social Links */
+.onepager-footer-social {
+  border-top: 1px solid rgba(66, 86, 69, 0.1);
+  padding: 48px 20px;
+  display: flex;
+  justify-content: center;
+  background: #f2efe9;
+}
+
+.footer-social-nav {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
+
+.footer-social-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.footer-social-nav a:hover,
+.footer-social-nav a:focus {
+  opacity: 1;
+  transform: scale(1.1);
+  outline: 2px solid #425645;
+  outline-offset: 3px;
+}
+
+.footer-social-nav img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .onepager-footer-social {
+    padding: 32px 16px;
+  }
+
+  .footer-social-nav {
+    gap: 24px;
+  }
+
+  .footer-social-nav a {
+    width: 36px;
+    height: 36px;
+  }
+}

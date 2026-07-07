@@ -162,6 +162,20 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           <Image src="/img/tik-tok.png" alt="" width={24} height={24} />
         </a>
       </nav>
+
+      <footer className="onepager-footer-social" aria-label="Volg Stuk Verdriet op social media">
+        <nav className="footer-social-nav">
+          <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <Image src="/img/instagram.png" alt="Instagram" width={28} height={28} />
+          </a>
+          <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <Image src="/img/facebook.png" alt="Facebook" width={28} height={28} />
+          </a>
+          <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+            <Image src="/img/tik-tok.png" alt="TikTok" width={28} height={28} />
+          </a>
+        </nav>
+      </footer>
     </>
   );
 }
