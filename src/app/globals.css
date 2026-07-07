@@ -5258,6 +5258,64 @@ textarea {
   opacity: 1;
 }
 
+/* Login under construction */
+.login-under-construction {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 20px;
+  background: linear-gradient(135deg, #f2efe9 0%, #e7dcc8 100%);
+}
+
+.login-uc-content {
+  text-align: center;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.login-uc-content h1 {
+  font-size: clamp(28px, 8vw, 48px);
+  color: #425645;
+  line-height: 1.1;
+  margin: 0;
+  font-weight: 800;
+}
+
+.login-uc-content p {
+  font-size: 18px;
+  color: #6b7a6a;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.login-uc-socials {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.login-uc-back {
+  display: inline-block;
+  padding: 14px 24px;
+  background: #425645;
+  color: #fffdf8;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-uc-back:hover,
+.login-uc-back:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(66, 86, 69, 0.2);
+  outline: 2px solid #425645;
+  outline-offset: 2px;
+}
+
 /* Build cache refresh */
 
 @media (prefers-reduced-motion: reduce) {
