@@ -118,6 +118,10 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         submitted={submitted}
         error={error}
       />
+
+      <footer className="onepager-social-footer" aria-label="Volg Stuk Verdriet op social media">
+        <SocialLinksList links={socialLinks} />
+      </footer>
     </>
   );
 }
