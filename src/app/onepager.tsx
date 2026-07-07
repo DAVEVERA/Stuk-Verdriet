@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
