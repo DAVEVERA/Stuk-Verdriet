@@ -5185,6 +5185,79 @@ textarea {
   }
 }
 
+.community-social-links {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.social-circle-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #425645;
+  color: #fffdf8;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.social-circle-link:hover,
+.social-circle-link:focus {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(66, 86, 69, 0.2);
+  outline: 2px solid #425645;
+  outline-offset: 2px;
+}
+
+.social-circle-link:focus {
+  outline: 3px solid #8A9D8B;
+  outline-offset: 3px;
+}
+
+.social-circle-link svg {
+  width: 28px;
+  height: 28px;
+}
+
+.community-coming-soon .eyebrow {
+  display: block;
+}
+
+.flyout-with-social {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.flyout-content {
+  flex: 1;
+}
+
+.flyout-social-footer {
+  border-top: 1px solid rgba(66, 86, 69, 0.1);
+  padding: 20px 0;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.flyout-social-footer a {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.flyout-social-footer a:hover,
+.flyout-social-footer a:focus {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

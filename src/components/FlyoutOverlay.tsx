@@ -102,7 +102,12 @@ export function FlyoutOverlay({
             <X size={20} aria-hidden />
           </Link>
         </div>
-        {renderPanel()}
+        <div className="flyout-with-social">
+          {renderPanel()}
+          <nav className="flyout-social-footer" aria-label="Volg Stuk Verdriet">
+            <SocialLinksList links={socialLinks} />
+          </nav>
+        </div>
       </aside>
     </div>
   );
