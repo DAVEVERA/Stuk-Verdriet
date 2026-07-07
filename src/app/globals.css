@@ -5564,3 +5564,41 @@ textarea {
     height: 36px;
   }
 }
+
+/* Nav bar social icons */
+.nav-social-icons {
+  display: none;
+  gap: 16px;
+  margin-left: auto;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .nav-social-icons {
+    display: flex;
+  }
+}
+
+.nav-social-icons a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.nav-social-icons a:hover,
+.nav-social-icons a:focus {
+  opacity: 1;
+  transform: scale(1.15);
+  outline: 2px solid #425645;
+  outline-offset: 2px;
+}
+
+.nav-social-icons img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

@@ -85,6 +85,18 @@ export function Header(_props: HeaderProps) {
                 {link.label}
               </Link>
             ))}
+
+            <div className="nav-social-icons" aria-label="Social media links">
+              <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <Image src="/img/instagram.png" alt="" width={20} height={20} />
+              </a>
+              <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <Image src="/img/facebook.png" alt="" width={20} height={20} />
+              </a>
+              <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                <Image src="/img/tik-tok.png" alt="" width={20} height={20} />
+              </a>
+            </div>
           </nav>
 
         </div>
