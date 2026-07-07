@@ -141,7 +141,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
         <select value={episode.id} onChange={(event) => selectEpisode(playlist.findIndex((item) => item.id === event.target.value), false)}>
           {playlist.map((item) => (
             <option key={item.id} value={item.id}>
-              S{item.season_number} E{item.episode_number} - {item.title}
+              {item.episode_number > 0 ? `S${item.season_number} E${item.episode_number} - ` : ""}{item.title}
             </option>
           ))}
         </select>
