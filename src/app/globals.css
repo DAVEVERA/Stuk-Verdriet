@@ -5367,3 +5367,75 @@ textarea {
 .onepager-social-footer a:focus {
   opacity: 1;
 }
+
+/* Social Sidebar */
+.social-sidebar {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+}
+
+.social-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #425645;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 4px 16px rgba(66, 86, 69, 0.15);
+  animation: slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.social-sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: #fffdf8;
+  text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.social-sidebar-link:hover,
+.social-sidebar-link:focus {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+  outline: 2px solid #fffdf8;
+  outline-offset: 2px;
+}
+
+.social-sidebar-link svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 640px) {
+  .social-sidebar-nav {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .social-sidebar-link {
+    width: 40px;
+    height: 40px;
+  }
+
+  .social-sidebar-link svg {
+    width: 20px;
+    height: 20px;
+  }
+}
