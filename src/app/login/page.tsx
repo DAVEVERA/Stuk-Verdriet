@@ -1,4 +1,4 @@
-import { signInWithEmail, signInWithProvider } from "@/lib/actions";
+import { signInWithEmail } from "@/lib/actions";
 import { PageIntro } from "@/components/ui";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
@@ -14,7 +14,6 @@ function safeNext(value: string | undefined) {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const next = safeNext(params?.next);
-  const google = signInWithProvider.bind(null, "google");
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
@@ -33,13 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         ) : null}
         {params?.sent ? <p className="notice">Check je inbox voor de loginlink. Open de link op ditzelfde apparaat of in dezelfde browser.</p> : null}
         {params?.missing === "supabase" ? <p className="notice">Supabase is nog niet geconfigureerd. Controleer de environment variables.</p> : null}
-        {params?.error ? <p className="notice">Inloggen lukte niet. Controleer je e-mailadres of probeer Google opnieuw.</p> : null}
-        <form className="subtle-actions" action={google}>
-          <input type="hidden" name="next" value={next} readOnly />
-          <button className="button" type="submit">
-            Inloggen met Google
-          </button>
-        </form>
+        {params?.error ? <p className="notice">Inloggen lukte niet. Controleer je e-mailadres.</p> : null}
         <form className="form-grid email-login-form" action={signInWithEmail}>
           <input type="hidden" name="next" value={next} readOnly />
           <label>

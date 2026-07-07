@@ -9,13 +9,29 @@ export function safeAuthNext(value: string | null) {
 
 export async function handleAuthRedirect(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
+
   const next = safeAuthNext(requestUrl.searchParams.get("next"));
 
-  if (code) {
-    const supabase = await createSupabaseServerClient();
-    const { error } = (await supabase?.auth.exchangeCodeForSession(code)) ?? { error: null };
-    if (error) return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin));
+  // Magic link / email OTP confirm uses token_hash + type
+  const token_hash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type"); // usually "email"
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=missing-supabase`, requestUrl.origin));
+  }
+
+  if (token_hash) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: (type === "email" ? "email" : "email") // je kan dit ook strict maken
+    });
+
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin)
+      );
+    }
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));

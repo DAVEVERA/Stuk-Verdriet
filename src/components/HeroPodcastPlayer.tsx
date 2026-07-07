@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Captions, ChevronDown, Gauge, ListMusic, Pause, Play, SkipBack, SkipForward, StepBack, StepForward } from "lucide-react";
 import type { PodcastEpisode } from "@/types/content";
 
-const fallbackAudioUrl = "/audio/podcast-placeholder.wav";
+const fallbackAudioUrl = "/audio/Voor de vroege vogels.mp3";
 const playbackRates = [1, 1.5, 2] as const;
 
 function getEpisodeAudioUrl(episode: PodcastEpisode) {

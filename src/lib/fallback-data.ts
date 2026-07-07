@@ -23,13 +23,13 @@ export const fallbackSeasons: PodcastSeason[] = [
 export const fallbackEpisodes: PodcastEpisode[] = [
   {
     id: "episode-1",
-    title: "Over gemis en verder moeten",
-    slug: "over-gemis-en-verder-moeten",
+    title: "Voor de vroege vogels",
+    slug: "voor-de-vroege-vogels",
     season_number: 1,
     episode_number: 1,
-    short_intro: "Testaflevering met placeholder-audio zodat de podcastspeler lokaal direct te controleren is.",
-    description: "Deze aflevering gebruikt tijdelijk een lokale audio-placeholder. Vervang de audio-URL in Supabase zodra de echte aflevering klaarstaat.",
-    audio_file_url: "/audio/podcast-placeholder.wav",
+    short_intro: "Luister naar deze bijzondere aflevering.",
+    description: "Deze aflevering kun je nu beluisteren.",
+    audio_file_url: "/audio/Voor de vroege vogels.mp3",
     spotify_url: null,
     podimo_url: null,
     apple_podcast_url: null,

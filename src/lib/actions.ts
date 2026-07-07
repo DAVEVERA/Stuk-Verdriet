@@ -415,7 +415,7 @@ export async function signInWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${siteUrl}/redirect?next=${encodeURIComponent(next)}`
+      emailRedirectTo: `${siteUrl}/auth/confirm/redirect?next=${encodeURIComponent(next)}`
     }
   });
 
