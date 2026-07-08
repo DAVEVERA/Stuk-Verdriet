@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Calendar,
   Download,
@@ -11,11 +14,13 @@ import {
   Mail,
   MessageCircle,
   Music2,
+  Pause,
   Play,
   Shield,
   Star,
   User,
   Users,
+  Volume2,
   Youtube,
 } from "lucide-react";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
@@ -368,10 +373,73 @@ export function LatestEpisodeCard({ episode, compact = false }: { episode: Podca
 
 export function ModernAudioPlayer({ episode, showPlaceholderNote = true }: { episode: PodcastEpisode; showPlaceholderNote?: boolean }) {
   const audioUrl = getEpisodeAudioUrl(episode);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateDuration = () => setDuration(audio.duration);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    audioRef.current.currentTime = percent * duration;
+  };
 
   return (
     <div className="modern-player">
-      <audio controls preload="metadata" src={audioUrl} />
+      <audio ref={audioRef} preload="metadata" src={audioUrl} />
+      <div className="player-controls">
+        <button onClick={togglePlay} aria-label={isPlaying ? "Pauzeer" : "Speel af"}>
+          {isPlaying ? <Pause size={20} aria-hidden /> : <Play size={20} aria-hidden />}
+        </button>
+        <div className="player-progress" onClick={handleProgressClick}>
+          <div className="progress-bar" style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
+        </div>
+        <div className="player-time">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+        <input type="range" min="0" max="100" value={audioRef.current?.volume ? audioRef.current.volume * 100 : 100} onChange={(e) => { if (audioRef.current) audioRef.current.volume = Number(e.target.value) / 100; }} aria-label="Volume" className="player-volume" />
+      </div>
       {showPlaceholderNote && !episode.audio_file_url ? <p className="player-note">Testaudio: vervang deze placeholder zodra de echte aflevering klaarstaat.</p> : null}
     </div>
   );
