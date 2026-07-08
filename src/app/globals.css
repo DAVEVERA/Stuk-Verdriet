@@ -5655,6 +5655,8 @@ textarea {
 /* Interview Card — exacte Instagram-embed kloon */
 .interview-cell {
   container-type: inline-size;
+  display: grid;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -5680,10 +5682,15 @@ textarea {
   font-family: Arial, sans-serif;
 }
 
-/* Zelfde hoogte als de ingeklapte Instagram-post ernaast:
-   clip-venster (100cqw + 190px, max 740px) + Lees meer-knop (~34px) */
+/* Zelfde hoogte als de ingeklapte Instagram-post ernaast: het clip-venster
+   (100cqw + 190px, max 740px). De Lees meer-knop staat er los onder, net als
+   bij de embeds. Uitgeklapt groeit de kaart mee met de volledige caption. */
 .interview-cell .interview-card {
-  height: min(calc(100cqw + 224px), 774px);
+  height: min(calc(100cqw + 190px), 740px);
+}
+
+.interview-cell .interview-card.expanded {
+  height: auto;
 }
 
 .interview-card-header {
@@ -5859,13 +5866,17 @@ textarea {
   font-weight: 600;
 }
 
-.interview-card-more {
-  background: none;
-  border: 0;
-  color: #8e8e8e;
-  cursor: pointer;
+.interview-card-caption-full {
   font-size: 14px;
-  padding: 2px 0 0;
+  line-height: 1.5;
+}
+
+.interview-card-caption-full p {
+  margin: 0 0 10px;
+}
+
+.interview-card-caption-full strong {
+  font-weight: 600;
 }
 
 .interview-card-date {

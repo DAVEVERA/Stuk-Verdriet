@@ -32,6 +32,7 @@ export function InterviewCard({
   onCommentSubmit
 }: InterviewCardProps) {
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const [expanded, setExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(interview.like_count);
   const [shareCount, setShareCount] = useState(interview.share_count);
@@ -86,7 +87,8 @@ export function InterviewCard({
   };
 
   return (
-    <article className="interview-card">
+    <>
+    <article className={expanded ? "interview-card expanded" : "interview-card"}>
       <header className="interview-card-header">
         <span className="interview-card-avatar">
           <Image src="/brand/sverdriet_logo.webp" alt="" width={40} height={40} />
@@ -127,7 +129,7 @@ export function InterviewCard({
           type="button"
           onClick={handleLike}
           aria-label={liked ? "Verwijder je medeleven" : "Toon je medeleven"}
-          aria-pressed={liked}
+          aria-pressed={liked ? "true" : "false"}
           className={liked ? "interview-like liked" : "interview-like"}
         >
           <Heart size={24} aria-hidden />
@@ -160,12 +162,28 @@ export function InterviewCard({
           {shareCount > 0 && <span className="interview-card-sharecount"> · {shareCount}x gedeeld</span>}
         </p>
         {shareFeedback && <p className="interview-card-feedback">{shareFeedback}</p>}
-        <p className="interview-card-caption">
-          <strong>stukverdrietdepodcast</strong> {interview.title} — {interview.excerpt}
-        </p>
-        <button type="button" className="interview-card-more" onClick={onOpen}>
-          meer
-        </button>
+        {expanded ? (
+          <div className="interview-card-caption-full">
+            <p>
+              <strong>stukverdrietdepodcast</strong> {interview.title}
+            </p>
+            {interview.full_content.split("\n").map((line, index) => {
+              const text = line.replace(/^#+\s*/, "").trim();
+              if (!text) return null;
+              return line.startsWith("#") ? (
+                <p key={index}>
+                  <strong>{text}</strong>
+                </p>
+              ) : (
+                <p key={index}>{text}</p>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="interview-card-caption">
+            <strong>stukverdrietdepodcast</strong> {interview.title} — {interview.excerpt}
+          </p>
+        )}
         {formattedDate && <p className="interview-card-date">Datum: {formattedDate}</p>}
       </div>
 
@@ -192,5 +210,13 @@ export function InterviewCard({
       </div>
       {commentFeedback && <p className="interview-card-comment-feedback">{commentFeedback}</p>}
     </article>
+    <button
+      type="button"
+      className="insta-embed-toggle"
+      onClick={() => setExpanded((value) => !value)}
+    >
+      {expanded ? "Toon minder" : "Lees meer…"}
+    </button>
+    </>
   );
 }
