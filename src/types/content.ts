@@ -187,3 +187,5 @@ export type ThemeArticle = {
   sections: ThemeArticleSection[];
   seo: ThemeArticleSeo;
 };
+
+export type { Interview, InterviewComment, InterviewEngagement } from "./interview";
