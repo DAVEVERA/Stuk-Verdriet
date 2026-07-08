@@ -84,11 +84,12 @@ export function InterviewGrid({
           <div className="interview-grid">
             {feedItems.map((item) =>
               item.type === "interview" ? (
-                <InterviewCard
-                  key={item.interview.id}
-                  interview={item.interview}
-                  onClick={() => setSelectedInterview(item.interview)}
-                />
+                <div className="interview-cell" key={item.interview.id}>
+                  <InterviewCard
+                    interview={item.interview}
+                    onClick={() => setSelectedInterview(item.interview)}
+                  />
+                </div>
               ) : (
                 <InstagramEmbed key={item.url} permalink={item.url} />
               )

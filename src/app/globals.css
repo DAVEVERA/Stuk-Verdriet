@@ -5653,6 +5653,11 @@ textarea {
 }
 
 /* Interview Card — Instagram-post stijl volgens brand design */
+.interview-cell {
+  container-type: inline-size;
+  min-width: 0;
+}
+
 .interview-card {
   background: #1c2f22;
   border-radius: 10px;
@@ -5662,12 +5667,19 @@ textarea {
   overflow: hidden;
 }
 
+/* Zelfde hoogte als de ingeklapte Instagram-post ernaast:
+   clip-venster (100cqw + 190px, max 740px) + Lees meer-knop (~34px) */
+.interview-cell .interview-card {
+  height: min(calc(100cqw + 224px), 774px);
+}
+
 .interview-card-media {
   aspect-ratio: 1 / 1;
   background: linear-gradient(180deg, #d9ecf7 0%, #eef7fc 55%, #9db56a 56%, #7f9a4d 100%);
   border: 0;
   cursor: pointer;
   display: block;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
   position: relative;
@@ -5700,6 +5712,7 @@ textarea {
 .interview-card-bar {
   color: var(--white);
   display: grid;
+  flex-shrink: 0;
   gap: 8px;
   padding: 12px 14px;
 }
@@ -5736,8 +5749,10 @@ textarea {
 
 .interview-card-buttons {
   display: grid;
+  flex-shrink: 0;
   gap: 4px;
   grid-template-columns: 1.4fr 1fr;
+  margin-top: auto;
   padding: 0 4px 4px;
 }
 
