@@ -5652,19 +5652,32 @@ textarea {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Interview Card — Instagram-post stijl volgens brand design */
+/* Interview Card — exacte Instagram-embed kloon */
 .interview-cell {
   container-type: inline-size;
   min-width: 0;
 }
 
 .interview-card {
-  background: #1c2f22;
-  border-radius: 10px;
-  box-shadow: 0 10px 24px rgba(43, 49, 43, 0.14);
+  background: #ffffff;
+  border-radius: 3px;
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.5), 0 1px 10px 0 rgba(0, 0, 0, 0.15);
+  color: #262626;
   display: flex;
   flex-direction: column;
+  margin: 1px auto;
+  max-width: 540px;
   overflow: hidden;
+  width: calc(100% - 2px);
+}
+
+.interview-card,
+.interview-card button,
+.interview-card input,
+.interview-card p,
+.interview-card span,
+.interview-card strong {
+  font-family: Arial, sans-serif;
 }
 
 /* Zelfde hoogte als de ingeklapte Instagram-post ernaast:
@@ -5673,31 +5686,87 @@ textarea {
   height: min(calc(100cqw + 224px), 774px);
 }
 
+.interview-card-header {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.interview-card-avatar {
+  border: 1px solid #efefef;
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 40px;
+  overflow: hidden;
+  width: 40px;
+}
+
+.interview-card-avatar img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.interview-card-account {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.interview-card-account strong {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interview-card-account span {
+  color: #8e8e8e;
+  font-size: 12px;
+}
+
+.interview-card-profile-button {
+  background: #0095f6;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: auto;
+  padding: 7px 14px;
+}
+
+.interview-card-profile-button:hover {
+  background: #1877f2;
+}
+
 .interview-card-media {
   aspect-ratio: 1 / 1;
-  background: linear-gradient(180deg, #d9ecf7 0%, #eef7fc 55%, #9db56a 56%, #7f9a4d 100%);
+  background: #fafafa;
   border: 0;
   cursor: pointer;
   display: block;
+  margin: 0 16px;
   min-height: 0;
   overflow: hidden;
   padding: 0;
   position: relative;
-  width: 100%;
+  width: calc(100% - 32px);
 }
 
 .interview-card-media img {
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.interview-card:hover .interview-card-media img {
-  transform: scale(1.03);
 }
 
 .interview-card-media-fallback {
   align-items: center;
-  color: var(--pine);
+  color: #8e8e8e;
   display: flex;
   font-size: 15px;
   font-weight: 600;
@@ -5709,71 +5778,150 @@ textarea {
   width: 100%;
 }
 
-.interview-card-bar {
-  color: var(--white);
-  display: grid;
+.interview-card-viewmore {
+  background: none;
+  border: 0;
+  color: #3897f0;
+  cursor: pointer;
   flex-shrink: 0;
-  gap: 8px;
-  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 550;
+  padding: 12px 16px 0;
+  text-align: left;
 }
 
-.interview-card-icons {
+.interview-card-actions {
   align-items: center;
-  color: var(--white);
   display: flex;
-  gap: 14px;
+  flex-shrink: 0;
+  gap: 16px;
+  padding: 12px 16px 8px;
 }
 
-.interview-icon-heart {
-  color: #b8352c;
-  fill: #b8352c;
+.interview-card-actions button {
+  background: none;
+  border: 0;
+  color: #262626;
+  cursor: pointer;
+  display: flex;
+  padding: 0;
+}
+
+.interview-card-actions button:hover {
+  color: #8e8e8e;
+}
+
+.interview-card-actions .interview-like.liked {
+  color: #ed4956;
+}
+
+.interview-card-actions .interview-like.liked svg {
+  fill: #ed4956;
+}
+
+.interview-card-bookmark {
+  margin-left: auto;
+}
+
+.interview-card-body {
+  flex-shrink: 0;
+  padding: 0 16px;
+}
+
+.interview-card-likes {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.interview-card-sharecount {
+  color: #8e8e8e;
+  font-weight: 400;
+}
+
+.interview-card-feedback {
+  color: #3897f0;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+.interview-card-caption {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  font-size: 14px;
+  -webkit-line-clamp: 2;
+  line-height: 1.4;
+  margin: 0;
+  overflow: hidden;
+}
+
+.interview-card-caption strong {
+  font-weight: 600;
+}
+
+.interview-card-more {
+  background: none;
+  border: 0;
+  color: #8e8e8e;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 0 0;
 }
 
 .interview-card-date {
+  color: #8e8e8e;
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  margin-left: auto;
-  opacity: 0.9;
+  letter-spacing: 0.04em;
+  margin: 8px 0 0;
   text-transform: uppercase;
 }
 
-.interview-card-sympathy {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  line-height: 1.5;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.interview-card-buttons {
-  display: grid;
+.interview-card-comment-row {
+  align-items: center;
+  border-top: 1px solid #efefef;
+  display: flex;
   flex-shrink: 0;
-  gap: 4px;
-  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
   margin-top: auto;
-  padding: 0 4px 4px;
+  padding: 12px 16px;
 }
 
-.interview-card-buttons button {
-  background: var(--sage);
+.interview-card-comment-row input {
+  background: transparent;
   border: 0;
-  border-radius: 4px;
-  color: var(--white);
+  color: #262626;
+  flex: 1;
+  font-size: 14px;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+}
+
+.interview-card-comment-row input::placeholder {
+  color: #8e8e8e;
+}
+
+.interview-card-comment-row button {
+  background: none;
+  border: 0;
+  color: #0095f6;
   cursor: pointer;
   font-size: 14px;
-  padding: 13px 14px;
-  text-align: left;
-  transition: background 0.2s ease;
+  font-weight: 600;
+  padding: 0;
 }
 
-.interview-card-buttons button:last-child {
-  text-align: center;
+.interview-card-comment-row button:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
-.interview-card-buttons button:hover {
-  background: var(--eucalyptus);
+.interview-card-comment-feedback {
+  color: #8e8e8e;
+  flex-shrink: 0;
+  font-size: 12px;
+  margin: 0;
+  padding: 0 16px 12px;
 }
 
 /* Instagram embeds tussen de interviews */

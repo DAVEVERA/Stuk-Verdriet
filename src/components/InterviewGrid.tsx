@@ -87,7 +87,11 @@ export function InterviewGrid({
                 <div className="interview-cell" key={item.interview.id}>
                   <InterviewCard
                     interview={item.interview}
-                    onClick={() => setSelectedInterview(item.interview)}
+                    isLoggedIn={isLoggedIn}
+                    onOpen={() => setSelectedInterview(item.interview)}
+                    onLike={() => onInterviewLike(item.interview.id)}
+                    onShare={() => onInterviewShare(item.interview.id)}
+                    onCommentSubmit={(body) => onCommentSubmit(item.interview.id, body)}
                   />
                 </div>
               ) : (

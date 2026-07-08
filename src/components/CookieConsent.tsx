@@ -32,7 +32,11 @@ export function CookieConsent({ gaId }: CookieConsentProps) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${gaId}', { anonymize_ip: true });
+              gtag('config', '${gaId}', {
+                anonymize_ip: true,
+                allow_google_signals: false,
+                allow_ad_personalization_signals: false
+              });
             `}
           </Script>
         </>

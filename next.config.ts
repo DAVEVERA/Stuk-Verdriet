@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       scriptSrc,
-      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com",
+      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com",
       "frame-src 'self' https://open.spotify.com https://www.gofundme.com https://www.instagram.com https://www.tiktok.com",
       "upgrade-insecure-requests"
     ].join("; ");

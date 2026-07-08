@@ -377,6 +377,7 @@ export function ModernAudioPlayer({ episode, showPlaceholderNote = true }: { epi
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [volume, setVolume] = useState(100);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -424,6 +425,14 @@ export function ModernAudioPlayer({ episode, showPlaceholderNote = true }: { epi
     audioRef.current.currentTime = percent * duration;
   };
 
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextVolume = Number(e.target.value);
+    setVolume(nextVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = nextVolume / 100;
+    }
+  };
+
   return (
     <div className="modern-player">
       <audio ref={audioRef} preload="metadata" src={audioUrl} />
@@ -438,7 +447,7 @@ export function ModernAudioPlayer({ episode, showPlaceholderNote = true }: { epi
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
-        <input type="range" min="0" max="100" value={audioRef.current?.volume ? audioRef.current.volume * 100 : 100} onChange={(e) => { if (audioRef.current) audioRef.current.volume = Number(e.target.value) / 100; }} aria-label="Volume" className="player-volume" />
+        <input type="range" min="0" max="100" value={volume} onChange={handleVolumeChange} aria-label="Volume" className="player-volume" />
       </div>
       {showPlaceholderNote && !episode.audio_file_url ? <p className="player-note">Testaudio: vervang deze placeholder zodra de echte aflevering klaarstaat.</p> : null}
     </div>

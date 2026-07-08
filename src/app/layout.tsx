@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import localFont from "next/font/local";
 import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -80,15 +79,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`}>
-      <head>
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-BEHWY1BVQ7" />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-BEHWY1BVQ7');`}
-        </Script>
-      </head>
       <body>
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />
