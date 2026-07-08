@@ -5145,6 +5145,55 @@ textarea {
   }
 }
 
+.social-sidebar-shell {
+  position: relative;
+}
+
+.social-sidebar-shell:not([open]) .social-sidebar-nav {
+  display: none;
+}
+
+.social-sidebar-toggle {
+  align-items: center;
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.72), rgba(255, 253, 248, 0.42));
+  border: 1px solid rgba(255, 253, 248, 0.7);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -8px 10px 22px rgba(43, 49, 43, 0.14);
+  color: var(--pine);
+  cursor: pointer;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  list-style: none;
+  position: absolute;
+  right: calc(100% - 1px);
+  top: 50%;
+  transform: translateY(-50%);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  width: 36px;
+  z-index: 1;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+.social-sidebar-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.social-sidebar-toggle:hover,
+.social-sidebar-toggle:focus {
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: -10px 12px 26px rgba(43, 49, 43, 0.2);
+  outline: 2px solid rgba(66, 86, 69, 0.55);
+  outline-offset: 2px;
+  transform: translateY(-50%) translateX(-1px);
+}
+
+.social-sidebar-shell:not([open]) .social-sidebar-toggle {
+  right: 0;
+}
+
 .social-sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -5714,14 +5763,58 @@ textarea {
 
 /* Instagram embeds tussen de interviews */
 .insta-embed {
+  container-type: inline-size;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-width: 0;
+}
+
+/* Ingeklapt venster: hoog genoeg voor foto + actiebalk, caption valt weg
+   achter de fade. Alle posts in dezelfde rij houden zo dezelfde hoogte. */
+.insta-embed-clip {
   display: flex;
   justify-content: center;
-  min-width: 0;
+  max-height: min(calc(100cqw + 190px), 740px);
   overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.insta-embed-clip.expanded {
+  max-height: none;
 }
 
 .insta-embed .instagram-media {
   min-width: 0 !important;
+}
+
+.insta-embed-fade {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 88%);
+  bottom: 0;
+  height: 64px;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+  width: min(100%, 540px);
+  z-index: 2;
+}
+
+.insta-embed-toggle {
+  background: none;
+  border: 0;
+  color: var(--pine);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 8px 6px;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.insta-embed-toggle:hover {
+  color: var(--eucalyptus);
 }
 
 /* Tag chips (popout) */

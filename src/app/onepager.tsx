@@ -136,35 +136,41 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       />
 
       <aside className="social-sidebar" aria-label="Volg Stuk Verdriet" role="complementary">
-        <nav className="social-sidebar-nav">
-          <a
-            href="https://www.instagram.com/stukverdrietdepodcast/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-icon-link"
-            aria-label="Volg ons op Instagram"
-          >
-            <Image src="/img/instagram.png" alt="Instagram" width={32} height={32} />
-          </a>
-          <a
-            href="https://www.facebook.com/stukverdriet"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-icon-link"
-            aria-label="Volg ons op Facebook"
-          >
-            <Image src="/img/facebook.png" alt="Facebook" width={32} height={32} />
-          </a>
-          <a
-            href="https://www.tiktok.com/@stuk.verdriet"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-icon-link"
-            aria-label="Volg ons op TikTok"
-          >
-            <Image src="/img/tik-tok.png" alt="TikTok" width={32} height={32} />
-          </a>
-        </nav>
+        <details className="social-sidebar-shell" open>
+          <summary className="social-sidebar-toggle">
+            <Share2 size={18} aria-hidden />
+            <span className="sr-only">Toon of verberg social media links</span>
+          </summary>
+          <nav className="social-sidebar-nav">
+            <a
+              href="https://www.instagram.com/stukverdrietdepodcast/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-icon-link"
+              aria-label="Volg ons op Instagram"
+            >
+              <Image src="/img/instagram.png" alt="Instagram" width={32} height={32} />
+            </a>
+            <a
+              href="https://www.facebook.com/stukverdriet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-icon-link"
+              aria-label="Volg ons op Facebook"
+            >
+              <Image src="/img/facebook.png" alt="Facebook" width={32} height={32} />
+            </a>
+            <a
+              href="https://www.tiktok.com/@stuk.verdriet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-icon-link"
+              aria-label="Volg ons op TikTok"
+            >
+              <Image src="/img/tik-tok.png" alt="TikTok" width={32} height={32} />
+            </a>
+          </nav>
+        </details>
       </aside>
 
       <details className="social-mobile-drawer" aria-label="Social media links">
