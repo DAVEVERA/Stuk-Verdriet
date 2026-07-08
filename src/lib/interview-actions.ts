@@ -76,7 +76,9 @@ export async function shareInterview(interviewId: string) {
 export async function submitInterviewComment(
   interviewId: string,
   body: string,
-  parentCommentId?: string
+  parentCommentId?: string,
+  authorName?: string,
+  authorEmail?: string
 ) {
   const trimmedBody = body.trim();
   if (!trimmedBody) return;
@@ -85,11 +87,24 @@ export async function submitInterviewComment(
   if (!supabase) return;
 
   const { data: user } = await supabase.auth.getUser();
+  const name = authorName?.trim() || user.user?.user_metadata?.full_name || null;
+  const email = authorEmail?.trim() || null;
+
+  // Naam/e-mail bewaren zodat we bezoekers op de hoogte kunnen houden.
+  // De tabel is insert-only voor bezoekers; lezen kan alleen via de admin.
+  if (email) {
+    await supabase
+      .from("interview_subscribers")
+      .upsert(
+        { name, email, interview_id: interviewId },
+        { onConflict: "email", ignoreDuplicates: true }
+      );
+  }
 
   const { error } = await supabase.from("interview_comments").insert({
     interview_id: interviewId,
-    author_name: user.user?.user_metadata?.full_name ?? null,
-    author_display_type: user.user ? "first_name" : "anonymous",
+    author_name: name,
+    author_display_type: name ? "first_name" : "anonymous",
     body: trimmedBody,
     parent_comment_id: parentCommentId ?? null,
     status: "pending"

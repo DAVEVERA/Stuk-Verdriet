@@ -8,7 +8,12 @@ type CommentsSectionProps = {
   interviewId: string;
   comments: InterviewComment[];
   isLoggedIn: boolean;
-  onCommentSubmit: (body: string, parentCommentId?: string) => Promise<void>;
+  onCommentSubmit: (
+    body: string,
+    parentCommentId?: string,
+    authorName?: string,
+    authorEmail?: string
+  ) => Promise<void>;
   onCommentLike: (commentId: string) => Promise<void>;
 };
 
@@ -22,6 +27,8 @@ export function CommentsSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [authorName, setAuthorName] = useState("");
+  const [authorEmail, setAuthorEmail] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +37,12 @@ export function CommentsSection({
 
     setIsSubmitting(true);
     try {
-      await onCommentSubmit(newComment, replyTo ?? undefined);
+      await onCommentSubmit(
+        newComment,
+        replyTo ?? undefined,
+        authorName.trim() || undefined,
+        authorEmail.trim() || undefined
+      );
       setNewComment("");
       setReplyTo(null);
       setFeedback("Bedankt! Je reactie wacht op goedkeuring.");
@@ -67,6 +79,36 @@ export function CommentsSection({
           className="comment-input"
           disabled={isSubmitting}
         />
+        <div className="comment-contact-fields">
+          <label htmlFor="comment-name" className="sr-only">
+            Je naam (optioneel)
+          </label>
+          <input
+            id="comment-name"
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="Je naam (optioneel)"
+            autoComplete="name"
+            disabled={isSubmitting}
+          />
+          <label htmlFor="comment-email" className="sr-only">
+            Je e-mailadres (optioneel)
+          </label>
+          <input
+            id="comment-email"
+            type="email"
+            value={authorEmail}
+            onChange={(e) => setAuthorEmail(e.target.value)}
+            placeholder="Je e-mail (optioneel)"
+            autoComplete="email"
+            disabled={isSubmitting}
+          />
+        </div>
+        <p className="comment-contact-note">
+          Laat je e-mail achter en we houden je op de hoogte van nieuwe verhalen. Je adres wordt
+          nooit publiek getoond.
+        </p>
         <div className="comment-form-actions">
           {replyTo && (
             <button

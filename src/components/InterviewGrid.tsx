@@ -17,7 +17,13 @@ type InterviewGridProps = {
   interviews: Interview[];
   comments: Record<string, InterviewComment[]>;
   isLoggedIn: boolean;
-  onCommentSubmit: (interviewId: string, body: string, parentCommentId?: string) => Promise<void>;
+  onCommentSubmit: (
+    interviewId: string,
+    body: string,
+    parentCommentId?: string,
+    authorName?: string,
+    authorEmail?: string
+  ) => Promise<void>;
   onCommentLike: (commentId: string) => Promise<void>;
   onInterviewLike: (interviewId: string, shouldLike?: boolean) => Promise<void>;
   onInterviewShare: (interviewId: string) => Promise<void>;
@@ -100,8 +106,8 @@ export function InterviewGrid({
           comments={comments[selectedInterview.id] ?? []}
           isLoggedIn={isLoggedIn}
           onClose={() => setSelectedInterview(null)}
-          onCommentSubmit={(body, parentId) =>
-            onCommentSubmit(selectedInterview.id, body, parentId)
+          onCommentSubmit={(body, parentId, authorName, authorEmail) =>
+            onCommentSubmit(selectedInterview.id, body, parentId, authorName, authorEmail)
           }
           onCommentLike={onCommentLike}
           onInterviewLike={() => onInterviewLike(selectedInterview.id)}

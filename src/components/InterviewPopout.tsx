@@ -12,7 +12,12 @@ type InterviewPopoutProps = {
   comments: InterviewComment[];
   isLoggedIn: boolean;
   onClose: () => void;
-  onCommentSubmit: (body: string, parentCommentId?: string) => Promise<void>;
+  onCommentSubmit: (
+    body: string,
+    parentCommentId?: string,
+    authorName?: string,
+    authorEmail?: string
+  ) => Promise<void>;
   onCommentLike: (commentId: string) => Promise<void>;
   onInterviewLike: () => Promise<void>;
   onInterviewShare: () => Promise<void>;
@@ -58,9 +63,9 @@ export function InterviewPopout({
 
   return (
     <div className="interview-popout-layer" role="dialog" aria-modal="true" aria-labelledby="interview-title">
-      <button className="interview-popout-backdrop" onClick={onClose} aria-label="Sluit interview" />
+      <button type="button" className="interview-popout-backdrop" onClick={onClose} aria-label="Sluit interview" />
       <div className="interview-popout-panel">
-        <button className="interview-popout-close" onClick={onClose} aria-label="Sluit">
+        <button type="button" className="interview-popout-close" onClick={onClose} aria-label="Sluit">
           <X size={24} aria-hidden />
         </button>
 

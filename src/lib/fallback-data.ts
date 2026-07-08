@@ -98,7 +98,7 @@ Sindsdien draag ik die woorden altijd met me mee.
 Want ergens geloof ik dat daar, op die allerkleinste ster in het heelal van ons hart, de mensen wonen die wij zo intens missen.
 
 En misschien is dat wel de enige plek waar afscheid en liefde voor altijd naast elkaar mogen bestaan.`,
-    cover_image_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80",
+    cover_image_url: "/img/interview1.png",
     interviewee_name: "Anoniem",
     publication_date: "2026-07-08",
     tags: ["verlies", "rouw", "liefde", "moeder", "herinnering", "gemis"],

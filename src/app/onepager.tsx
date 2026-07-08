@@ -90,9 +90,9 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
             interviews={interviews}
             comments={commentsByInterview}
             isLoggedIn={isLoggedIn}
-            onCommentSubmit={async (interviewId, body, parentId) => {
+            onCommentSubmit={async (interviewId, body, parentId, authorName, authorEmail) => {
               "use server";
-              await submitInterviewComment(interviewId, body, parentId);
+              await submitInterviewComment(interviewId, body, parentId, authorName, authorEmail);
             }}
             onCommentLike={async (commentId) => {
               "use server";

@@ -6115,6 +6115,45 @@ textarea {
   color: rgba(66, 86, 69, 0.4);
 }
 
+.comment-contact-fields {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;
+  margin-top: 8px;
+}
+
+@media (min-width: 640px) {
+  .comment-contact-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.comment-contact-fields input {
+  background: rgba(255, 253, 248, 0.5);
+  border: 1px solid rgba(66, 86, 69, 0.15);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.comment-contact-fields input::placeholder {
+  color: rgba(66, 86, 69, 0.45);
+}
+
+.comment-contact-fields input:focus {
+  border-color: rgba(66, 86, 69, 0.3);
+}
+
+.comment-contact-note {
+  color: rgba(66, 86, 69, 0.55);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
 .comment-form-actions {
   display: flex;
   gap: 8px;
