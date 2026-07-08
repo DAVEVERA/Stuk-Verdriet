@@ -10,7 +10,6 @@ import {
 } from "@/lib/fallback-data";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { createSupabasePublicClient } from "@/lib/supabase";
-import { getPublishedInterviews } from "@/lib/interview-data";
 import type {
   CommunityCategory,
   CommunityPost,
@@ -170,6 +169,20 @@ export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links || typeof data.social_links !== "object") return {};
   return normalizeSectionDesign((data.social_links as Record<string, unknown>).section_styles);
+}
+
+export async function getPublishedInterviews(): Promise<Interview[]> {
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return fallbackInterviews;
+
+  const { data, error } = await supabase
+    .from("interviews")
+    .select("*")
+    .eq("status", "published")
+    .order("publication_date", { ascending: false });
+
+  if (error || !data) return fallbackInterviews;
+  return data as Interview[];
 }
 
 export async function getInterviewsWithComments() {

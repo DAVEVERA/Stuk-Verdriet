@@ -1,30 +1,4 @@
-import { fallbackInterviews } from "@/lib/fallback-data";
-import { createSupabasePublicClient } from "@/lib/supabase";
 import type { Interview } from "@/types/interview";
-
-export async function getPublishedInterviews(): Promise<Interview[]> {
-  const supabase = createSupabasePublicClient();
-  if (!supabase) return fallbackInterviews;
-
-  const { data, error } = await supabase
-    .from("interviews")
-    .select("*")
-    .eq("status", "published")
-    .order("publication_date", { ascending: false });
-
-  if (error || !data) return fallbackInterviews;
-  return data as Interview[];
-}
-
-export async function getInterviewBySlug(slug: string): Promise<Interview | null> {
-  const interviews = await getPublishedInterviews();
-  return interviews.find((interview) => interview.slug === slug) ?? null;
-}
-
-export async function getInterviewsByTag(tag: string): Promise<Interview[]> {
-  const interviews = await getPublishedInterviews();
-  return interviews.filter((interview) => interview.tags.includes(tag));
-}
 
 export function getAllInterviewTags(interviews: Interview[]): string[] {
   const tags = new Set<string>();
