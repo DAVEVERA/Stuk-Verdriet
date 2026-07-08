@@ -3,18 +3,22 @@ import {
   fallbackEpisodes,
   fallbackFaqs,
   fallbackHosts,
+  fallbackInterviews,
   fallbackSeasons,
   fallbackSocialLinks,
   fallbackSponsors
 } from "@/lib/fallback-data";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { createSupabasePublicClient } from "@/lib/supabase";
+import { getPublishedInterviews } from "@/lib/interview-data";
 import type {
   CommunityCategory,
   CommunityPost,
   CommunityReply,
   FAQ,
   HostProfile,
+  Interview,
+  InterviewComment,
   PodcastEpisode,
   PodcastSeason,
   SiteDesignSettings,
@@ -166,4 +170,26 @@ export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links || typeof data.social_links !== "object") return {};
   return normalizeSectionDesign((data.social_links as Record<string, unknown>).section_styles);
+}
+
+export async function getInterviewsWithComments() {
+  const interviews = await getPublishedInterviews();
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return { interviews, commentsByInterview: {} };
+
+  const { data: comments, error } = await supabase
+    .from("interview_comments")
+    .select("*")
+    .eq("status", "approved");
+
+  if (error || !comments) return { interviews, commentsByInterview: {} };
+
+  const commentsByInterview: Record<string, InterviewComment[]> = {};
+  interviews.forEach((interview) => {
+    commentsByInterview[interview.id] = (comments as any[]).filter(
+      (c) => c.interview_id === interview.id
+    );
+  });
+
+  return { interviews, commentsByInterview };
 }

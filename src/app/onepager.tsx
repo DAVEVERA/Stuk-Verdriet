@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
+import { InterviewGrid } from "@/components/InterviewGrid";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
 import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
-import { getApprovedCommunityPosts, getCommunityCategories, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
+import { getApprovedCommunityPosts, getCommunityCategories, getInterviewsWithComments, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
+import { likeInterview, shareInterview, submitInterviewComment, likeComment } from "@/lib/interview-actions";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { getThemeArticles } from "@/lib/theme-articles";
@@ -18,7 +20,7 @@ type OnepagerProps = {
 
 export async function Onepager({ initialPanel = null, initialTheme = null, submitted = false, error = null, signupStatus = null }: OnepagerProps) {
   const supabase = await createSupabaseServerClient();
-  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, sectionDesign, authResult] = await Promise.all([
+  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, sectionDesign, authResult, interviewsData] = await Promise.all([
     getLatestEpisode(),
     getPublishedSeasons(),
     getPublishedEpisodes(),
@@ -27,10 +29,12 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
     getPublishedHosts(),
     getSocialLinks(),
     getSiteDesignSettings(),
-    supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } })
+    supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } }),
+    getInterviewsWithComments()
   ]);
   const isLoggedIn = Boolean(authResult.data.user);
   const themeArticles = getThemeArticles();
+  const { interviews, commentsByInterview } = interviewsData;
 
   return (
     <>
@@ -77,20 +81,32 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           </div>
         </section>
 
-        <section className="community-story-section" id="community" aria-labelledby="community-entry-title">
-          <div className="community-visual">
-            <Image src="/img/wegwijzer.png" alt="Wegwijzer met Stuk Verdriet op de pijl voor een berglandschap" fill sizes="(max-width: 900px) 100vw, 42vw" />
+        <section className="interview-section content-band" id="interviews" aria-labelledby="interviews-title">
+          <div className="section-heading">
+            <h2 id="interviews-title">Interviews</h2>
+            <p>Echte verhalen van mensen die hun ervaringen delen rond verlies, rouw en verder leven.</p>
           </div>
-          <div className="community-panel">
-            <div className="community-panel-heading">
-              <h2 id="community-entry-title">Ingang community</h2>
-              <p>Deel je verhaal, stel een vraag of lees mee met anderen die rouw en gemis herkennen.</p>
-            </div>
-            <CommunityFeedback submitted={submitted} error={error} />
-            <div className="community-story-grid">
-              <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo="/community" />
-            </div>
-          </div>
+          <InterviewGrid
+            interviews={interviews}
+            comments={commentsByInterview}
+            isLoggedIn={isLoggedIn}
+            onCommentSubmit={async (interviewId, body, parentId) => {
+              "use server";
+              await submitInterviewComment(interviewId, body, parentId);
+            }}
+            onCommentLike={async (commentId) => {
+              "use server";
+              await likeComment(commentId);
+            }}
+            onInterviewLike={async (interviewId) => {
+              "use server";
+              await likeInterview(interviewId);
+            }}
+            onInterviewShare={async (interviewId) => {
+              "use server";
+              await shareInterview(interviewId);
+            }}
+          />
         </section>
 
         <section className="content-band image-band" id="themas">
