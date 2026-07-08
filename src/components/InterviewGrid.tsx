@@ -45,6 +45,10 @@ export function InterviewGrid({
     [interviews, searchTerm, selectedTags, sortBy]
   );
 
+  // Featured interview is the first one after filtering (if any)
+  const featuredInterview = filteredInterviews.length > 0 ? filteredInterviews[0] : null;
+  const gridInterviews = filteredInterviews.slice(1);
+
   return (
     <>
       <div className="interview-grid-container">
@@ -60,15 +64,27 @@ export function InterviewGrid({
             <p>Geen interviews gevonden. Probeer je zoekterm of filters aan te passen.</p>
           </div>
         ) : (
-          <div className="interview-grid">
-            {filteredInterviews.map((interview) => (
-              <InterviewCard
-                key={interview.id}
-                interview={interview}
-                onClick={() => setSelectedInterview(interview)}
-              />
-            ))}
-          </div>
+          <>
+            {featuredInterview && (
+              <div className="interview-featured-section">
+                <InterviewCard
+                  interview={featuredInterview}
+                  onClick={() => setSelectedInterview(featuredInterview)}
+                />
+              </div>
+            )}
+            {gridInterviews.length > 0 && (
+              <div className="interview-grid">
+                {gridInterviews.map((interview) => (
+                  <InterviewCard
+                    key={interview.id}
+                    interview={interview}
+                    onClick={() => setSelectedInterview(interview)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
