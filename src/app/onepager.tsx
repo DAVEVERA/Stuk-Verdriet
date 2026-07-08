@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Share2 } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { InterviewGrid } from "@/components/InterviewGrid";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
@@ -167,17 +167,23 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         </nav>
       </aside>
 
-      <nav className="social-mobile-bar" aria-label="Social media links" role="complementary">
-        <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-          <Image src="/img/instagram.png" alt="" width={24} height={24} />
-        </a>
-        <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-          <Image src="/img/facebook.png" alt="" width={24} height={24} />
-        </a>
-        <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-          <Image src="/img/tik-tok.png" alt="" width={24} height={24} />
-        </a>
-      </nav>
+      <details className="social-mobile-drawer" aria-label="Social media links">
+        <summary className="social-mobile-toggle">
+          <Share2 size={18} aria-hidden />
+          <span className="sr-only">Toon social media links</span>
+        </summary>
+        <nav className="social-mobile-links" aria-label="Social media links">
+          <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <Image src="/img/instagram.png" alt="" width={24} height={24} />
+          </a>
+          <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <Image src="/img/facebook.png" alt="" width={24} height={24} />
+          </a>
+          <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+            <Image src="/img/tik-tok.png" alt="" width={24} height={24} />
+          </a>
+        </nav>
+      </details>
 
       <footer className="onepager-footer-social" aria-label="Volg Stuk Verdriet op social media">
         <nav className="footer-social-nav">

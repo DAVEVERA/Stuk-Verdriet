@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Send } from "lucide-react";
 import type { Interview } from "@/types/interview";
 
 type InterviewCardProps = {
@@ -7,14 +7,30 @@ type InterviewCardProps = {
   onClick: () => void;
 };
 
+function formatCardDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
 export function InterviewCard({ interview, onClick }: InterviewCardProps) {
+  const formattedDate = formatCardDate(interview.publication_date);
+  const sympathyLine =
+    interview.like_count > 0
+      ? `${interview.like_count} anderen toonden hun medeleven`
+      : "Toon als eerste je medeleven";
+
   return (
-    <button
-      onClick={onClick}
-      className="interview-card"
-      aria-label={`Lees interview met ${interview.interviewee_name}: ${interview.title}`}
-    >
-      <div className="interview-card-image">
+    <article className="interview-card">
+      <button
+        type="button"
+        className="interview-card-media"
+        onClick={onClick}
+        aria-label={`Lees interview: ${interview.title}`}
+      >
         {interview.cover_image_url ? (
           <Image
             src={interview.cover_image_url}
@@ -23,40 +39,26 @@ export function InterviewCard({ interview, onClick }: InterviewCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="interview-card-placeholder" aria-hidden>
-            <span>{interview.title}</span>
-          </div>
+          <span className="interview-card-media-fallback">{interview.title}</span>
         )}
-      </div>
-      <div className="interview-card-content">
-        <p className="eyebrow">Interview</p>
-        <h3>{interview.title}</h3>
-        <p className="interview-interviewee">{interview.interviewee_name}</p>
-        <p>{interview.excerpt}</p>
-        {interview.tags.length > 0 && (
-          <div className="interview-tags">
-            {interview.tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="interview-tag">
-                {tag}
-              </span>
-            ))}
-            {interview.tags.length > 2 && <span className="interview-tag-more">+{interview.tags.length - 2}</span>}
-          </div>
-        )}
-      </div>
-      <div className="interview-card-footer">
-        <div className="interview-engagement">
-          <span className="engagement-stat">
-            <Heart size={16} aria-hidden /> {interview.like_count}
-          </span>
-          <span className="engagement-stat">
-            <MessageCircle size={16} aria-hidden /> {interview.comment_count}
-          </span>
-          <span className="engagement-stat">
-            <Share2 size={16} aria-hidden /> {interview.share_count}
-          </span>
+      </button>
+      <div className="interview-card-bar">
+        <div className="interview-card-icons">
+          <Heart size={22} aria-hidden className="interview-icon-heart" />
+          <MessageCircle size={22} aria-hidden />
+          <Send size={22} aria-hidden />
+          {formattedDate && <span className="interview-card-date">Datum: {formattedDate}</span>}
         </div>
+        <p className="interview-card-sympathy">{sympathyLine}</p>
       </div>
-    </button>
+      <div className="interview-card-buttons">
+        <button type="button" onClick={onClick}>
+          Een opmerking toevoegen…
+        </button>
+        <button type="button" onClick={onClick}>
+          Plaatsen…
+        </button>
+      </div>
+    </article>
   );
 }

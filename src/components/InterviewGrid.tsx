@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { InstagramEmbed } from "@/components/InstagramEmbed";
 import { InterviewCard } from "@/components/InterviewCard";
 import { InterviewSearchFilter } from "@/components/InterviewSearchFilter";
 import { InterviewPopout } from "@/components/InterviewPopout";
 import { filterInterviews, getAllInterviewTags } from "@/lib/interview-data";
+import { instagramPostUrls } from "@/lib/instagram-posts";
 import type { Interview, InterviewComment } from "@/types/interview";
+
+type FeedItem =
+  | { type: "interview"; interview: Interview }
+  | { type: "instagram"; url: string };
 
 type InterviewGridProps = {
   interviews: Interview[];
@@ -45,9 +51,18 @@ export function InterviewGrid({
     [interviews, searchTerm, selectedTags, sortBy]
   );
 
-  // Featured interview is the first one after filtering (if any)
-  const featuredInterview = filteredInterviews.length > 0 ? filteredInterviews[0] : null;
-  const gridInterviews = filteredInterviews.slice(1);
+  // Interleave Instagram posts between the interviews, Instagram-grid style
+  const feedItems = useMemo(() => {
+    const items: FeedItem[] = [];
+    const instaQueue = [...instagramPostUrls];
+    filteredInterviews.forEach((interview) => {
+      items.push({ type: "interview", interview });
+      const instaUrl = instaQueue.shift();
+      if (instaUrl) items.push({ type: "instagram", url: instaUrl });
+    });
+    instaQueue.forEach((url) => items.push({ type: "instagram", url }));
+    return items;
+  }, [filteredInterviews]);
 
   return (
     <>
@@ -59,32 +74,26 @@ export function InterviewGrid({
           onSortChange={setSortBy}
         />
 
-        {filteredInterviews.length === 0 ? (
+        {filteredInterviews.length === 0 && (
           <div className="interview-empty-state">
             <p>Geen interviews gevonden. Probeer je zoekterm of filters aan te passen.</p>
           </div>
-        ) : (
-          <>
-            {featuredInterview && (
-              <div className="interview-featured-section">
+        )}
+
+        {feedItems.length > 0 && (
+          <div className="interview-grid">
+            {feedItems.map((item) =>
+              item.type === "interview" ? (
                 <InterviewCard
-                  interview={featuredInterview}
-                  onClick={() => setSelectedInterview(featuredInterview)}
+                  key={item.interview.id}
+                  interview={item.interview}
+                  onClick={() => setSelectedInterview(item.interview)}
                 />
-              </div>
+              ) : (
+                <InstagramEmbed key={item.url} permalink={item.url} />
+              )
             )}
-            {gridInterviews.length > 0 && (
-              <div className="interview-grid">
-                {gridInterviews.map((interview) => (
-                  <InterviewCard
-                    key={interview.id}
-                    interview={interview}
-                    onClick={() => setSelectedInterview(interview)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
 
