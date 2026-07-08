@@ -98,9 +98,9 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
               "use server";
               await likeComment(commentId);
             }}
-            onInterviewLike={async (interviewId) => {
+            onInterviewLike={async (interviewId, shouldLike) => {
               "use server";
-              await likeInterview(interviewId);
+              await likeInterview(interviewId, shouldLike);
             }}
             onInterviewShare={async (interviewId) => {
               "use server";

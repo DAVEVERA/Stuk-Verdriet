@@ -9,7 +9,7 @@ type InterviewCardProps = {
   interview: Interview;
   isLoggedIn: boolean;
   onOpen: () => void;
-  onLike: () => Promise<void>;
+  onLike: (shouldLike: boolean) => Promise<void>;
   onShare: () => Promise<void>;
   onCommentSubmit: (body: string) => Promise<void>;
 };
@@ -47,7 +47,7 @@ export function InterviewCard({
     const nextLiked = !liked;
     setLiked(nextLiked);
     setLikeCount((count) => Math.max(0, count + (nextLiked ? 1 : -1)));
-    onLike().catch(() => {
+    onLike(nextLiked).catch(() => {
       // Niet ingelogd of database niet bereikbaar: de voorkeur blijft
       // lokaal zichtbaar voor deze sessie.
     });

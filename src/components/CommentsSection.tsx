@@ -22,6 +22,7 @@ export function CommentsSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +33,12 @@ export function CommentsSection({
       await onCommentSubmit(newComment, replyTo ?? undefined);
       setNewComment("");
       setReplyTo(null);
+      setFeedback("Bedankt! Je reactie wacht op goedkeuring.");
+    } catch {
+      setFeedback("Reageren is op dit moment niet mogelijk.");
     } finally {
       setIsSubmitting(false);
+      setTimeout(() => setFeedback(null), 4000);
     }
   };
 
@@ -44,46 +49,45 @@ export function CommentsSection({
     <section className="comments-section" aria-labelledby="comments-title">
       <h3 id="comments-title">Reacties ({comments.length})</h3>
 
-      {!isLoggedIn && (
-        <p className="comment-login-prompt">
-          Log in om een reactie achter te laten.
-        </p>
-      )}
-
-      {isLoggedIn && (
-        <form onSubmit={handleSubmit} className="comment-form">
-          <label htmlFor="comment-input" className="sr-only">
-            {replyTo ? "Reageer op opmerking" : "Laat een reactie achter"}
-          </label>
-          <textarea
-            id="comment-input"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder={replyTo ? "Schrijf je antwoord..." : "Laat een reactie achter..."}
-            className="comment-input"
-            disabled={isSubmitting}
-          />
-          <div className="comment-form-actions">
-            {replyTo && (
-              <button
-                type="button"
-                onClick={() => setReplyTo(null)}
-                className="comment-form-cancel"
-                disabled={isSubmitting}
-              >
-                Annuleer antwoord
-              </button>
-            )}
+      <form onSubmit={handleSubmit} className="comment-form">
+        <label htmlFor="comment-input" className="sr-only">
+          {replyTo ? "Reageer op opmerking" : "Laat een reactie achter"}
+        </label>
+        <textarea
+          id="comment-input"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder={
+            replyTo
+              ? "Schrijf je antwoord..."
+              : isLoggedIn
+                ? "Laat een reactie achter..."
+                : "Laat een reactie achter (anoniem)..."
+          }
+          className="comment-input"
+          disabled={isSubmitting}
+        />
+        <div className="comment-form-actions">
+          {replyTo && (
             <button
-              type="submit"
-              className="button"
-              disabled={!newComment.trim() || isSubmitting}
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="comment-form-cancel"
+              disabled={isSubmitting}
             >
-              {isSubmitting ? "Versturen..." : "Verstuur"}
+              Annuleer antwoord
             </button>
-          </div>
-        </form>
-      )}
+          )}
+          <button
+            type="submit"
+            className="button"
+            disabled={!newComment.trim() || isSubmitting}
+          >
+            {isSubmitting ? "Versturen..." : "Verstuur"}
+          </button>
+        </div>
+      </form>
+      {feedback && <p className="comments-feedback">{feedback}</p>}
 
       <div className="comments-list">
         {topLevelComments.length === 0 ? (

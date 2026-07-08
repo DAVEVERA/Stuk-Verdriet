@@ -2,12 +2,31 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase";
 
-export async function likeInterview(interviewId: string) {
+// Zonder geconfigureerde Supabase-omgeving (of zonder ingelogde gebruiker bij
+// likes) doen deze acties stilletjes niets: de kaart toont de interactie
+// optimistisch en de site blijft gewoon werken.
+
+export async function likeInterview(interviewId: string, shouldLike?: boolean) {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase client not available");
+  if (!supabase) return;
 
   const { data: user } = await supabase.auth.getUser();
-  if (!user.user) throw new Error("Not authenticated");
+
+  if (!user.user) {
+    // Anonieme bezoeker: pas de teller direct aan (geen login vereist)
+    const { data: interview } = await supabase
+      .from("interviews")
+      .select("like_count")
+      .eq("id", interviewId)
+      .maybeSingle();
+    if (!interview) return;
+    const delta = shouldLike === false ? -1 : 1;
+    await supabase
+      .from("interviews")
+      .update({ like_count: Math.max(0, interview.like_count + delta) })
+      .eq("id", interviewId);
+    return;
+  }
 
   const { data: existingLike } = await supabase
     .from("interview_likes")
@@ -38,7 +57,7 @@ export async function likeInterview(interviewId: string) {
 
 export async function shareInterview(interviewId: string) {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase client not available");
+  if (!supabase) return;
 
   const { data: interview, error } = await supabase
     .from("interviews")
@@ -46,7 +65,7 @@ export async function shareInterview(interviewId: string) {
     .eq("id", interviewId)
     .maybeSingle();
 
-  if (error || !interview) throw error || new Error("Interview not found");
+  if (error || !interview) return;
 
   await supabase
     .from("interviews")
@@ -59,21 +78,24 @@ export async function submitInterviewComment(
   body: string,
   parentCommentId?: string
 ) {
+  const trimmedBody = body.trim();
+  if (!trimmedBody) return;
+
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase client not available");
+  if (!supabase) return;
 
   const { data: user } = await supabase.auth.getUser();
 
   const { error } = await supabase.from("interview_comments").insert({
     interview_id: interviewId,
     author_name: user.user?.user_metadata?.full_name ?? null,
-    author_display_type: "first_name",
-    body: body.trim(),
+    author_display_type: user.user ? "first_name" : "anonymous",
+    body: trimmedBody,
     parent_comment_id: parentCommentId ?? null,
     status: "pending"
   });
 
-  if (error) throw error;
+  if (error) return;
 
   const { count } = await supabase
     .from("interview_comments")
@@ -90,10 +112,10 @@ export async function submitInterviewComment(
 
 export async function likeComment(commentId: string) {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase client not available");
+  if (!supabase) return;
 
   const { data: user } = await supabase.auth.getUser();
-  if (!user.user) throw new Error("Not authenticated");
+  if (!user.user) return;
 
   const { data: existingLike } = await supabase
     .from("comment_likes")

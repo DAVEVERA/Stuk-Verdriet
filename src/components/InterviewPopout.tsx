@@ -81,16 +81,6 @@ export function InterviewPopout({
             <h2 id="interview-title">{interview.title}</h2>
             <p className="interview-popout-interviewee">{interview.interviewee_name}</p>
             <p className="interview-popout-date">{formatDate(interview.publication_date)}</p>
-
-            {interview.tags.length > 0 && (
-              <div className="interview-popout-tags">
-                {interview.tags.map((tag) => (
-                  <span key={tag} className="interview-tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="interview-popout-body">
@@ -107,6 +97,7 @@ export function InterviewPopout({
 
           <div className="interview-popout-actions">
             <button
+              type="button"
               onClick={handleLike}
               disabled={isLiking}
               className="interview-action"
@@ -115,6 +106,7 @@ export function InterviewPopout({
               <Heart size={18} aria-hidden /> {interview.like_count}
             </button>
             <button
+              type="button"
               onClick={handleShare}
               disabled={isSharing}
               className="interview-action"

@@ -5,7 +5,7 @@ import { InstagramEmbed } from "@/components/InstagramEmbed";
 import { InterviewCard } from "@/components/InterviewCard";
 import { InterviewSearchFilter } from "@/components/InterviewSearchFilter";
 import { InterviewPopout } from "@/components/InterviewPopout";
-import { filterInterviews, getAllInterviewTags } from "@/lib/interview-data";
+import { filterInterviews } from "@/lib/interview-data";
 import { instagramPostUrls } from "@/lib/instagram-posts";
 import type { Interview, InterviewComment } from "@/types/interview";
 
@@ -19,7 +19,7 @@ type InterviewGridProps = {
   isLoggedIn: boolean;
   onCommentSubmit: (interviewId: string, body: string, parentCommentId?: string) => Promise<void>;
   onCommentLike: (commentId: string) => Promise<void>;
-  onInterviewLike: (interviewId: string) => Promise<void>;
+  onInterviewLike: (interviewId: string, shouldLike?: boolean) => Promise<void>;
   onInterviewShare: (interviewId: string) => Promise<void>;
 };
 
@@ -35,20 +35,17 @@ export function InterviewGrid({
   onInterviewShare
 }: InterviewGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
-
-  const allTags = useMemo(() => getAllInterviewTags(interviews), [interviews]);
 
   const filteredInterviews = useMemo(
     () =>
       filterInterviews(interviews, {
         searchTerm,
-        tags: selectedTags,
+        tags: [],
         sortBy
       }),
-    [interviews, searchTerm, selectedTags, sortBy]
+    [interviews, searchTerm, sortBy]
   );
 
   // Interleave Instagram posts between the interviews, Instagram-grid style
@@ -67,12 +64,7 @@ export function InterviewGrid({
   return (
     <>
       <div className="interview-grid-container">
-        <InterviewSearchFilter
-          tags={allTags}
-          onSearch={setSearchTerm}
-          onTagsChange={setSelectedTags}
-          onSortChange={setSortBy}
-        />
+        <InterviewSearchFilter onSearch={setSearchTerm} onSortChange={setSortBy} />
 
         {filteredInterviews.length === 0 && (
           <div className="interview-empty-state">
@@ -89,7 +81,7 @@ export function InterviewGrid({
                     interview={item.interview}
                     isLoggedIn={isLoggedIn}
                     onOpen={() => setSelectedInterview(item.interview)}
-                    onLike={() => onInterviewLike(item.interview.id)}
+                    onLike={(shouldLike) => onInterviewLike(item.interview.id, shouldLike)}
                     onShare={() => onInterviewShare(item.interview.id)}
                     onCommentSubmit={(body) => onCommentSubmit(item.interview.id, body)}
                   />
