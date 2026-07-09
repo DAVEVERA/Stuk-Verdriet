@@ -4,9 +4,9 @@ import { createSign } from "crypto";
 import { readFileSync } from "fs";
 import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { normalizeSectionDesign } from "@/lib/section-design";
+import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { adminEmailList, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
@@ -15,7 +15,6 @@ const communityImageMaxSize = 4 * 1024 * 1024;
 const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const signupRateLimit = new Map<string, { count: number; resetAt: number }>();
 const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
 
@@ -74,47 +73,6 @@ function fileExtension(file: File, fallback: string) {
 function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community" | "/bijsluiter") {
   const path = String(value ?? "").trim();
   return path === "/bijsluiter" || path === "/community" || path.startsWith("/community/") ? path : fallback;
-}
-
-async function getRequestOrigin() {
-  const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const proto = headerStore.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
-}
-
-async function assertSameOriginRequest() {
-  const headerStore = await headers();
-  const origin = headerStore.get("origin");
-  if (!origin) return true;
-  return origin === (await getRequestOrigin());
-}
-
-async function requestIpAddress() {
-  const headerStore = await headers();
-  return (
-    headerStore
-      .get("x-forwarded-for")
-      ?.split(",")
-      .map((part) => part.trim())
-      .find(Boolean) ??
-    headerStore.get("x-real-ip") ??
-    "unknown"
-  );
-}
-
-function consumeSignupRateLimit(key: string) {
-  const now = Date.now();
-  const current = signupRateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    signupRateLimit.set(key, { count: 1, resetAt: now + signupRateLimitWindowMs });
-    return true;
-  }
-
-  if (current.count >= signupRateLimitMax) return false;
-  current.count += 1;
-  return true;
 }
 
 async function queueLocalEpisodeSignup(payload: EpisodeSignupPayload, reason: string) {
@@ -438,7 +396,10 @@ export async function subscribeEpisodeSignup(formData: FormData) {
   if (!name || !emailPattern.test(email)) redirect("/?signup=invalid#aanmelden");
   if (!(await assertSameOriginRequest())) redirect("/?signup=invalid#aanmelden");
   const ip = await requestIpAddress();
-  if (!consumeSignupRateLimit(`signup:ip:${ip}`) || !consumeSignupRateLimit(`signup:email:${email}`)) {
+  if (
+    !consumeRateLimit(`signup:ip:${ip}`, signupRateLimitWindowMs, signupRateLimitMax) ||
+    !consumeRateLimit(`signup:email:${email}`, signupRateLimitWindowMs, signupRateLimitMax)
+  ) {
     redirect("/?signup=rate-limited#aanmelden");
   }
 

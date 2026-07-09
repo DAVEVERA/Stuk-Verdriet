@@ -8,11 +8,6 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
-# Environment files and secrets
-.env
-.env*.local
-!.env.example
-
 # Deployment/local platform state
 .vercel/
 
@@ -25,9 +20,12 @@ next-env.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.next-dev.log
-.next-dev.err.log
 screenshots/
 output/
 
-.env*
+# Environment files and secrets
+# Alles wat met .env begint negeren, behalve het (bewust gedeelde) voorbeeld.
+# Let op: de uitzondering moet ná de brede .env* patronen staan, anders werkt hij niet.
+.env
+.env.*
+!.env.example
