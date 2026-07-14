@@ -38,6 +38,7 @@ const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
 const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
 const podcastTikTokProfileUrl = "https://www.tiktok.com/@stuk.verdriet";
 const tychoSupportUrl = "https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho";
+const gofundmeCampaignUrl = "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken";
 const gofundmeGoalBarUrl =
   "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-goal-bar?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3";
 const gofundmeQrCodeUrl =
@@ -122,9 +123,20 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
         ))}
       </div>
       <p className="copyright">
-        &copy; {new Date().getFullYear()} Stuk Verdriet - Met liefde gebouwd door{" "}
-        <a href="https://mnrv.nl" target="_blank" rel="noopener noreferrer">
-          MNRV
+        <span>
+          &copy; {new Date().getFullYear()} Stuk Verdriet - Met liefde gebouwd door{" "}
+          <a href="https://mnrv.nl" target="_blank" rel="noopener noreferrer">
+            MNRV
+          </a>
+        </span>
+        <a
+          className="copyright-qr"
+          href={gofundmeCampaignUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open de GoFundMe van Stuk Verdriet"
+        >
+          <Image src="/img/QRCODE_GFM.png" alt="QR-code voor de GoFundMe van Stuk Verdriet" width={92} height={92} />
         </a>
       </p>
     </footer>

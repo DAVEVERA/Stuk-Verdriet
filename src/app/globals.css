@@ -3301,15 +3301,37 @@ textarea {
 }
 
 .copyright {
+  align-items: center;
   color: var(--eucalyptus);
+  display: flex;
+  flex-wrap: wrap;
   font-size: 0.88rem;
+  gap: 12px;
   grid-column: 1 / -1;
+  line-height: 1.35;
 }
 
 .copyright a {
   color: var(--pine);
   font-weight: 700;
   text-decoration: none;
+}
+
+.copyright-qr {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.78);
+  border: 1px solid rgba(66, 86, 69, 0.14);
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 6px;
+}
+
+.copyright-qr img {
+  display: block;
+  height: clamp(52px, 14vw, 76px);
+  object-fit: contain;
+  width: clamp(52px, 14vw, 76px);
 }
 
 .cookie-consent {
