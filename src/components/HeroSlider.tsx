@@ -36,7 +36,7 @@ const slides: HeroSlide[] = [
   },
   {
     image: "/hero/Hero_ep1_live.png",
-    mobileImage: "/hero/Hero_ep1_live.png",
+    mobileImage: "/img/mobile/mobile hero SV EP1.png",
     imageAlt: "Hero-afbeelding voor aflevering 1 live",
     imageClassName: "hero-slide-image-episode-live",
     heroClassName: "hero-state-butterfly",

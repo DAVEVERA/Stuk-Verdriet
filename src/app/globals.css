@@ -5601,7 +5601,6 @@ textarea {
   }
 
   .hero-state-butterfly {
-    --mobile-hero-media-height: clamp(300px, 86vw, 380px);
     align-items: flex-end;
     background:
       linear-gradient(180deg, #050504 0%, #0f120d 56%, #425645 100%);
@@ -5615,8 +5614,8 @@ textarea {
 
   .hero-state-butterfly .hero-slide-image-episode-live {
     background: #050504;
-    object-fit: contain !important;
-    object-position: center 78%;
+    object-fit: cover !important;
+    object-position: center top;
   }
 
   .hero-state-butterfly .hero-copy {
