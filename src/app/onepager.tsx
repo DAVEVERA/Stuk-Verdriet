@@ -133,6 +133,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         isLoggedIn={isLoggedIn}
         submitted={submitted}
         error={error}
+        signupStatus={signupStatus}
       />
 
       <aside className="social-sidebar" aria-label="Volg Stuk Verdriet" role="complementary">

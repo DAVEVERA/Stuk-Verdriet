@@ -112,7 +112,7 @@ En misschien is dat wel de enige plek waar afscheid en liefde voor altijd naast 
 export const fallbackEpisodes: PodcastEpisode[] = [
   {
     id: "episode-1",
-    title: "aflevering 1",
+    title: "Aflevering 1: Het begin.",
     slug: "voor-de-vroege-vogels",
     season_number: 0,
     episode_number: 0,

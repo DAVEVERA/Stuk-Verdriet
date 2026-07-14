@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { site, type OnepagerPanel } from "@/lib/site";
+import { subscribeEpisodeSignup } from "@/lib/actions";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks, ThemeArticle, ThemeArticleBlock } from "@/types/content";
 import { CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
@@ -23,6 +24,7 @@ type FlyoutOverlayProps = {
   isLoggedIn: boolean;
   submitted?: boolean;
   error?: string | null;
+  signupStatus?: string | null;
 };
 
 const panelLabels: Record<OnepagerPanel, string> = {
@@ -68,7 +70,8 @@ export function FlyoutOverlay({
   socialLinks,
   isLoggedIn,
   submitted,
-  error
+  error,
+  signupStatus
 }: FlyoutOverlayProps) {
   const [panel, setPanel] = useState<OnepagerPanel | null>(initialPanel ?? null);
   const [activeTheme, setActiveTheme] = useState<string | null>(initialTheme ?? null);
@@ -114,24 +117,65 @@ export function FlyoutOverlay({
 
   function renderPanel() {
     if (panel === "podcast") {
+      const signupFeedback: Record<string, string> = {
+        error: "Aanmelden lukte niet. Probeer het nog eens.",
+        invalid: "Vul je naam en een geldig e-mailadres in.",
+        "rate-limited": "Er zijn te veel aanmeldpogingen. Probeer het later opnieuw.",
+        storage: "Aanmelden is nog niet gekoppeld aan Supabase.",
+        subscribed: "Je staat op de lijst. We laten je weten wanneer aflevering 2 klaarstaat."
+      };
+
       return (
-        <div className="flyout-content">
-          <h2 id="flyout-title">De podcast</h2>
-          <p className="lead-text">{podcastIntro}</p>
+        <div className="flyout-content podcast-flyout-content">
+          <header className="podcast-flyout-header">
+            <p className="eyebrow">Stuk Verdriet podcast</p>
+            <h2 id="flyout-title">De podcast</h2>
+            <p className="lead-text">{podcastIntro}</p>
+          </header>
           {featured ? (
             <article className="flyout-feature podcast-flyout-feature">
-              <div>
-                <p className="eyebrow">Nieuwste aflevering</p>
-                <h3>{featured.title}</h3>
-                <EpisodeMeta episode={featured} />
-                {featured.short_intro ? <p>{featured.short_intro}</p> : null}
+              <div className="podcast-current-episode">
+                <div className="podcast-card-copy">
+                  <p className="eyebrow">Nieuwste aflevering</p>
+                  <h3>{featured.title}</h3>
+                  <EpisodeMeta episode={featured} />
+                  {featured.short_intro ? <p>{featured.short_intro}</p> : null}
+                </div>
                 <ModernAudioPlayer episode={featured} showPlaceholderNote={false} />
                 <PlatformLinks episode={featured} />
+              </div>
+              <div className="podcast-next-card" aria-labelledby="podcast-next-title">
+                <p className="eyebrow">Binnenkort</p>
+                <h3 id="podcast-next-title">Aflevering 2</h3>
+                <p>Nieuwe stemmen, nieuwe vragen en opnieuw ruimte voor wat meestal moeilijk hardop gezegd wordt.</p>
+                <span>Schrijf je in en ontvang een seintje zodra de volgende aflevering klaarstaat.</span>
               </div>
             </article>
           ) : (
             <p className="notice">De podcastomgeving is klaar. Afleveringen verschijnen zodra ze in de admin zijn gepubliceerd.</p>
           )}
+          <section className="podcast-flyout-signup" id="podcast-signup" aria-labelledby="podcast-signup-title">
+            <div>
+              <p className="eyebrow">Mis het niet</p>
+              <h3 id="podcast-signup-title">Ontvang aflevering 2 als eerste.</h3>
+              <p>Laat je naam en e-mailadres achter. We sturen alleen een bericht wanneer er iets nieuws te luisteren is.</p>
+            </div>
+            <form className="podcast-flyout-signup-form" action={subscribeEpisodeSignup}>
+              <input type="hidden" name="source" value="podcast_flyout_episode_2" readOnly />
+              <input type="hidden" name="return_to" value="/podcast" readOnly />
+              <input type="hidden" name="return_anchor" value="podcast-signup" readOnly />
+              <label>
+                Naam
+                <input name="name" autoComplete="name" required />
+              </label>
+              <label>
+                E-mailadres
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <button className="button" type="submit">Mis het niet</button>
+              {signupStatus ? <p className="signup-feedback">{signupFeedback[signupStatus] ?? signupFeedback.error}</p> : null}
+            </form>
+          </section>
           <div className="flyout-list">
             {seasons.map((season) => {
               const seasonEpisodes = episodes.filter((episode) => episode.season_number === season.season_number);

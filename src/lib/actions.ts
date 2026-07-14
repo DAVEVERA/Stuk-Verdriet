@@ -75,6 +75,14 @@ function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community"
   return path === "/bijsluiter" || path === "/community" || path.startsWith("/community/") ? path : fallback;
 }
 
+function signupRedirectTarget(formData: FormData, status: string) {
+  const returnTo = String(formData.get("return_to") ?? "").trim();
+  const anchor = String(formData.get("return_anchor") ?? "aanmelden").trim();
+  const safePath = returnTo === "/podcast" ? "/podcast" : "/";
+  const safeAnchor = /^[a-z0-9_-]+$/i.test(anchor) ? anchor : "aanmelden";
+  return `${safePath}?signup=${encodeURIComponent(status)}#${safeAnchor}`;
+}
+
 async function queueLocalEpisodeSignup(payload: EpisodeSignupPayload, reason: string) {
   await mkdir("output", { recursive: true });
   await appendFile(
@@ -393,14 +401,14 @@ export async function subscribeEpisodeSignup(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const source = String(formData.get("source") ?? "homepage_episode_1").trim() || "homepage_episode_1";
 
-  if (!name || !emailPattern.test(email)) redirect("/?signup=invalid#aanmelden");
-  if (!(await assertSameOriginRequest())) redirect("/?signup=invalid#aanmelden");
+  if (!name || !emailPattern.test(email)) redirect(signupRedirectTarget(formData, "invalid"));
+  if (!(await assertSameOriginRequest())) redirect(signupRedirectTarget(formData, "invalid"));
   const ip = await requestIpAddress();
   if (
     !consumeRateLimit(`signup:ip:${ip}`, signupRateLimitWindowMs, signupRateLimitMax) ||
     !consumeRateLimit(`signup:email:${email}`, signupRateLimitWindowMs, signupRateLimitMax)
   ) {
-    redirect("/?signup=rate-limited#aanmelden");
+    redirect(signupRedirectTarget(formData, "rate-limited"));
   }
 
   const result = await saveEpisodeSignup({
@@ -411,10 +419,11 @@ export async function subscribeEpisodeSignup(formData: FormData) {
     updated_at: new Date().toISOString()
   });
 
-  if (!result.ok) redirect("/?signup=error#aanmelden");
+  if (!result.ok) redirect(signupRedirectTarget(formData, "error"));
 
   revalidatePath("/");
-  redirect("/?signup=subscribed#aanmelden");
+  revalidatePath("/podcast");
+  redirect(signupRedirectTarget(formData, "subscribed"));
 }
 
 export async function createCommunityPost(formData: FormData) {

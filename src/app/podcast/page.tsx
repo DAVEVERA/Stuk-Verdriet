@@ -1,5 +1,10 @@
 import { Onepager } from "@/app/onepager";
 
-export default function PodcastPage() {
-  return <Onepager initialPanel="podcast" />;
+type PodcastPageProps = {
+  searchParams?: Promise<{ signup?: string }>;
+};
+
+export default async function PodcastPage({ searchParams }: PodcastPageProps) {
+  const params = await searchParams;
+  return <Onepager initialPanel="podcast" signupStatus={params?.signup ?? null} />;
 }
