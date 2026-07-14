@@ -122,7 +122,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
-    <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`}>
+    <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`} data-scroll-behavior="smooth">
       <body>
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />

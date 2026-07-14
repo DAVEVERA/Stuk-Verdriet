@@ -181,13 +181,13 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         </summary>
         <nav className="social-mobile-links" aria-label="Social media links">
           <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-            <Image src="/img/instagram.png" alt="" width={24} height={24} />
+            <Image src="/img/instagram.png" alt="Instagram" width={24} height={24} />
           </a>
           <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-            <Image src="/img/facebook.png" alt="" width={24} height={24} />
+            <Image src="/img/facebook.png" alt="Facebook" width={24} height={24} />
           </a>
           <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-            <Image src="/img/tik-tok.png" alt="" width={24} height={24} />
+            <Image src="/img/tik-tok.png" alt="TikTok" width={24} height={24} />
           </a>
         </nav>
       </details>

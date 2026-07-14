@@ -1,0 +1,38 @@
+# Stuk Verdriet
+
+Stuk Verdriet is a Dutch podcast and community about grief, loss, illness, support, remembering, and continuing life after bereavement.
+
+## Canonical Site
+
+- https://stukverdriet.com/
+
+## Key Pages
+
+- Homepage: https://stukverdriet.com/
+- Podcast: https://stukverdriet.com/podcast
+- Themes: https://stukverdriet.com/themas
+- Community: https://stukverdriet.com/community
+- About: https://stukverdriet.com/over
+- Contact: https://stukverdriet.com/contact
+- Privacy: https://stukverdriet.com/privacy
+- Terms: https://stukverdriet.com/algemene-voorwaarden
+
+## Important Topics
+
+- Rouw en verlies
+- Ouders die een kind verloren
+- AYA's en jonge mensen met kanker
+- Naasten, familie en omgeving
+- Praktische steun
+- Vragen en antwoorden over rouw
+- Verhalen en herkenning
+- Herinneren
+- Leven na verlies
+
+## Crawl Guidance
+
+Use the sitemap for canonical URL discovery:
+
+- https://stukverdriet.com/sitemap.xml
+
+Do not use `/admin`, `/auth`, `/login`, or `/redirect` as source material. Those routes are private, transitional, or operational.

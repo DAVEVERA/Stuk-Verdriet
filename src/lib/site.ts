@@ -2,7 +2,7 @@ export const site = {
   name: "Stuk Verdriet",
   tagline: "Verdriet verdient een stem.",
   email: "info@stukverdriet.nl",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://stukverdriet.com",
   logo: "/brand/sverdriet_logo.webp",
   colors: {
     pine: "#425645",

@@ -170,7 +170,7 @@ async function requireAdminClient() {
     data: { user }
   } = await server.auth.getUser();
   const email = user?.email?.toLowerCase();
-  if (!email || !adminEmailList().includes(email)) redirect("/login");
+  if (!email || !adminEmailList().includes(email)) redirect("/admin?error=unauthorized");
 
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/admin?missing=service-role");
@@ -381,7 +381,7 @@ export async function signInWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${siteUrl}/auth/confirm/redirect?next=${encodeURIComponent(next)}`
+      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
     }
   });
 

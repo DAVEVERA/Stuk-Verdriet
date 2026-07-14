@@ -1,11 +1,44 @@
 import Link from "next/link";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{ error?: string; next?: string; sent?: string; missing?: string }>;
+};
+
+const errorMessages: Record<string, string> = {
+  "local-admin": "Controleer de lokale admingegevens.",
+  "local-disabled": "Lokale admin-login is alleen beschikbaar in development.",
+  oauth: "Inloggen via Google lukte niet.",
+  email: "Vul een geldig e-mailadres in.",
+  "email-login": "De magic link kon niet worden verzonden.",
+  callback: "De loginlink kon niet worden verwerkt.",
+  "missing-supabase": "Supabase is nog niet geconfigureerd voor deze omgeving."
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = (await searchParams) ?? {};
+  const next = params.next ?? "/admin";
+  const error = params.error ?? params.missing;
+
   return (
     <div className="login-under-construction">
       <div className="login-uc-content">
-        <h1>Nog even geduld...</h1>
-        <p>De community groeit. Login volgt snel!</p>
+        <h1>Beheer login</h1>
+        <p>Log lokaal in om het adminportaal te bekijken en de beheerflow te controleren.</p>
+
+        <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
+          <input type="hidden" name="next" value={next} readOnly />
+          <label>
+            Gebruiker
+            <input name="username" autoComplete="username" required />
+          </label>
+          <label>
+            Wachtwoord
+            <input name="password" type="password" autoComplete="current-password" required />
+          </label>
+          <button className="button" type="submit">Inloggen</button>
+          {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
+          {params.sent ? <p className="notice">Magic link verzonden. Controleer je inbox.</p> : null}
+        </form>
 
         <div className="login-uc-socials">
           <a

@@ -3,7 +3,7 @@ import { getApprovedCommunityPosts, getPublishedEpisodes } from "@/lib/content";
 import { getThemeArticles } from "@/lib/theme-articles";
 import { site } from "@/lib/site";
 
-const productionSiteUrl = "https://stukverdriet.staging.mnrv.nl";
+const productionSiteUrl = "https://stukverdriet.com";
 
 const staticRoutes = [
   { path: "", priority: 1, changeFrequency: "weekly" },
