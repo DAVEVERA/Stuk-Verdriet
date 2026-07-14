@@ -6652,6 +6652,16 @@ textarea {
   object-fit: cover;
 }
 
+.interview-card-media-content-aware {
+  background: #ffffff;
+}
+
+.interview-card-media-content-aware img {
+  object-fit: contain;
+  object-position: center center;
+  padding: clamp(8px, 2.8cqw, 18px);
+}
+
 .interview-card-media-fallback {
   align-items: center;
   color: #8e8e8e;

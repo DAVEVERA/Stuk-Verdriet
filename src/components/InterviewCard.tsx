@@ -42,6 +42,7 @@ export function InterviewCard({
   const [commentFeedback, setCommentFeedback] = useState<string | null>(null);
 
   const formattedDate = formatCardDate(interview.publication_date);
+  const isContentAwareCover = interview.cover_image_url === "/img/DV.jpeg";
 
   const handleLike = () => {
     const nextLiked = !liked;
@@ -104,7 +105,7 @@ export function InterviewCard({
 
       <button
         type="button"
-        className="interview-card-media"
+        className={isContentAwareCover ? "interview-card-media interview-card-media-content-aware" : "interview-card-media"}
         onClick={onOpen}
         aria-label={`Lees interview: ${interview.title}`}
       >
