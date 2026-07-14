@@ -83,7 +83,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
 
         <section className="interview-section content-band" id="interviews" aria-labelledby="interviews-title">
           <div className="section-heading">
-            <h2 id="interviews-title">Interviews</h2>
+            <h2 id="interviews-title">Échte verhalen</h2>
             <p>Echte verhalen van mensen die hun ervaringen delen rond verlies, rouw en verder leven.</p>
           </div>
           <InterviewGrid
