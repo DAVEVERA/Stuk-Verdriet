@@ -1,4 +1,3 @@
-import { PageIntro } from "@/components/ui";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
@@ -35,6 +34,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const saved = Array.isArray(params.saved) ? params.saved[0] : params.saved;
   const error = Array.isArray(params.error) ? params.error[0] : params.error;
   const sent = Array.isArray(params.sent) ? params.sent[0] : params.sent;
+  const tab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const server = await createSupabaseServerClient();
   const {
     data: { user }
@@ -67,23 +67,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }));
 
   return (
-    <>
-      <PageIntro eyebrow="Beheer" title="Podcast admin portaal">
-        <p>Maak afleveringen, upload audio en covers, plan publicaties en beheer de cards en socials die op de site verschijnen.</p>
-      </PageIntro>
-      <AdminDashboard
-        episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
-        seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
-        pendingPosts={pendingPosts ?? []}
-        reports={reports ?? []}
-        pendingInterviewComments={normalizedPendingInterviewComments}
-        sectionDesign={sectionDesign}
-        missingSupabase={!hasSupabaseEnv}
-        localPreview={localAdminAllowed && !allowed}
-        savedMessage={saved ?? null}
-        errorMessage={error ?? null}
-      />
-    </>
+    <AdminDashboard
+      episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
+      seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
+      pendingPosts={pendingPosts ?? []}
+      reports={reports ?? []}
+      pendingInterviewComments={normalizedPendingInterviewComments}
+      sectionDesign={sectionDesign}
+      missingSupabase={!hasSupabaseEnv}
+      localPreview={localAdminAllowed && !allowed}
+      savedMessage={saved ?? null}
+      errorMessage={error ?? null}
+      initialTab={tab ?? null}
+    />
   );
 }
 

@@ -80,6 +80,7 @@ type AdminDashboardProps = {
   localPreview?: boolean;
   savedMessage?: string | null;
   errorMessage?: string | null;
+  initialTab?: string | null;
 };
 
 const emptyEpisode: PodcastEpisode = {
@@ -112,13 +113,13 @@ const emptyEpisode: PodcastEpisode = {
 const tabs = [
   ["today", "Vandaag"],
   ["podcast", "Podcast"],
-  ["reviews", "Reviews"],
-  ["builder", "Builder"],
-  ["access", "Rollen"],
-  ["keys", "API keys"],
+  ["reviews", "Inbox"],
+  ["builder", "Sitebuilder"],
+  ["access", "Beheerders"],
+  ["keys", "Secrets"],
   ["calendar", "Kalender"],
-  ["integrations", "Integraties"],
-  ["ai", "AI studio"],
+  ["integrations", "Koppelingen"],
+  ["ai", "AI hulp"],
   ["analytics", "Analytics"],
   ["brand", "Branding"],
   ["automation", "Automations"],
@@ -129,7 +130,35 @@ const tabs = [
   ["hosts", "Hosts"]
 ] as const;
 
-const primaryTabIds = ["today", "podcast", "reviews", "calendar", "builder"] as const;
+type AdminTabId = (typeof tabs)[number][0];
+
+const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
+  {
+    title: "Inbox",
+    helper: "Aandacht en moderatie",
+    ids: ["today", "reviews", "community"]
+  },
+  {
+    title: "Podcast",
+    helper: "Afleveringen en redactie",
+    ids: ["podcast", "seasons", "hosts"]
+  },
+  {
+    title: "Site",
+    helper: "Pagina's en uitstraling",
+    ids: ["builder", "sections", "site", "brand"]
+  },
+  {
+    title: "Marketing",
+    helper: "Planning en groei",
+    ids: ["calendar", "ai", "analytics", "automation"]
+  },
+  {
+    title: "Instellingen",
+    helper: "Toegang en koppelingen",
+    ids: ["access", "keys", "integrations"]
+  }
+];
 
 const cardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
 
@@ -145,7 +174,9 @@ const feedbackLabels: Record<string, string> = {
   "transcript-started": "transcriptie gestart",
   "transcript-ready": "transcriptie klaar",
   "transcript-processing": "transcriptie wordt verwerkt",
-  "transcript-failed": "transcriptie mislukt"
+  "transcript-failed": "transcriptie mislukt",
+  "episode-save": "Aflevering niet opgeslagen. Controleer titel, seizoen, afleveringnummer en media.",
+  "transcript-start": "Transcriptie kon niet starten. Controleer of audio aanwezig is en Google Speech is ingesteld."
 };
 
 const integrationCards = [
@@ -178,9 +209,9 @@ const roleRows = [
   { role: "Analist", access: "Alleen analytics", members: "1 gebruiker", risk: "Laag" }
 ];
 
-export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number][0]>("today");
-  const [showMoreNav, setShowMoreNav] = useState(false);
+export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
+  const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
+  const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -198,10 +229,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
     calendar: scheduledEpisodes,
     analytics: analyticsRows.length
   };
-  const primaryTabs = tabs.filter(([id]) => primaryTabIds.includes(id as (typeof primaryTabIds)[number]));
-  const secondaryTabs = tabs.filter(([id]) => !primaryTabIds.includes(id as (typeof primaryTabIds)[number]));
-  const isSecondaryTabActive = secondaryTabs.some(([id]) => id === activeTab);
-  const secondaryBadgeCount = secondaryTabs.reduce((total, [id]) => total + (tabBadges[id] ?? 0), 0);
+  const tabMap = new Map<AdminTabId, (typeof tabs)[number]>(tabs.map((tab) => [tab[0], tab]));
 
   const filteredEpisodes = useMemo(() => {
     return episodes.filter((episode) => {
@@ -262,9 +290,8 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
     setLinkCards((current) => current.filter((_, cardIndex) => cardIndex !== index));
   }
 
-  function openTab(tab: (typeof tabs)[number][0]) {
+  function openTab(tab: AdminTabId) {
     setActiveTab(tab);
-    setShowMoreNav(false);
   }
 
   function renderTabButton([id, label]: (typeof tabs)[number]) {
@@ -284,28 +311,29 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
       {savedMessage ? <p className="notice">Opgeslagen: {feedbackLabels[savedMessage] ?? savedMessage}.</p> : null}
       {errorMessage ? <p className="notice">Fout: {feedbackLabels[errorMessage] ?? errorMessage}. Controleer Supabase-configuratie, velden of storage buckets.</p> : null}
 
+      <AdminOperationsHeader
+        episodes={episodes}
+        missingSupabase={missingSupabase}
+        localPreview={localPreview}
+        pendingReviewCount={pendingReviewCount}
+        missingMedia={missingMedia}
+        failedTranscripts={failedTranscripts}
+        scheduledEpisodes={scheduledEpisodes}
+        onOpenTab={openTab}
+      />
+
       <nav className="admin-navigation" aria-label="Admin onderdelen">
-        <div className="admin-tabs admin-tabs-primary" role="group" aria-label="Belangrijkste admin onderdelen">
-          {primaryTabs.map(renderTabButton)}
-        </div>
-        <button
-          className={isSecondaryTabActive || showMoreNav ? "admin-more-toggle active" : "admin-more-toggle"}
-          type="button"
-          aria-expanded={showMoreNav}
-          aria-controls="admin-secondary-navigation"
-          onClick={() => setShowMoreNav((current) => !current)}
-        >
-          Meer onderdelen
-          {secondaryBadgeCount ? <span>{secondaryBadgeCount}</span> : null}
-        </button>
-        <div
-          className={showMoreNav ? "admin-tabs admin-tabs-secondary open" : "admin-tabs admin-tabs-secondary"}
-          id="admin-secondary-navigation"
-          role="group"
-          aria-label="Overige admin onderdelen"
-        >
-          {secondaryTabs.map(renderTabButton)}
-        </div>
+        {tabGroups.map((group) => (
+          <section className="admin-nav-group" key={group.title} aria-label={group.title}>
+            <div className="admin-nav-group-copy">
+              <strong>{group.title}</strong>
+              <small>{group.helper}</small>
+            </div>
+            <div className="admin-tabs" role="group" aria-label={group.title}>
+              {group.ids.map((id) => tabMap.get(id)).filter((tab): tab is (typeof tabs)[number] => Boolean(tab)).map(renderTabButton)}
+            </div>
+          </section>
+        ))}
       </nav>
 
       {activeTab === "today" ? (
@@ -348,10 +376,10 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
               {filteredEpisodes.map((episode) => (
                 <button key={episode.id} type="button" className={episode.id === selectedId ? "active" : ""} onClick={() => selectEpisode(episode)}>
                   <span>{episode.title}</span>
-                  <small>S{episode.season_number} E{episode.episode_number} - {episode.status}</small>
+                  <small>S{episode.season_number} E{episode.episode_number} - {episodeStatusLabel(episode.status)}</small>
                 </button>
               ))}
-              {!filteredEpisodes.length ? <p className="small-note">Geen afleveringen gevonden.</p> : null}
+              {!filteredEpisodes.length ? <p className="small-note">Geen afleveringen gevonden. Pas je zoekterm of statusfilter aan.</p> : null}
             </div>
           </aside>
 
@@ -363,6 +391,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
           >
             <input type="hidden" name="id" defaultValue={selectedEpisode.id} />
             <input type="hidden" name="link_cards" value={JSON.stringify(linkCards)} readOnly />
+            <input type="hidden" name="return_tab" value="podcast" readOnly />
 
             <div className="editor-topbar">
               <div>
@@ -399,7 +428,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
                   <label>Duur<input name="duration" defaultValue={selectedEpisode.duration ?? ""} placeholder="45:12" /></label>
                   <label>Status<StatusSelect defaultValue={selectedEpisode.status} /></label>
                 </div>
-                <label className="check-row"><input name="featured_latest" type="checkbox" defaultChecked={selectedEpisode.featured_latest} /> Featured latest</label>
+                <label className="check-row"><input name="featured_latest" type="checkbox" defaultChecked={selectedEpisode.featured_latest} /> Toon als nieuwste aflevering</label>
 
                 <div className="upload-grid">
                   <label className="upload-field">
@@ -426,7 +455,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
                     <p className="eyebrow">Google STT</p>
                     <h3>Transcript</h3>
                     <p className="small-note">
-                      Status: {selectedEpisode.transcript_status}
+                      Status: {transcriptStatusLabel(selectedEpisode.transcript_status)}
                       {selectedEpisode.transcript_generated_at ? ` · ${new Date(selectedEpisode.transcript_generated_at).toLocaleString("nl-NL")}` : ""}
                     </p>
                   </div>
@@ -450,8 +479,8 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
                 <div className="link-card-editor">
                   <div className="manager-header">
                     <div>
-                      <p className="eyebrow">CTA cards</p>
-                      <h3>Link widgets</h3>
+                      <p className="eyebrow">Extra acties</p>
+                      <h3>Luister- en linkkaarten</h3>
                     </div>
                     <button className="text-link" type="button" onClick={addCard}>Card toevoegen</button>
                   </div>
@@ -466,7 +495,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
                       <button type="button" className="text-button" onClick={() => removeCard(index)}>Verwijder</button>
                     </div>
                   ))}
-                  {!linkCards.length ? <p className="small-note">Voeg optionele CTA cards toe voor boeken, donaties of luisterplatforms.</p> : null}
+                  {!linkCards.length ? <p className="small-note">Voeg optionele kaarten toe voor boeken, donaties of luisterplatforms.</p> : null}
                 </div>
               </div>
 
@@ -479,6 +508,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
       {activeTab === "seasons" ? (
         <div className="admin-grid wide">
           <AdminForm title="Seizoen toevoegen of bijwerken" action={saveSeason}>
+            <input type="hidden" name="return_tab" value="seasons" readOnly />
             <label>Titel<input name="title" required /></label>
             <label>Seizoensnummer<input name="season_number" type="number" min="1" required /></label>
             <label>Beschrijving<textarea name="description" /></label>
@@ -489,7 +519,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
           <article className="admin-panel">
             <h2>Bestaande seizoenen</h2>
             <div className="compact-list">
-              {seasons.map((season) => <p key={season.id}>S{season.season_number} - {season.title} ({season.status})</p>)}
+              {seasons.map((season) => <p key={season.id}>S{season.season_number} - {season.title} ({episodeStatusLabel(season.status)})</p>)}
             </div>
           </article>
         </div>
@@ -513,6 +543,70 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
   );
 }
 
+function AdminOperationsHeader({
+  episodes,
+  missingSupabase,
+  localPreview,
+  pendingReviewCount,
+  missingMedia,
+  failedTranscripts,
+  scheduledEpisodes,
+  onOpenTab
+}: {
+  episodes: PodcastEpisode[];
+  missingSupabase?: boolean;
+  localPreview?: boolean;
+  pendingReviewCount: number;
+  missingMedia: number;
+  failedTranscripts: number;
+  scheduledEpisodes: number;
+  onOpenTab: (tab: AdminTabId) => void;
+}) {
+  const publishedEpisodes = episodes.filter((episode) => episode.status === "published").length;
+  const draftEpisodes = episodes.filter((episode) => episode.status === "draft").length;
+  const environmentLabel = missingSupabase ? "Demo data" : localPreview ? "Lokale preview" : "Live beheer";
+  const environmentTone = missingSupabase || localPreview ? "warning" : "ready";
+
+  return (
+    <header className="admin-ops-header">
+      <div className="admin-ops-copy">
+        <p className="eyebrow">Beheercentrum</p>
+        <h2>Wat moet er nu gebeuren?</h2>
+        <p>
+          Werk vanuit taken: publiceer podcastcontent, keur reacties goed en controleer of de live site klaarstaat.
+          Setup-modules tonen voortaan duidelijk wat nog koppeling nodig heeft.
+        </p>
+      </div>
+      <div className="admin-ops-status" aria-label="Beheerstatus">
+        <span className={`admin-health-pill ${environmentTone}`}>
+          {environmentTone === "ready" ? <CheckCircle2 size={16} aria-hidden /> : <ShieldCheck size={16} aria-hidden />}
+          {environmentLabel}
+        </span>
+        <span>{publishedEpisodes} gepubliceerd</span>
+        <span>{draftEpisodes} concepten</span>
+        <span>{scheduledEpisodes} gepland</span>
+      </div>
+      <div className="admin-ops-actions" aria-label="Snelle acties">
+        <button type="button" onClick={() => onOpenTab("reviews")}>
+          <ClipboardCheck size={18} aria-hidden />
+          <span>{pendingReviewCount}</span>
+          Review inbox
+        </button>
+        <button type="button" onClick={() => onOpenTab("podcast")}>
+          <ImagePlus size={18} aria-hidden />
+          <span>{missingMedia}</span>
+          Media aanvullen
+        </button>
+        <button type="button" onClick={() => onOpenTab("podcast")}>
+          <Captions size={18} aria-hidden />
+          <span>{failedTranscripts}</span>
+          Transcripties
+        </button>
+      </div>
+    </header>
+  );
+}
+
 function SectionDesignEditor({ initialSettings }: { initialSettings: SiteDesignSettings }) {
   const [settings, setSettings] = useState<SiteDesignSettings>(initialSettings);
 
@@ -529,6 +623,7 @@ function SectionDesignEditor({ initialSettings }: { initialSettings: SiteDesignS
   return (
     <form className="section-design-editor" action={saveSectionDesignSettings}>
       <input type="hidden" name="section_styles" value={encodeSiteDesignSettings(settings)} readOnly />
+      <input type="hidden" name="return_tab" value="sections" readOnly />
       <div className="editor-topbar">
         <div>
           <p className="eyebrow">No-code stijlbeheer</p>
@@ -585,6 +680,18 @@ function ColorInput({ value, onChange }: { value: string; onChange: (value: stri
   );
 }
 
+function ModuleReadiness({ state, detail }: { state: string; detail: string }) {
+  return (
+    <aside className="module-readiness" aria-label="Module status">
+      <ShieldCheck size={18} aria-hidden />
+      <div>
+        <strong>{state}</strong>
+        <p>{detail}</p>
+      </div>
+    </aside>
+  );
+}
+
 function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   return (
     <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Preset kiezen" title="Preset kiezen">
@@ -630,8 +737,8 @@ function TodayDashboard({
           <h2>Vandaag in beheer</h2>
           <p>Begin met wat aandacht vraagt: reviews, media, transcripties en geplande content.</p>
         </div>
-        <button className="button" type="button" onClick={() => onOpenTab("builder")}>
-          <LayoutTemplate size={17} aria-hidden /> Open builder
+        <button className="button" type="button" onClick={() => onOpenTab(pendingPosts.length + pendingInterviewComments.length + reports.length ? "reviews" : "podcast")}>
+          <ClipboardCheck size={17} aria-hidden /> Start met open taken
         </button>
       </div>
       <div className="admin-kpi-grid">
@@ -648,10 +755,10 @@ function TodayDashboard({
         <article className="admin-panel">
           <h2>Snelle taken</h2>
           <div className="workflow-list">
-            <button type="button" onClick={() => onOpenTab("reviews")}><CheckCircle2 size={17} aria-hidden /> Review interviewreacties</button>
-            <button type="button" onClick={() => onOpenTab("calendar")}><CalendarDays size={17} aria-hidden /> Plan marketingmoment</button>
-            <button type="button" onClick={() => onOpenTab("ai")}><WandSparkles size={17} aria-hidden /> Schrijf social caption met AI</button>
-            <button type="button" onClick={() => onOpenTab("brand")}><Palette size={17} aria-hidden /> Controleer moodboard</button>
+            <button type="button" onClick={() => onOpenTab("reviews")}><CheckCircle2 size={17} aria-hidden /> Beoordeel reacties en meldingen</button>
+            <button type="button" onClick={() => onOpenTab("podcast")}><ImagePlus size={17} aria-hidden /> Vul audio, cover of transcriptie aan</button>
+            <button type="button" onClick={() => onOpenTab("sections")}><LayoutTemplate size={17} aria-hidden /> Pas homepage-secties aan</button>
+            <button type="button" onClick={() => onOpenTab("calendar")}><CalendarDays size={17} aria-hidden /> Bekijk marketingplanning</button>
           </div>
         </article>
         <article className="admin-panel">
@@ -676,6 +783,11 @@ function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pen
           <h2>Af- en goedkeuren</h2>
           <p>Moderatie voor interviewcomments, community posts en open meldingen in een veilige reviewflow.</p>
         </div>
+      </div>
+      <div className="review-summary" aria-label="Review samenvatting">
+        <span><strong>{pendingInterviewComments.length}</strong> interviewreacties</span>
+        <span><strong>{pendingPosts.length}</strong> communityberichten</span>
+        <span><strong>{reports.length}</strong> open meldingen</span>
       </div>
       <div className="review-board">
         <article className="admin-panel review-lane">
@@ -703,14 +815,14 @@ function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pen
                 </form>
               </div>
             </div>
-          )) : <p>Geen interviewcomments in review.</p>}
+          )) : <p className="empty-state">Alles is beoordeeld. Nieuwe interviewreacties verschijnen hier.</p>}
         </article>
         <article className="admin-panel review-lane">
           <h3>Community posts</h3>
           {pendingPosts.length ? pendingPosts.map((post) => (
             <div className="review-card" key={post.id}>
               <div className="review-card-top">
-                <span>Pending</span>
+                <span>Wacht op review</span>
                 <small>{new Date(post.created_at).toLocaleDateString("nl-NL")}</small>
               </div>
               <strong>{post.title}</strong>
@@ -724,17 +836,18 @@ function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pen
                 </form>
               </div>
             </div>
-          )) : <p>Geen community posts in review.</p>}
+          )) : <p className="empty-state">Geen communityberichten die op review wachten.</p>}
         </article>
         <article className="admin-panel review-lane">
           <h3>Meldingen</h3>
+          <ModuleReadiness state="Alleen lezen" detail="Meldingen worden hier zichtbaar gemaakt. Oplossen/negeren vraagt nog een server action." />
           {reports.length ? reports.map((report) => (
             <div className="review-card" key={report.id}>
               <div className="review-card-top"><span>Open</span><small>{new Date(report.created_at).toLocaleDateString("nl-NL")}</small></div>
               <p>{report.reason}</p>
               <small>Post: {report.post_id ?? "onbekend"}</small>
             </div>
-          )) : <p>Geen open meldingen.</p>}
+          )) : <p className="empty-state">Geen open meldingen.</p>}
         </article>
       </div>
     </div>
@@ -746,14 +859,15 @@ function ElementorBuilder({ settings, onOpenSections }: { settings: SiteDesignSe
     <div className="admin-module builder-shell">
       <div className="admin-module-hero">
         <div>
-          <p className="eyebrow">Elementor-style</p>
+          <p className="eyebrow">Sitebeheer</p>
           <h2>Pagina builder</h2>
-          <p>Een veilige page outline met live canvas, inspector en voor/na preview. Opslaan gebeurt via de bestaande Secties-module.</p>
+          <p>Bekijk de homepage-opbouw en pas styling veilig aan via Secties. De canvas is een preview, de opslaglaag zit in Secties.</p>
         </div>
         <button className="button" type="button" onClick={onOpenSections}>
-          <Save size={17} aria-hidden /> Open opslaglaag
+          <Save size={17} aria-hidden /> Pas secties aan
         </button>
       </div>
+      <ModuleReadiness state="Live preview" detail="Deze module leest de huidige sectie-instellingen. Wijzigingen opslaan doe je via Secties." />
       <div className="builder-layout">
         <aside className="builder-outline">
           <h3>Pagina outline</h3>
@@ -794,10 +908,11 @@ function AccessAndRoles() {
         <div>
           <p className="eyebrow">Security</p>
           <h2>Beheerders en rollen</h2>
-          <p>RBAC blauwdruk voor eigenaar, redacteur, moderator en analist. Koppel dit later aan Supabase Auth claims.</p>
+          <p>Overzicht van gewenste rollen. Live toegang loopt nu via Supabase Auth en de toegestane e-maillijst.</p>
         </div>
         <ShieldCheck aria-hidden />
       </div>
+      <ModuleReadiness state="Setup nodig" detail="Rolbeheer is nog geen live CRUD. Voeg beheerders nu toe via ADMIN_EMAILS en Supabase Auth." />
       <div className="admin-table-card">
         {roleRows.map((row) => (
           <div className="admin-table-row" key={row.role}>
@@ -821,7 +936,10 @@ function ApiKeyVault({ missingSupabase }: { missingSupabase?: boolean }) {
         </div>
         <KeyRound aria-hidden />
       </div>
-      {missingSupabase ? <p className="notice">Voor live sleutelbeheer is Supabase plus server-side secret opslag nodig.</p> : null}
+      <ModuleReadiness
+        state="Alleen inventaris"
+        detail={missingSupabase ? "Supabase ontbreekt. Secrets horen in Vercel env of een server-side secret manager." : "Secrets worden bewust niet in de browser aangepast. Beheer ze via Vercel env of een secret manager."}
+      />
       <div className="key-grid">
         {keys.map((key) => (
           <article className="key-card" key={key}>
@@ -845,8 +963,9 @@ function MarketingCalendar() {
           <h2>Marketingkalender</h2>
           <p>Plan campagnes per kanaal, laat AI captions schrijven en routeer goedgekeurde items naar Make.</p>
         </div>
-        <button className="button" type="button"><Plus size={17} aria-hidden /> Moment toevoegen</button>
+        <button className="button ghost" type="button" disabled><Plus size={17} aria-hidden /> Planning volgt</button>
       </div>
+      <ModuleReadiness state="Roadmap" detail="Deze kalender is een planningsoverzicht. Live toevoegen vereist nog een marketing_items tabel en server action." />
       <div className="calendar-list">
         {marketingItems.map((item) => (
           <article className="calendar-item" key={`${item.date}-${item.title}`}>
@@ -871,6 +990,7 @@ function IntegrationCenter() {
         </div>
         <Network aria-hidden />
       </div>
+      <ModuleReadiness state="Configuratiecheck" detail="Koppelingen zijn hier als checklist zichtbaar. Publiceren naar externe platformen is nog niet live gekoppeld." />
       <div className="integration-grid">
         {integrationCards.map(({ platform, state, owner, icon: Icon, note }) => (
           <article className="integration-card" key={platform}>
@@ -897,16 +1017,17 @@ function AIStudio() {
         </div>
         <Bot aria-hidden />
       </div>
+      <ModuleReadiness state="Roadmap" detail="AI-acties zijn nog niet gekoppeld aan server-side generatie. Gebruik dit als prompt- en tone-of-voice ontwerp." />
       <div className="ai-workbench">
         <article className="admin-panel">
           <h3><WandSparkles size={18} aria-hidden /> Tekstschrijver</h3>
           <textarea defaultValue="Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden." />
-          <button className="button" type="button"><Sparkles size={17} aria-hidden /> Genereer tekst</button>
+          <button className="button ghost" type="button" disabled><Sparkles size={17} aria-hidden /> Nog niet gekoppeld</button>
         </article>
         <article className="admin-panel">
           <h3><ImageIcon size={18} aria-hidden /> Nano Banana beelden</h3>
           <textarea defaultValue="Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst." />
-          <button className="button" type="button"><ImagePlus size={17} aria-hidden /> Genereer beeld</button>
+          <button className="button ghost" type="button" disabled><ImagePlus size={17} aria-hidden /> Nog niet gekoppeld</button>
         </article>
         <article className="admin-panel">
           <h3><Brain size={18} aria-hidden /> Persoonlijkheid finetunen</h3>
@@ -932,6 +1053,7 @@ function AnalyticsCenter() {
         </div>
         <Gauge aria-hidden />
       </div>
+      <ModuleReadiness state="Voorbeelddata" detail="Deze cijfers zijn placeholders totdat GA4, social insights en Supabase analytics live worden opgehaald." />
       <div className="admin-kpi-grid">
         {analyticsRows.map((row) => (
           <article className="admin-kpi-card static" key={row.metric}>
@@ -987,6 +1109,7 @@ function AutomationHub() {
         </div>
         <Workflow aria-hidden />
       </div>
+      <ModuleReadiness state="Blueprint" detail="Automations zijn nog geen live workflows. Koppel eerst Make webhook, reviewstatus en publishing logs." />
       <div className="automation-flow">
         {["Kalenderitem", "AI copy", "Review", "Make webhook", "Social publish", "Analytics terugkoppeling"].map((step, index) => (
           <article key={step}>
@@ -1013,7 +1136,7 @@ function EpisodePreview({ episode, linkCards }: { episode: PodcastEpisode; linkC
       <div className="preview-meta">
         <span>S{episode.season_number}</span>
         <span>E{episode.episode_number}</span>
-        <span>{episode.status}</span>
+        <span>{episodeStatusLabel(episode.status)}</span>
       </div>
       <div className="episode-link-card-grid">
         {linkCards.filter((card) => card.label && card.url).map((card, index) => (
@@ -1047,7 +1170,7 @@ function CommunityModeration({ pendingPosts, reports }: { pendingPosts: AdminPos
             </div>
           ))
         ) : (
-          <p>Geen pending berichten.</p>
+          <p className="empty-state">Geen berichten die op review wachten.</p>
         )}
       </article>
       <article className="admin-panel">
@@ -1061,6 +1184,7 @@ function CommunityModeration({ pendingPosts, reports }: { pendingPosts: AdminPos
 function SiteSettingsForm() {
   return (
     <AdminForm title="Site instellingen" action={saveSiteSettings}>
+      <input type="hidden" name="return_tab" value="site" readOnly />
       <label>Logo URL<input name="logo_url" defaultValue="/brand/sverdriet_logo.webp" /></label>
       <label>Homepage intro<textarea name="homepage_intro" placeholder="Intro voor de homepage" /></label>
       <label>Instagram<input name="instagram_url" /></label>
@@ -1079,6 +1203,7 @@ function HostAndFaqForms() {
   return (
     <div className="admin-grid wide">
       <AdminForm title="Host toevoegen" action={saveHost}>
+        <input type="hidden" name="return_tab" value="hosts" readOnly />
         <label>Naam<input name="name" required /></label>
         <label>Rol<input name="role" /></label>
         <label>Foto URL<input name="image_url" /></label>
@@ -1089,6 +1214,7 @@ function HostAndFaqForms() {
         <button className="button" type="submit">Host opslaan</button>
       </AdminForm>
       <AdminForm title="FAQ toevoegen" action={saveFaq}>
+        <input type="hidden" name="return_tab" value="hosts" readOnly />
         <label>Vraag<input name="question" required /></label>
         <label>Antwoord<textarea name="answer" required /></label>
         <label>Categorie<input name="category" /></label>
@@ -1114,12 +1240,32 @@ function AdminForm({ title, action, children }: { title: string; action: (formDa
 function StatusSelect({ defaultValue = "draft" }: { defaultValue?: string }) {
   return (
     <select name="status" defaultValue={defaultValue} aria-label="Status" title="Status">
-      <option value="draft">draft</option>
-      <option value="scheduled">scheduled</option>
-      <option value="published">published</option>
-      <option value="archived">archived</option>
+      <option value="draft">Concept</option>
+      <option value="scheduled">Gepland</option>
+      <option value="published">Gepubliceerd</option>
+      <option value="archived">Gearchiveerd</option>
     </select>
   );
+}
+
+function episodeStatusLabel(value: string) {
+  const labels: Record<string, string> = {
+    archived: "Gearchiveerd",
+    draft: "Concept",
+    published: "Gepubliceerd",
+    scheduled: "Gepland"
+  };
+  return labels[value] ?? value;
+}
+
+function transcriptStatusLabel(value: string | null | undefined) {
+  const labels: Record<string, string> = {
+    failed: "Mislukt",
+    missing: "Ontbreekt",
+    processing: "Wordt verwerkt",
+    ready: "Klaar"
+  };
+  return labels[value ?? ""] ?? "Onbekend";
 }
 
 function SeasonSelect({ seasons, defaultValue }: { seasons: PodcastSeason[]; defaultValue: number }) {

@@ -2010,6 +2010,14 @@ p {
   color: var(--pine);
 }
 
+.button.ghost,
+.button:disabled {
+  background: rgba(66, 86, 69, 0.1);
+  border-color: rgba(66, 86, 69, 0.18);
+  color: rgba(43, 49, 43, 0.62);
+  cursor: not-allowed;
+}
+
 .brand-social-links {
   gap: 12px;
 }
@@ -3442,28 +3450,42 @@ textarea {
   gap: 22px;
   padding-left: clamp(14px, 4vw, 56px);
   padding-right: clamp(14px, 4vw, 56px);
+  padding-top: clamp(96px, 12vw, 132px);
 }
 
 .admin-navigation {
   display: grid;
+  gap: 12px;
+}
+
+.admin-nav-group {
+  background: rgba(255, 253, 248, 0.68);
+  border: 1px solid var(--line);
+  display: grid;
   gap: 10px;
+  padding: 10px;
+}
+
+.admin-nav-group-copy {
+  display: grid;
+  gap: 2px;
+  padding: 2px 4px 0;
+}
+
+.admin-nav-group-copy strong {
+  color: var(--pine);
+  font-size: 0.9rem;
+}
+
+.admin-nav-group-copy small {
+  color: rgba(43, 49, 43, 0.58);
+  font-size: 0.76rem;
 }
 
 .admin-tabs {
-  background: rgba(255, 253, 248, 0.68);
-  border: 1px solid var(--line);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px;
-}
-
-.admin-tabs-secondary {
-  display: none;
-}
-
-.admin-tabs-secondary.open {
-  display: flex;
 }
 
 .admin-tabs button,
@@ -3538,6 +3560,96 @@ textarea {
 .admin-module {
   display: grid;
   gap: 18px;
+}
+
+.admin-ops-header {
+  background:
+    linear-gradient(135deg, rgba(66, 86, 69, 0.96), rgba(31, 39, 32, 0.94)),
+    var(--pine);
+  box-shadow: var(--shadow);
+  color: var(--white);
+  display: grid;
+  gap: 18px;
+  padding: clamp(18px, 4vw, 32px);
+}
+
+.admin-ops-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-ops-copy h2 {
+  color: var(--white);
+  font-size: clamp(1.7rem, 7vw, 3.2rem);
+  line-height: 0.98;
+  margin: 0;
+}
+
+.admin-ops-copy p:not(.eyebrow) {
+  color: rgba(255, 253, 248, 0.78);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 760px;
+}
+
+.admin-ops-status,
+.admin-ops-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-ops-status span,
+.admin-ops-actions button {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.1);
+  border: 1px solid rgba(255, 253, 248, 0.16);
+  color: var(--white);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 12px;
+}
+
+.admin-ops-actions button {
+  cursor: pointer;
+  flex: 1 1 160px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.admin-ops-actions button span {
+  background: var(--white);
+  color: var(--pine);
+  display: inline-grid;
+  min-width: 28px;
+  place-items: center;
+}
+
+.admin-health-pill.ready {
+  background: rgba(138, 157, 139, 0.28);
+}
+
+.admin-health-pill.warning {
+  background: rgba(231, 220, 200, 0.22);
+}
+
+.module-readiness {
+  align-items: start;
+  background: rgba(231, 220, 200, 0.28);
+  border: 1px solid rgba(66, 86, 69, 0.16);
+  color: var(--pine);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 12px;
+}
+
+.module-readiness p {
+  color: rgba(43, 49, 43, 0.66);
+  line-height: 1.5;
+  margin: 3px 0 0;
 }
 
 .admin-module-hero {
@@ -3642,6 +3754,25 @@ textarea {
   align-content: start;
   display: grid;
   gap: 12px;
+}
+
+.review-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.review-summary span,
+.empty-state {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  color: var(--pine);
+  padding: 12px;
+}
+
+.review-summary strong {
+  font-size: 1.35rem;
+  margin-right: 6px;
 }
 
 .review-card {
@@ -3925,7 +4056,8 @@ textarea {
   .admin-kpi-grid,
   .integration-grid,
   .key-grid,
-  .brand-grid {
+  .brand-grid,
+  .review-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -3959,15 +4091,20 @@ textarea {
   }
 
   .admin-navigation {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
   }
 
-  .admin-more-toggle {
-    display: none;
+  .admin-nav-group {
+    align-content: start;
   }
 
-  .admin-tabs-secondary {
-    display: flex;
+  .admin-ops-header {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  }
+
+  .admin-ops-actions {
+    grid-column: 1 / -1;
   }
 
   .admin-kpi-grid,
@@ -3975,6 +4112,10 @@ textarea {
   .key-grid,
   .brand-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .review-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .review-board,
@@ -5460,7 +5601,7 @@ textarea {
   }
 
   .hero-state-butterfly {
-    --mobile-hero-media-height: clamp(218px, 63vw, 360px);
+    --mobile-hero-media-height: clamp(300px, 86vw, 380px);
     align-items: flex-end;
     background:
       linear-gradient(180deg, #050504 0%, #0f120d 56%, #425645 100%);
@@ -5475,7 +5616,7 @@ textarea {
   .hero-state-butterfly .hero-slide-image-episode-live {
     background: #050504;
     object-fit: contain !important;
-    object-position: center top;
+    object-position: center 78%;
   }
 
   .hero-state-butterfly .hero-copy {

@@ -136,6 +136,12 @@ function optionalUrl(value: FormDataEntryValue | null) {
   }
 }
 
+function adminReturnTarget(formData: FormData, status: "saved" | "error", code: string, fallbackTab = "today") {
+  const rawTab = String(formData.get("return_tab") ?? fallbackTab).trim();
+  const tab = /^[a-z0-9-]+$/i.test(rawTab) ? rawTab : fallbackTab;
+  return `/admin?tab=${encodeURIComponent(tab)}&${status}=${encodeURIComponent(code)}`;
+}
+
 function isAllowedCommunityImage(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   return file.size <= communityImageMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
@@ -559,7 +565,7 @@ export async function saveSeason(formData: FormData) {
   const supabase = await requireAdminClient();
   const title = String(formData.get("title") ?? "").trim();
   const seasonNumber = Number(formData.get("season_number"));
-  if (!title || !seasonNumber) redirect("/admin?error=season");
+  if (!title || !seasonNumber) redirect(adminReturnTarget(formData, "error", "season", "seasons"));
 
   await supabase.from("podcast_seasons").upsert(
     {
@@ -573,7 +579,7 @@ export async function saveSeason(formData: FormData) {
   );
   revalidatePath("/podcast");
   revalidatePath("/admin");
-  redirect("/admin?saved=season");
+  redirect(adminReturnTarget(formData, "saved", "season", "seasons"));
 }
 
 export async function saveEpisode(formData: FormData) {
@@ -582,7 +588,7 @@ export async function saveEpisode(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const seasonNumber = Number(formData.get("season_number"));
   const episodeNumber = Number(formData.get("episode_number"));
-  if (!title || !seasonNumber || !episodeNumber) redirect("/admin?error=episode");
+  if (!title || !seasonNumber || !episodeNumber) redirect(adminReturnTarget(formData, "error", "episode", "podcast"));
 
   const slug = String(formData.get("slug") ?? "").trim() || slugify(title);
   const uploadFolder = `podcast/${safePathPart(slug)}`;
@@ -623,12 +629,12 @@ export async function saveEpisode(formData: FormData) {
   const result = id
     ? await supabase.from("podcast_episodes").update(payload).eq("id", id)
     : await supabase.from("podcast_episodes").upsert(payload, { onConflict: "slug" });
-  if (result.error) redirect("/admin?error=episode-save");
+  if (result.error) redirect(adminReturnTarget(formData, "error", "episode-save", "podcast"));
   revalidatePath("/");
   revalidatePath("/podcast");
   revalidatePath(`/podcast/${slug}`);
   revalidatePath("/admin");
-  redirect("/admin?saved=episode");
+  redirect(adminReturnTarget(formData, "saved", "episode", "podcast"));
 }
 
 export async function archiveEpisode(episodeId: string) {
@@ -637,12 +643,12 @@ export async function archiveEpisode(episodeId: string) {
   revalidatePath("/");
   revalidatePath("/podcast");
   revalidatePath("/admin");
-  redirect("/admin?saved=archived");
+  redirect("/admin?tab=podcast&saved=archived");
 }
 
 export async function startEpisodeTranscript(episodeId: string) {
   const supabase = await requireAdminClient();
-  let target = "/admin?saved=transcript-started";
+  let target = "/admin?tab=podcast&saved=transcript-started";
   try {
     const episode = await getEpisodeForTranscript(supabase, episodeId);
     if (!episode.audio_file_url) throw new Error("missing-audio");
@@ -708,14 +714,14 @@ export async function startEpisodeTranscript(episodeId: string) {
       .update({ transcript_status: "failed", updated_at: new Date().toISOString() })
       .eq("id", episodeId);
     revalidatePath("/admin");
-    target = "/admin?error=transcript-start";
+    target = "/admin?tab=podcast&error=transcript-start";
   }
   redirect(target);
 }
 
 export async function refreshEpisodeTranscript(episodeId: string) {
   const supabase = await requireAdminClient();
-  let target = "/admin?saved=transcript-ready";
+  let target = "/admin?tab=podcast&saved=transcript-ready";
   try {
     const episode = await getEpisodeForTranscript(supabase, episodeId);
     if (!episode.transcript_operation_name) throw new Error("missing-operation");
@@ -735,7 +741,7 @@ export async function refreshEpisodeTranscript(episodeId: string) {
         .update({ transcript_status: "processing", updated_at: new Date().toISOString() })
         .eq("id", episodeId);
       revalidatePath("/admin");
-      target = "/admin?saved=transcript-processing";
+      target = "/admin?tab=podcast&saved=transcript-processing";
     } else {
       if (operation.error) throw new Error(operation.error.message ?? "speech-operation-error");
 
@@ -768,7 +774,7 @@ export async function refreshEpisodeTranscript(episodeId: string) {
       .update({ transcript_status: "failed", updated_at: new Date().toISOString() })
       .eq("id", episodeId);
     revalidatePath("/admin");
-    target = "/admin?error=transcript-refresh";
+    target = "/admin?tab=podcast&error=transcript-refresh";
   }
   redirect(target);
 }
@@ -776,7 +782,7 @@ export async function refreshEpisodeTranscript(episodeId: string) {
 export async function saveHost(formData: FormData) {
   const supabase = await requireAdminClient();
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) redirect("/admin?error=host");
+  if (!name) redirect(adminReturnTarget(formData, "error", "host", "hosts"));
 
   await supabase.from("host_profiles").insert({
     name,
@@ -790,14 +796,14 @@ export async function saveHost(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/over");
   revalidatePath("/admin");
-  redirect("/admin?saved=host");
+  redirect(adminReturnTarget(formData, "saved", "host", "hosts"));
 }
 
 export async function saveFaq(formData: FormData) {
   const supabase = await requireAdminClient();
   const question = String(formData.get("question") ?? "").trim();
   const answer = String(formData.get("answer") ?? "").trim();
-  if (!question || !answer) redirect("/admin?error=faq");
+  if (!question || !answer) redirect(adminReturnTarget(formData, "error", "faq", "hosts"));
 
   await supabase.from("faqs").insert({
     question,
@@ -808,7 +814,7 @@ export async function saveFaq(formData: FormData) {
   });
   revalidatePath("/faq");
   revalidatePath("/admin");
-  redirect("/admin?saved=faq");
+  redirect(adminReturnTarget(formData, "saved", "faq", "hosts"));
 }
 
 export async function saveSiteSettings(formData: FormData) {
@@ -839,7 +845,7 @@ export async function saveSiteSettings(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/contact");
   revalidatePath("/admin");
-  redirect("/admin?saved=site");
+  redirect(adminReturnTarget(formData, "saved", "site", "site"));
 }
 
 export async function saveSectionDesignSettings(formData: FormData) {
@@ -849,7 +855,7 @@ export async function saveSectionDesignSettings(formData: FormData) {
   try {
     parsed = JSON.parse(rawSettings);
   } catch {
-    redirect("/admin?error=section-design");
+    redirect(adminReturnTarget(formData, "error", "section-design", "sections"));
   }
 
   const { data } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
@@ -870,11 +876,11 @@ export async function saveSectionDesignSettings(formData: FormData) {
     { onConflict: "id" }
   );
 
-  if (result.error) redirect("/admin?error=section-design-save");
+  if (result.error) redirect(adminReturnTarget(formData, "error", "section-design-save", "sections"));
   revalidatePath("/");
   revalidatePath("/podcast");
   revalidatePath("/themas");
   revalidatePath("/community");
   revalidatePath("/admin");
-  redirect("/admin?saved=section-design");
+  redirect(adminReturnTarget(formData, "saved", "section-design", "sections"));
 }

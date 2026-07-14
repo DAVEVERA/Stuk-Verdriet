@@ -62,3 +62,26 @@ Fix pasted SEO, Markdown, heading, structured-data, and build-root diagnostics f
 ## Completion Marker
 
 DIAGNOSTICS_FIX_PASS_COMPLETE: true
+
+---
+
+## Goal
+
+Make the Stuk Verdriet admin portal understandable, task-led, mobile-first, and more functionally honest.
+
+## Tasks
+
+- [x] Inspect current admin implementation
+- [x] Identify confusing or placeholder functionality
+- [x] Redesign admin information architecture around daily tasks
+- [x] Improve primary navigation and readiness/status signals
+- [x] Improve podcast editor usability and mobile layout
+- [x] Improve review workflow clarity and empty states
+- [x] Mark non-live modules as setup/readiness modules instead of fake live tools
+- [x] Run verification
+- [x] Fix failures
+- [x] Final review
+
+## Completion Marker
+
+ADMIN_REWORK_PASS_COMPLETE: true
