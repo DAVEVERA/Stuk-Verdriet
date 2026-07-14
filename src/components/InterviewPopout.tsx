@@ -35,6 +35,7 @@ export function InterviewPopout({
 }: InterviewPopoutProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const isContentAwareCover = interview.cover_image_url === "/img/DV.jpeg";
 
   const handleLike = async () => {
     setIsLiking(true);
@@ -71,7 +72,7 @@ export function InterviewPopout({
 
         <div className="interview-popout-content">
           {interview.cover_image_url && (
-            <div className="interview-popout-image">
+            <div className={isContentAwareCover ? "interview-popout-image interview-popout-image-content-aware" : "interview-popout-image"}>
               <Image
                 src={interview.cover_image_url}
                 alt={interview.title}

@@ -6948,6 +6948,17 @@ textarea {
   object-position: center;
 }
 
+.interview-popout-image-content-aware {
+  background: #ffffff;
+  height: clamp(300px, 48vw, 520px);
+}
+
+.interview-popout-image-content-aware img {
+  object-fit: contain;
+  object-position: center center;
+  padding: clamp(10px, 2.5vw, 24px);
+}
+
 .interview-popout-header {
   border-bottom: 1px solid rgba(66, 86, 69, 0.1);
   margin-bottom: 20px;
@@ -7249,6 +7260,10 @@ textarea {
 
   .interview-popout-panel {
     max-width: 800px;
+  }
+
+  .interview-popout-image-content-aware {
+    height: clamp(420px, 52vw, 620px);
   }
 
   .comment-card.reply {
