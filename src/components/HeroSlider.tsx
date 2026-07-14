@@ -13,6 +13,7 @@ type HeroSlide = {
   heroClassName: string;
   slogan: [string, string];
   mobileSlogan?: [string] | [string, string];
+  hideCopy?: boolean;
 };
 
 const slides: HeroSlide[] = [
@@ -40,7 +41,8 @@ const slides: HeroSlide[] = [
     imageClassName: "hero-slide-image-episode-live",
     heroClassName: "hero-state-butterfly",
     slogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
-    mobileSlogan: ["Samen door wat niemand", "alleen zou moeten dragen."]
+    mobileSlogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
+    hideCopy: true
   }
 ];
 
@@ -84,16 +86,20 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
         </div>
         <div className="hero-slider-wash" aria-hidden="true" />
         <div className="hero-copy">
-          <h1>{siteName}</h1>
-          <div className="hero-slogan-art hero-slogan-art-desktop slogan-text" aria-label={activeSlide.slogan.join(" ")}>
-            <span>{activeSlide.slogan[0]}</span>
-            <span>{activeSlide.slogan[1]}</span>
-          </div>
-          <div className="hero-slogan-art hero-slogan-art-mobile slogan-text" aria-label={mobileSlogan.join(" ")}>
-            {mobileSlogan.map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </div>
+          {!activeSlide.hideCopy ? (
+            <>
+              <h1>{siteName}</h1>
+              <div className="hero-slogan-art hero-slogan-art-desktop slogan-text" aria-label={activeSlide.slogan.join(" ")}>
+                <span>{activeSlide.slogan[0]}</span>
+                <span>{activeSlide.slogan[1]}</span>
+              </div>
+              <div className="hero-slogan-art hero-slogan-art-mobile slogan-text" aria-label={mobileSlogan.join(" ")}>
+                {mobileSlogan.map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
+              </div>
+            </>
+          ) : null}
           <div className="hero-slider-dots" role="tablist" aria-label="Kies hero slide">
             {slides.map((slide, index) =>
               index === activeIndex ? (
