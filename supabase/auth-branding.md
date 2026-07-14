@@ -41,4 +41,31 @@ Controleer na wijzigingen minimaal een Google-login, een e-mail magic link en ee
 - De productie-URL in Supabase komt overeen met het actuele publieke domein.
 - Google Cloud bevat het juiste logo en geen oude test- of projectnaam.
 
+## Waarom deze instellingen belangrijk zijn
+
+De authenticatieflow is voor veel bezoekers het eerste moment waarop zij buiten de normale websiteomgeving komen. Een afwijkende projectnaam, technisch Supabase-label of onduidelijke afzender kan daardoor direct twijfel oproepen. Voor Stuk Verdriet is vertrouwen extra belangrijk, omdat bezoekers mogelijk persoonlijke verhalen, reacties of contactgegevens delen. De login moet daarom niet alleen technisch werken, maar ook voelen alsof hij hoort bij dezelfde rustige, zorgvuldige omgeving als de website.
+
+Gebruik dit document als inhoudelijke controle bij elke wijziging aan login, magic links, Google OAuth, redirectgedrag of e-mailtemplates. Het doel is dat bezoekers een herkenbare afzender zien, begrijpen waarom zij inloggen en na het afronden van de login terugkomen op de pagina waar zij begonnen. Dat geldt voor de publieke community, het reactieformulier, toekomstige persoonlijke functies en de beheeromgeving.
+
+## Reviewproces
+
+Controleer wijzigingen in drie lagen. Eerst de repo: routes zoals `/auth/callback`, `/redirect`, `/login`, `/privacy` en `/algemene-voorwaarden` moeten blijven bestaan en mogen niet door een statische export of verkeerde deploytarget worden gebroken. Controleer daarna Supabase Dashboard: site-URL, redirect-URL's, e-mailafzender en templates moeten overeenkomen met de productieomgeving. Controleer tot slot Google Cloud Console: appnaam, supportmail, privacyverklaring, voorwaarden en geautoriseerd domein moeten publiek bereikbaar en consistent zijn.
+
+Leg bij iedere dashboardwijziging vast wie de wijziging heeft gedaan, op welke datum, welke omgeving is geraakt en welke loginflow daarna is getest. Een korte notitie is voldoende, maar zonder notitie is later moeilijk te achterhalen of een fout uit code, Supabase, Google Cloud of DNS komt.
+
+## Testscenario's
+
+- Nieuwe bezoeker vraagt een magic link aan en komt na klikken terug op de bedoelde pagina.
+- Bestaande gebruiker logt in met Google en blijft na redirect als ingelogd herkend.
+- Bezoeker opent een verlopen of al gebruikte magic link en krijgt een begrijpelijke fout of nieuwe inlogmogelijkheid.
+- Wachtwoordherstelmail bevat de juiste naam, afzender, link en toon.
+- Privacyverklaring en algemene voorwaarden zijn bereikbaar vanuit de OAuth consent screen links.
+- Lokale ontwikkeling blijft mogelijk via `localhost`, zonder productie-redirects te breken.
+
+## Content- en privacyrichtlijnen
+
+Schrijf auth-teksten menselijk en concreet. Vermijd technische termen zoals project reference, anon key, database, bucket of provider callback in zichtbare e-mails en schermen. Benoem liever wat de bezoeker doet: inloggen, terugkeren, reageren, verhaal delen of gegevens beheren. Vraag alleen gegevens die nodig zijn voor de functie en verwijs bij twijfel naar de privacyverklaring.
+
+Als er nieuwe communityfuncties bijkomen, controleer dan opnieuw of de auth-ervaring past bij het doel van die functie. Een beheerlogin, communityreactie en privacyverzoek hebben elk een andere context, maar moeten allemaal herkenbaar blijven als Stuk Verdriet.
+
 Deze instellingen staan buiten de repo en moeten in Supabase Dashboard en Google Cloud Console worden gezet. Documenteer dashboardwijzigingen kort in de deploymentnotities, zodat latere auth-problemen sneller herleidbaar zijn.

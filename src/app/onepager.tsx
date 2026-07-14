@@ -39,6 +39,7 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
   return (
     <>
       <SiteDesignStyles settings={sectionDesign} />
+      <h1 className="sr-only">Stuk Verdriet - podcast en community over rouw, verlies en verder leven</h1>
       <Hero latest={latest} episodes={episodes} />
       <div className="story-gradient-flow">
         <GoFundMeSupportSection />
@@ -191,20 +192,6 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
           </a>
         </nav>
       </details>
-
-      <footer className="onepager-footer-social" aria-label="Volg Stuk Verdriet op social media">
-        <nav className="footer-social-nav">
-          <a href="https://www.instagram.com/stukverdrietdepodcast/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-            <Image src="/img/instagram.png" alt="Instagram" width={28} height={28} />
-          </a>
-          <a href="https://www.facebook.com/stukverdriet" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-            <Image src="/img/facebook.png" alt="Facebook" width={28} height={28} />
-          </a>
-          <a href="https://www.tiktok.com/@stuk.verdriet" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-            <Image src="/img/tik-tok.png" alt="TikTok" width={28} height={28} />
-          </a>
-        </nav>
-      </footer>
     </>
   );
 }

@@ -643,13 +643,13 @@ textarea {
   width: min(560px, 42vw);
 }
 
-.hero-state-podcast .hero-copy h1,
-.hero-state-lavie .hero-copy h1 {
+.hero-state-podcast .hero-site-title,
+.hero-state-lavie .hero-site-title {
   font-size: clamp(2.4rem, 4.8vw, 4.05rem);
   max-width: 10ch;
 }
 
-.hero-state-podcast .hero-copy h1,
+.hero-state-podcast .hero-site-title,
 .hero-state-podcast .hero-slogan-art {
   color: var(--white);
   text-shadow: 0 2px 22px rgba(20, 24, 20, 0.58);
@@ -677,7 +677,7 @@ textarea {
   width: min(560px, 42vw);
 }
 
-.hero-state-lavie .hero-copy h1,
+.hero-state-lavie .hero-site-title,
 .hero-state-lavie .hero-slogan-art {
   color: var(--white);
   text-shadow: 0 2px 22px rgba(20, 24, 20, 0.62);
@@ -697,7 +697,7 @@ textarea {
   width: min(720px, 54vw);
 }
 
-.hero-state-butterfly .hero-copy h1,
+.hero-state-butterfly .hero-site-title,
 .hero-state-butterfly .hero-slogan-art {
   color: var(--white);
   text-shadow: 0 2px 24px rgba(9, 14, 10, 0.68);
@@ -730,7 +730,12 @@ textarea {
   width: clamp(92px, 13vw, 190px);
 }
 
-.hero-copy h1 {
+.hero-site-title {
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: clamp(2.7rem, 6.4vw, 4.9rem);
+  font-weight: 600;
+  line-height: 1.08;
+  margin: 0;
   max-width: 760px;
   text-shadow: 0 1px 0 rgba(255, 253, 248, 0.54), 0 18px 38px rgba(242, 239, 233, 0.72);
 }
@@ -2512,7 +2517,6 @@ p {
   background: rgb(255, 253, 248);
   overflow-y: auto;
   padding: clamp(22px, 5vw, 48px);
-  scrollbar-gutter: stable;
 }
 
 .story-popout-body p {
@@ -5572,7 +5576,7 @@ textarea {
     width: min(94vw, 390px);
   }
 
-  .hero-state-podcast .hero-copy h1,
+  .hero-state-podcast .hero-site-title,
   .hero-state-podcast .hero-slogan-art {
     color: var(--white);
     text-shadow: 0 2px 22px rgba(9, 14, 10, 0.56);
@@ -5589,7 +5593,7 @@ textarea {
     width: min(94vw, 390px);
   }
 
-  .hero-state-lavie .hero-copy h1,
+  .hero-state-lavie .hero-site-title,
   .hero-state-lavie .hero-slogan-art {
     color: var(--white);
     text-shadow: 0 2px 22px rgba(9, 14, 10, 0.58);
@@ -5639,7 +5643,7 @@ textarea {
     padding: 1px 5px;
   }
 
-  .hero-state-butterfly .hero-copy h1,
+  .hero-state-butterfly .hero-site-title,
   .hero-state-butterfly .hero-slogan-art {
     color: var(--white);
     text-shadow: 0 2px 22px rgba(9, 14, 10, 0.58);
@@ -5669,7 +5673,7 @@ textarea {
     width: clamp(78px, 30vw, 138px);
   }
 
-  .hero-copy h1 {
+  .hero-site-title {
     display: none;
     font-size: clamp(1.72rem, 8.4vw, 2.38rem);
     line-height: 0.98;
@@ -6179,8 +6183,8 @@ textarea {
   transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   width: 36px;
   z-index: 1;
-  backdrop-filter: blur(16px) saturate(1.2);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
 }
 
 .social-sidebar-toggle::-webkit-details-marker {
@@ -6210,8 +6214,8 @@ textarea {
   border-right: 0;
   border-radius: 8px 0 0 8px;
   box-shadow: -10px 12px 28px rgba(43, 49, 43, 0.16);
-  backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
   animation: slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -6285,8 +6289,8 @@ textarea {
   justify-content: center;
   list-style: none;
   width: 44px;
-  backdrop-filter: blur(16px) saturate(1.2);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
   transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -6318,8 +6322,8 @@ textarea {
   padding: 8px;
   position: absolute;
   right: 0;
-  backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 
 .social-mobile-links a {
@@ -6408,60 +6412,6 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-
-/* Footer Social Links */
-.onepager-footer-social {
-  border-top: 1px solid rgba(66, 86, 69, 0.1);
-  padding: 48px 20px;
-  display: flex;
-  justify-content: center;
-  background: #f2efe9;
-}
-
-.footer-social-nav {
-  display: flex;
-  gap: 32px;
-  justify-content: center;
-}
-
-.footer-social-nav a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  opacity: 0.8;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.footer-social-nav a:hover,
-.footer-social-nav a:focus {
-  opacity: 1;
-  transform: scale(1.1);
-  outline: 2px solid #425645;
-  outline-offset: 3px;
-}
-
-.footer-social-nav img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-@media (max-width: 640px) {
-  .onepager-footer-social {
-    padding: 32px 16px;
-  }
-
-  .footer-social-nav {
-    gap: 24px;
-  }
-
-  .footer-social-nav a {
-    width: 36px;
-    height: 36px;
-  }
 }
 
 /* ===== INTERVIEW SECTION ===== */
