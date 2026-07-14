@@ -97,6 +97,9 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
         <a className="quiet-link" href={`mailto:${site.email}`}>
           <Mail size={18} aria-hidden /> {site.email}
         </a>
+        <Link className="quiet-link footer-optout-link" href="/afmelden">
+          Afmelden of gegevens verwijderen
+        </Link>
         <a className="footer-aya-link" href="https://ayafonds.nl/" target="_blank" rel="noopener noreferrer" aria-label="Bezoek AYA Fonds">
           <Image src="/img/AYAFonds/Embleem_logo_paars.svg" alt="AYA Fonds" width={148} height={125} />
         </a>

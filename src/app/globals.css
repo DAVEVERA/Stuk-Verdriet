@@ -3376,6 +3376,13 @@ textarea {
 .admin-console {
   display: grid;
   gap: 22px;
+  padding-left: clamp(14px, 4vw, 56px);
+  padding-right: clamp(14px, 4vw, 56px);
+}
+
+.admin-navigation {
+  display: grid;
+  gap: 10px;
 }
 
 .admin-tabs {
@@ -3387,13 +3394,23 @@ textarea {
   padding: 8px;
 }
 
+.admin-tabs-secondary {
+  display: none;
+}
+
+.admin-tabs-secondary.open {
+  display: flex;
+}
+
 .admin-tabs button,
+.admin-more-toggle,
 .icon-button,
 .category-arrow {
   font: inherit;
 }
 
 .admin-tabs button,
+.admin-more-toggle,
 .icon-button {
   align-items: center;
   background: transparent;
@@ -3401,16 +3418,513 @@ textarea {
   color: var(--pine);
   cursor: pointer;
   display: inline-flex;
-  min-height: 42px;
+  flex: 1 1 128px;
+  justify-content: center;
+  min-height: 48px;
+  min-width: min(100%, 128px);
   padding: 9px 14px;
+  text-align: center;
+  touch-action: manipulation;
+}
+
+.icon-button {
+  flex: 0 0 48px;
+  min-width: 48px;
+  padding: 0;
+  width: 48px;
 }
 
 .admin-tabs button.active,
 .admin-tabs button:hover,
+.admin-more-toggle.active,
+.admin-more-toggle:hover,
 .icon-button {
   background: var(--pine);
   border-color: var(--pine);
   color: var(--white);
+}
+
+.admin-more-toggle {
+  background: rgba(255, 253, 248, 0.68);
+  border-color: var(--line);
+  width: 100%;
+}
+
+.admin-tabs button span,
+.admin-more-toggle span {
+  align-items: center;
+  background: rgba(66, 86, 69, 0.12);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  justify-content: center;
+  margin-left: 7px;
+  min-width: 24px;
+  padding: 2px 7px;
+}
+
+.admin-tabs button.active span,
+.admin-tabs button:hover span,
+.admin-more-toggle.active span,
+.admin-more-toggle:hover span {
+  background: rgba(255, 253, 248, 0.18);
+}
+
+.admin-module {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-module-hero {
+  align-items: start;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.78), rgba(231, 220, 200, 0.34)),
+    var(--white);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: clamp(18px, 4vw, 30px);
+}
+
+.admin-module-hero > svg {
+  color: var(--pine);
+  height: 34px;
+  width: 34px;
+}
+
+.admin-module-hero p {
+  color: rgba(43, 49, 43, 0.72);
+  max-width: 760px;
+}
+
+.admin-kpi-grid,
+.integration-grid,
+.key-grid,
+.brand-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-kpi-card,
+.integration-card,
+.key-card,
+.brand-card {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  color: var(--pine);
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+  text-align: left;
+}
+
+.admin-kpi-card {
+  cursor: pointer;
+  min-height: 148px;
+}
+
+.admin-kpi-card.static {
+  cursor: default;
+}
+
+.admin-kpi-card strong {
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  line-height: 1;
+}
+
+.admin-kpi-card span,
+.integration-card span {
+  font-weight: 800;
+}
+
+.admin-kpi-card small,
+.integration-card small,
+.key-card small,
+.brand-card small,
+.calendar-item small,
+.admin-table-row small {
+  color: rgba(43, 49, 43, 0.58);
+}
+
+.workflow-list,
+.calendar-list,
+.automation-flow,
+.review-board,
+.ai-workbench {
+  display: grid;
+  gap: 12px;
+}
+
+.workflow-list button {
+  align-items: center;
+  background: rgba(231, 220, 200, 0.32);
+  border: 1px solid var(--line);
+  color: var(--pine);
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  min-height: 46px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.review-lane {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+}
+
+.review-card {
+  background: rgba(255, 253, 248, 0.76);
+  border: 1px solid rgba(66, 86, 69, 0.16);
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+}
+
+.review-card-top,
+.review-actions {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.review-card-top span,
+.calendar-item span,
+.integration-card span {
+  background: rgba(138, 157, 139, 0.18);
+  color: var(--pine);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+.review-actions {
+  justify-content: flex-start;
+}
+
+.review-actions form,
+.review-actions .button,
+.review-actions .text-link {
+  width: 100%;
+}
+
+.review-timeline {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.review-timeline span {
+  background: rgba(231, 220, 200, 0.36);
+  border-top: 3px solid var(--sage);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 7px;
+}
+
+.danger {
+  color: #8b2f2f;
+}
+
+.builder-layout {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.builder-outline,
+.builder-canvas,
+.builder-inspector {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.builder-outline button {
+  background: rgba(231, 220, 200, 0.34);
+  border: 1px solid var(--line);
+  color: var(--pine);
+  cursor: pointer;
+  min-height: 44px;
+  text-align: left;
+}
+
+.builder-section-preview {
+  border: 1px solid rgba(66, 86, 69, 0.16);
+  display: grid;
+  gap: 6px;
+  min-height: 150px;
+  padding: 16px;
+}
+
+.builder-section-preview span {
+  background: var(--sage);
+  height: 4px;
+  width: 54px;
+}
+
+.builder-inspector label,
+.tone-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.compare-card {
+  background: rgba(231, 220, 200, 0.32);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.compare-card div {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.compare-card span {
+  background: var(--white);
+  min-height: 62px;
+  padding: 8px;
+}
+
+.admin-table-card {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+}
+
+.admin-table-row {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 14px;
+}
+
+.admin-table-row + .admin-table-row {
+  border-top: 1px solid var(--line);
+}
+
+.key-card code,
+.automation-flow + .admin-panel code {
+  background: rgba(43, 49, 43, 0.08);
+  color: var(--pine);
+  overflow-wrap: anywhere;
+  padding: 8px;
+}
+
+.calendar-item {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 62px minmax(0, 1fr);
+  padding: 14px;
+}
+
+.calendar-item time {
+  background: var(--pine);
+  color: var(--white);
+  display: grid;
+  font-weight: 800;
+  min-height: 54px;
+  place-items: center;
+  text-align: center;
+}
+
+.ai-workbench textarea {
+  min-height: 130px;
+}
+
+.tone-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.brand-card img {
+  aspect-ratio: 16 / 10;
+  background: var(--paper);
+  object-fit: contain;
+  width: 100%;
+}
+
+.automation-flow {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.automation-flow article {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+}
+
+.automation-flow span {
+  align-items: center;
+  background: var(--pine);
+  color: var(--white);
+  display: inline-flex;
+  font-weight: 800;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.admin-skeleton span,
+.admin-skeleton-card,
+.admin-skeleton-panel {
+  background: linear-gradient(90deg, rgba(255, 253, 248, 0.42), rgba(255, 253, 248, 0.82), rgba(255, 253, 248, 0.42));
+  background-size: 220% 100%;
+  animation: admin-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.admin-skeleton span {
+  display: block;
+  height: 18px;
+  max-width: 520px;
+}
+
+.admin-skeleton span:first-child {
+  height: 38px;
+  max-width: 320px;
+}
+
+.admin-skeleton-panel {
+  min-height: 220px;
+}
+
+@keyframes admin-skeleton-pulse {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-tabs button,
+  .admin-more-toggle {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .manager-header,
+  .editor-topbar {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .editor-actions .button,
+  .editor-actions .text-link {
+    width: auto;
+  }
+
+  .review-card-top,
+  .review-actions {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .review-actions {
+    justify-content: flex-start;
+  }
+
+  .review-actions form,
+  .review-actions .button,
+  .review-actions .text-link {
+    width: auto;
+  }
+
+  .admin-kpi-grid,
+  .integration-grid,
+  .key-grid,
+  .brand-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-module-hero {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .review-board,
+  .ai-workbench {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-table-row {
+    align-items: center;
+    grid-template-columns: minmax(130px, 0.7fr) minmax(0, 1.3fr) minmax(120px, 0.7fr) minmax(90px, 0.5fr);
+  }
+
+  .calendar-item {
+    grid-template-columns: 70px minmax(0, 1fr) auto;
+  }
+
+  .automation-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-shell {
+    max-width: 1440px;
+  }
+
+  .admin-navigation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-more-toggle {
+    display: none;
+  }
+
+  .admin-tabs-secondary {
+    display: flex;
+  }
+
+  .admin-kpi-grid,
+  .integration-grid,
+  .key-grid,
+  .brand-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .review-board,
+  .builder-layout {
+    grid-template-columns: minmax(220px, 0.38fr) minmax(0, 1fr) minmax(240px, 0.42fr);
+  }
+
+  .ai-workbench {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .automation-flow {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 
 .podcast-admin-grid {
@@ -3434,8 +3948,9 @@ textarea {
 
 .manager-header,
 .editor-topbar {
-  align-items: center;
+  align-items: stretch;
   display: flex;
+  flex-direction: column;
   gap: 14px;
   justify-content: space-between;
 }
@@ -3504,6 +4019,8 @@ textarea {
 .editor-actions .button,
 .editor-actions .text-link {
   gap: 8px;
+  justify-content: center;
+  width: 100%;
 }
 
 .editor-layout {
@@ -6288,4 +6805,33 @@ textarea {
   .comment-card.reply {
     margin-left: 60px;
   }
+}
+
+/* Afmelden / opt-out pagina */
+.afmelden-section {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 20px 64px;
+}
+.afmelden-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+.afmelden-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 500;
+}
+.afmelden-form input {
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  font: inherit;
+  width: 100%;
+}
+.afmelden-form .button {
+  align-self: flex-start;
 }

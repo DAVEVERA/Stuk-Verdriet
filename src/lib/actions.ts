@@ -535,6 +535,17 @@ export async function moderatePost(postId: string, status: "approved" | "rejecte
   revalidatePath("/community");
 }
 
+export async function moderateInterviewComment(commentId: string, interviewId: string, status: "approved" | "rejected") {
+  const supabase = await requireAdminClient();
+  await supabase
+    .from("interview_comments")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", commentId);
+  await supabase.rpc("recount_interview_comments", { p_interview_id: interviewId });
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
 export async function saveSeason(formData: FormData) {
   const supabase = await requireAdminClient();
   const title = String(formData.get("title") ?? "").trim();

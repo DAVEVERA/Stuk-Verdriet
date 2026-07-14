@@ -2,21 +2,40 @@
 
 ## Goal
 
-Clean, harden, and reorganize the Stuk Verdriet codebase without changing the website design or content.
+Build a complete mobile-first admin portal for Stuk Verdriet with moderation, content building, access management, marketing planning, integrations, AI tooling, analytics, automation, moodboard, and branding modules.
 
 ## Tasks
 
 - [x] Inspect current implementation
-- [x] Replace duplicate middleware with the current Next proxy convention
-- [x] Add production security headers
-- [x] Reduce public-page dependence on the Supabase service role
-- [x] Harden signup abuse controls
-- [x] Harden Supabase SQL function privileges
-- [x] Gate third-party embed scripts behind cookie consent
-- [x] Reorganize misplaced or legacy files safely
+- [x] Identify required admin modules
+- [x] Implement interview comment review workflow
+- [x] Expand admin portal navigation and module UI
+- [x] Add mobile-first responsive styling
 - [x] Run verification
+- [x] Fix failures
 - [x] Final review
 
 ## Completion Marker
 
 ALL_TASKS_COMPLETE: true
+
+---
+
+## Goal
+
+Start SOC 2 readiness for Stuk Verdriet by creating an audit-friendly Access and Data Inventory.
+
+## Tasks
+
+- [x] Inspect current implementation and existing SOC 2 baseline
+- [x] Identify production systems
+- [x] Identify access holders and access gaps
+- [x] List environment variable names without secret values
+- [x] Map data categories to systems and tables
+- [x] Draft vendor register
+- [x] Run documentation verification
+- [x] Final review
+
+## Completion Marker
+
+SOC2_ACCESS_DATA_INVENTORY_COMPLETE: true
