@@ -5460,20 +5460,43 @@ textarea {
   }
 
   .hero-state-butterfly {
+    --mobile-hero-media-height: clamp(218px, 63vw, 360px);
     align-items: flex-end;
+    background:
+      linear-gradient(180deg, #050504 0%, #0f120d 56%, #425645 100%);
     padding-top: 0;
   }
 
   .hero-state-butterfly .hero-slider-wash {
     background:
-      radial-gradient(circle at 70% 54%, rgba(231, 220, 200, 0.16), transparent 27%),
-      linear-gradient(180deg, rgba(19, 25, 20, 0.16) 0%, rgba(19, 25, 20, 0.06) 42%, rgba(242, 239, 233, 0.28) 60%, rgba(231, 220, 200, 0.54) 74%, rgba(66, 86, 69, 0.62) 91%, #425645 100%);
+      linear-gradient(180deg, rgba(5, 5, 4, 0) 0%, rgba(5, 5, 4, 0) 68%, rgba(66, 86, 69, 0.42) 90%, #425645 100%);
+  }
+
+  .hero-state-butterfly .hero-slide-image-episode-live {
+    background: #050504;
+    object-fit: contain !important;
+    object-position: center top;
+  }
+
+  .hero-state-butterfly .hero-copy {
+    bottom: 8px;
+    display: flex;
+    justify-content: center;
+    max-width: 100%;
+    top: auto;
   }
 
   .hero-state-butterfly .hero-copy::before {
-    background:
-      radial-gradient(ellipse at 26% 42%, rgba(19, 25, 20, 0.58) 0%, rgba(19, 25, 20, 0.34) 46%, rgba(19, 25, 20, 0.08) 78%, rgba(19, 25, 20, 0) 100%);
-    width: min(94vw, 390px);
+    content: none;
+  }
+
+  .hero-state-butterfly .hero-slider-dots {
+    background: rgba(5, 5, 4, 0.38);
+    border: 1px solid rgba(255, 253, 248, 0.16);
+    border-radius: 999px;
+    justify-self: center;
+    margin-top: 0;
+    padding: 1px 5px;
   }
 
   .hero-state-butterfly .hero-copy h1,
