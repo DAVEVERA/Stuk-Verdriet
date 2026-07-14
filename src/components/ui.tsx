@@ -465,7 +465,7 @@ function EpisodeQueueItem({ episode, active }: { episode: PodcastEpisode; active
       </div>
       <div>
         <p className="eyebrow">S{episode.season_number} · E{episode.episode_number}</p>
-        <h4>{episode.title}</h4>
+        <h3>{episode.title}</h3>
         <EpisodeMeta episode={episode} />
       </div>
       <div className="queue-actions">
@@ -782,7 +782,7 @@ export function HostCard({ host }: { host: HostProfile }) {
           <Image src={familyCard.image} alt={familyCard.imageAlt} width={360} height={360} />
           <div>
             <p className="eyebrow">{familyCard.relation}</p>
-            <h4>{familyCard.name}</h4>
+            <h3>{familyCard.name}</h3>
             <p>{familyCard.deck}</p>
             <div className="host-family-card-actions">
               <FamilyStoryPopout storyKey={familyCard.storyKey} />

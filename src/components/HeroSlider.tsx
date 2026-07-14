@@ -86,9 +86,9 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
         </div>
         <div className="hero-slider-wash" aria-hidden="true" />
         <div className="hero-copy">
+          <h1 className={activeSlide.hideCopy ? "sr-only" : undefined}>{siteName}</h1>
           {!activeSlide.hideCopy ? (
             <>
-              <h1>{siteName}</h1>
               <div className="hero-slogan-art hero-slogan-art-desktop slogan-text" aria-label={activeSlide.slogan.join(" ")}>
                 <span>{activeSlide.slogan[0]}</span>
                 <span>{activeSlide.slogan[1]}</span>

@@ -2268,7 +2268,7 @@ p {
   width: 100%;
 }
 
-.host-family-card h4 {
+.host-family-card h3 {
   color: var(--pine);
   font-size: clamp(1.25rem, 3vw, 1.75rem);
   line-height: 1.05;

@@ -39,3 +39,26 @@ Start SOC 2 readiness for Stuk Verdriet by creating an audit-friendly Access and
 ## Completion Marker
 
 SOC2_ACCESS_DATA_INVENTORY_COMPLETE: true
+
+---
+
+## Goal
+
+Fix pasted SEO, Markdown, heading, structured-data, and build-root diagnostics for Stuk Verdriet.
+
+## Tasks
+
+- [x] Inspect current implementation
+- [x] Reproduce real project checks with typecheck, lint, and build
+- [x] Identify root causes for the diagnostics
+- [x] Fix `supabase/auth-branding.md` thin content and bare URL issues
+- [x] Keep exactly one homepage H1 available across hero slider states
+- [x] Correct heading hierarchy skips in component markup
+- [x] Add site-wide JSON-LD structured data
+- [x] Fix Turbopack root inference warning
+- [x] Verify typecheck, lint, and production build
+- [x] Final review
+
+## Completion Marker
+
+DIAGNOSTICS_FIX_PASS_COMPLETE: true

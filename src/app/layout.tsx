@@ -73,6 +73,50 @@ export const metadata: Metadata = {
   }
 };
 
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site.url}/#organization`,
+      name: site.name,
+      url: site.url,
+      logo: `${site.url}${site.logo}`,
+      email: site.email,
+      sameAs: [
+        "https://www.instagram.com/stukverdrietdepodcast/",
+        "https://www.tiktok.com/@stuk.verdriet"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site.url}/#website`,
+      name: site.name,
+      url: site.url,
+      inLanguage: "nl-NL",
+      publisher: {
+        "@id": `${site.url}/#organization`
+      },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${site.url}/community?search={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "PodcastSeries",
+      "@id": `${site.url}/podcast#series`,
+      name: "Stuk Verdriet",
+      url: `${site.url}/podcast`,
+      description: "Een Nederlandse podcast en community over rouw, verlies, ziekte, gemis en verder leven.",
+      inLanguage: "nl-NL",
+      publisher: {
+        "@id": `${site.url}/#organization`
+      }
+    }
+  ]
+};
+
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const socialLinks = await getSocialLinks();
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
@@ -85,6 +129,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <main className="main">{children}</main>
           <Footer socialLinks={socialLinks} />
         </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <CookieConsent gaId={gaId} />
       </body>
     </html>
