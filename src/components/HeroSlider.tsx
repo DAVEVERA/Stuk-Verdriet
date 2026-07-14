@@ -34,10 +34,10 @@ const slides: HeroSlide[] = [
     slogan: ["Woorden geven aan", "wat niet te bevatten is."]
   },
   {
-    image: "/hero/herostartbutterfly.png",
-    mobileImage: "/hero/herostartbutterfly.png",
-    imageAlt: "Een vlinder rust op een uitgestoken hand",
-    imageClassName: "hero-slide-image-butterfly",
+    image: "/hero/Hero_ep1_live.png",
+    mobileImage: "/hero/Hero_ep1_live.png",
+    imageAlt: "Hero-afbeelding voor aflevering 1 live",
+    imageClassName: "hero-slide-image-episode-live",
     heroClassName: "hero-state-butterfly",
     slogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
     mobileSlogan: ["Samen door wat niemand", "alleen zou moeten dragen."]

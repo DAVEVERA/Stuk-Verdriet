@@ -14,7 +14,6 @@ const staticRoutes = [
   { path: "/contact", priority: 0.7, changeFrequency: "monthly" },
   { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
   { path: "/archief", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/bijsluiter", priority: 0.6, changeFrequency: "monthly" },
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/cookies", priority: 0.3, changeFrequency: "yearly" },
   { path: "/algemene-voorwaarden", priority: 0.3, changeFrequency: "yearly" },

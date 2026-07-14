@@ -205,10 +205,10 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
 
       <div className="hero-player-signup-promo">
         <div>
-          <h3>Mis het niet!</h3>
-          <p>Meld je aan en wees een van de eersten die aflevering 1 kan luisteren.</p>
+          <h3>Seintje bij nieuw</h3>
+          <p>We zorgen dat je niets mist!</p>
         </div>
-        <a href="#aanmelden">Meld mij aan</a>
+        <a href="#aanmelden">Geef mij een seintje</a>
       </div>
 
       <div id="hero-player-transcript" className={`hero-player-transcript${isTranscriptOpen ? " open" : ""}`}>

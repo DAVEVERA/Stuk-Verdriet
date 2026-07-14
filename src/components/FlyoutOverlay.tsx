@@ -36,7 +36,6 @@ const panelLabels: Record<OnepagerPanel, string> = {
   privacy: "Privacyverklaring",
   cookies: "Cookieverklaring",
   communityrichtlijnen: "Communityrichtlijnen",
-  bijsluiter: "Deel je verhaal",
   archief: "Archief"
 };
 
@@ -93,7 +92,7 @@ export function FlyoutOverlay({
   }, [panel]);
 
   if (!panel) return null;
-  const isPopout = panel === "podcast" || panel === "themas" || panel === "bijsluiter";
+  const isPopout = panel === "podcast" || panel === "themas";
 
   return (
     <div className={`flyout-layer${isPopout ? " popout-layer" : ""}`} role="dialog" aria-modal="true" aria-labelledby="flyout-title">
@@ -259,12 +258,12 @@ export function FlyoutOverlay({
       );
     }
 
-    if (panel === "community" || panel === "bijsluiter") {
+    if (panel === "community") {
       return (
         <div className="flyout-content">
-          <h2 id="flyout-title">{panel === "bijsluiter" ? "Deel je verhaal" : "Community en verhalen"}</h2>
+          <h2 id="flyout-title">Community en verhalen</h2>
           <CommunityFeedback submitted={submitted} error={error} />
-          {panel === "community" && posts.length ? (
+          {posts.length ? (
             <div className="post-grid compact community-post-list">
               {posts.map((post) => (
                 <CommunityPostCard key={post.id} post={post} />
@@ -272,7 +271,7 @@ export function FlyoutOverlay({
             </div>
           ) : null}
           <div className="community-flyout-grid story-only-grid">
-            <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo={panel === "bijsluiter" ? "/bijsluiter" : "/community"} />
+            <CommunityStoryForm categories={categories} isLoggedIn={isLoggedIn} returnTo="/community" />
           </div>
         </div>
       );

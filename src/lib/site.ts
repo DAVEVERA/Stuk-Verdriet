@@ -16,7 +16,7 @@ export const site = {
   }
 };
 
-export type OnepagerPanel = "podcast" | "themas" | "community" | "over" | "contact" | "privacy" | "cookies" | "communityrichtlijnen" | "bijsluiter" | "archief";
+export type OnepagerPanel = "podcast" | "themas" | "community" | "over" | "contact" | "privacy" | "cookies" | "communityrichtlijnen" | "archief";
 
 export const navigation = [
   { href: "/", label: "Home" },

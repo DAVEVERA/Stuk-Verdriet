@@ -533,6 +533,10 @@ textarea {
   transform-origin: center center;
 }
 
+.hero-slide-image-episode-live {
+  object-position: center center;
+}
+
 .hero-slider-wash {
   background: linear-gradient(180deg, rgba(66, 86, 69, 0) 0%, rgba(66, 86, 69, 0) 70%, rgba(66, 86, 69, 0.16) 87%, #425645 100%);
   pointer-events: none;
@@ -5317,6 +5321,10 @@ textarea {
     object-position: 72% center;
     transform: none;
     transform-origin: center center;
+  }
+
+  .hero-slide-image-episode-live {
+    object-position: center center;
   }
 
   .hero-copy {

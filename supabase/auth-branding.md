@@ -8,21 +8,23 @@ Gebruik deze waarden in Supabase Auth en Google Cloud OAuth, zodat bezoekers nie
 - Site URL: productie-URL van de website
 - Redirect URLs:
   - `https://stukverdriet.com/auth/callback`
+  - `https://www.stukverdriet.com/auth/callback`
   - `https://stukverdriet.com/redirect`
+  - `https://www.stukverdriet.com/redirect`
   - `http://localhost:3000/auth/callback`
   - `http://localhost:3000/redirect`
 - Email sender name: `Stuk Verdriet`
-- Email sender address: bijvoorbeeld `@stukverdriet.com`
+- Email sender address: bijvoorbeeld `info@stukverdriet.com`
 - Magic link template: `supabase/email-templates/magic-link.html`
 - Password recovery template: `supabase/email-templates/reset-password.html`
 
 ## Google OAuth Consent Screen
 
 - App name: `Stuk Verdriet`
-- User support email: klantadres of `info@stukverdriet.nl`
+- User support email: klantadres of `info@stukverdriet.com`
 - App logo: `public/brand/sverdriet_logo.webp`
-- Authorized domain: productiedomein van Stuk Verdriet
-- Privacy policy URL: `/privacy`
-- Terms URL: `/algemene-voorwaarden`
+- Authorized domain: https://www.stukverdriet.com
+- Privacy policy URL: `https://www.stukverdriet.com/privacy`
+- Terms URL: `https://www.stukverdriet.com/algemene-voorwaarden`
 
 Deze instellingen staan buiten de repo en moeten in Supabase Dashboard en Google Cloud Console worden gezet.
