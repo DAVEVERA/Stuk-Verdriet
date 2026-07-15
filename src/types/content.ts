@@ -96,6 +96,40 @@ export type CommunityReply = {
   status: CommunityStatus;
 };
 
+export type CommunityProfile = {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_discoverable: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CommunityMessage = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+};
+
+export type CommunityConversationParticipant = {
+  conversation_id: string;
+  user_id: string;
+  last_read_at: string | null;
+  created_at: string;
+  community_profiles?: CommunityProfile | null;
+};
+
+export type CommunityConversation = {
+  id: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  community_conversation_participants?: CommunityConversationParticipant[];
+  community_messages?: CommunityMessage[];
+};
+
 export type HostProfile = {
   id: string;
   name: string;

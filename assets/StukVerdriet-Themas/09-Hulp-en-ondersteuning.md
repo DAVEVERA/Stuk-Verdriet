@@ -1,65 +1,94 @@
-# Hulp & ondersteuning
+## Wil je nu met iemand praten?
 
-Soms is verdriet te groot om alleen te dragen. Hulp vragen is geen teken dat je faalt, maar een manier om serieus te nemen wat je hebt meegemaakt.
+Soms heb je niet direct professionele behandeling nodig, maar wel iemand die even blijft luisteren. Iemand bij wie je niets hoeft op te lossen, uit te leggen of kleiner te maken.
 
-## Hulp vragen is geen laatste redmiddel
+Onderstaande organisaties bieden een luisterend oor via telefoon, chat, mail of een persoonlijk gesprek.
 
-Veel mensen wachten lang voordat ze hulp zoeken. Ze denken dat hun verdriet "normaal" is en dat ze dus niet mogen klagen. Of ze vinden dat anderen het zwaarder hebben. Of ze zijn bang dat professionele hulp betekent dat er iets mis is met hen.
+### De Luisterlijn
 
-Maar hulp hoeft niet pas te beginnen wanneer je volledig vastloopt. Ondersteuning kan juist helpen om niet verder weg te zakken. Een gesprek met iemand die kan luisteren zonder te schrikken, een lotgenotengroep waarin je niets hoeft uit te leggen, of begeleiding die helpt om overzicht te krijgen: het kan allemaal verschil maken.
+Voor iedereen die ergens mee zit en zijn verhaal vertrouwelijk en anoniem wil delen.
 
-Rouw, ziekte en verlies zijn geen kleine gebeurtenissen. Ze kunnen invloed hebben op slaap, concentratie, energie, relaties, werk, studie, eetlust, angst, stemming en je gevoel van veiligheid. Het is logisch dat je daar soms hulp bij nodig hebt.
+**Telefoon:** 088 0767 000
+**Telefonisch bereikbaar:** dag en nacht
+**Chat:** iedere dag van 10.00 tot 22.00 uur
+**Website:** [deluisterlijn.nl](https://www.deluisterlijn.nl/)
 
-## Wanneer ondersteuning helpend kan zijn
+De vrijwilligers luisteren zonder oordeel, denken met je mee en geven ruimte aan zorgen, verdriet, verlies of eenzaamheid. Je hoeft geen duidelijke hulpvraag te hebben.
 
-Er is geen vaste grens waarop hulp nodig is. Toch zijn er signalen die kunnen aangeven dat extra steun verstandig is. Als je merkt dat je langdurig nauwelijks functioneert, nergens rust vindt, voortdurend angstig bent, jezelf steeds verder terugtrekt of vastloopt in schuldgevoelens, kan het goed zijn om met iemand te praten.
+### De Rouwtelefoon
 
-Ook als je omgeving weinig begrijpt, kan hulp waardevol zijn. Niet omdat jouw omgeving slecht is, maar omdat naasten soms te dichtbij staan, zelf verdriet hebben of snel willen troosten. Een professionele of ervaren luisteraar kan ruimte bieden zonder eigen belang.
+Speciaal voor mensen die een dierbare hebben verloren en behoefte hebben aan een gesprek met iemand die ervaring heeft met rouw en verlies.
 
-Voor AYA's, ouders, partners en naasten kunnen specifieke vormen van ondersteuning belangrijk zijn. Denk aan AYA-zorg, rouwbegeleiding, maatschappelijk werk, psychologische hulp, lotgenotencontact of een patiëntenorganisatie. De juiste hulp hangt af van jouw situatie en behoefte.
+**Telefoon:** 085 401 42 50
+**Bereikbaar:** dinsdag en donderdag van 09.00 tot 12.00 uur
+**Website:** [rouwinformatie.nl](https://rouwinformatie.nl/rouwchat/)
 
-## Verschillende vormen van steun
+Je kunt anoniem en vrijblijvend bellen om je verhaal te vertellen of vragen over rouw te bespreken. De eerdere Rouwchat is gestopt; de Rouwtelefoon is nog wel bereikbaar.
 
-Ondersteuning kan veel vormen hebben. Sommige mensen zoeken individuele gesprekken met een psycholoog, therapeut, rouwbegeleider of maatschappelijk werker. Anderen hebben meer aan lotgenotencontact, een gespreksgroep, online community, pastorale zorg of een hulplijn. Weer anderen vinden steun in boeken, podcasts, schrijven, lichaamsgerichte begeleiding of praktische hulp.
+### Kanker.nl Infolijn
 
-Geen enkele vorm is automatisch beter. Wat telt, is of het jou helpt om te ademen, te begrijpen, te voelen of juist even te ordenen. Voor de een is praten essentieel. Voor de ander werkt samen wandelen beter. Voor weer iemand anders begint hulp bij praktische ontlasting: iemand die meeleest met brieven, meegaat naar afspraken of een maaltijd brengt.
+Voor mensen die kanker hebben of hebben gehad, maar ook voor partners, ouders, kinderen, vrienden en andere naasten.
 
-Het is toegestaan om iets te proberen en te merken dat het niet past. Hulp zoeken is soms ook zoeken naar de juiste persoon, toon en timing.
+**Telefoon:** 0800 022 66 22
+**Telefonisch bereikbaar:** werkdagen van 12.00 tot 17.00 uur
+**Chat:** werkdagen van 09.00 tot 17.00 uur
+**E-mail:** [infolijn@kanker.nl](mailto:infolijn@kanker.nl)
+**Website:** [kanker.nl/infolijn](https://www.kanker.nl/hulp-en-ondersteuning/de-kankernl-infolijn)
 
-## Betrouwbare routes en organisaties
+Je kunt er terecht met vragen, zorgen en twijfels, maar ook wanneer je simpelweg behoefte hebt aan iemand die begrijpt welke impact kanker kan hebben.
 
-Bij rouw en verlies kunnen organisaties zoals Humanitas, Steun bij Verlies, De Luisterlijn of MIND Hulplijn laagdrempelige steun bieden. Bij kanker en jongvolwassen zorg kunnen Kanker.nl, het AYA Zorgnetwerk en AYA Fonds richting geven. Via huisarts, ziekenhuis, bedrijfsarts of school kan vaak worden doorverwezen naar passende begeleiding.
+### In je bol
 
-Als je niet weet waar je moet beginnen, begin dan klein. Bespreek met je huisarts dat je vastloopt of behoefte hebt aan ondersteuning. Vraag in het ziekenhuis naar psychosociale zorg of een maatschappelijk werker. Vraag een vertrouwd iemand om samen uit te zoeken welke opties er zijn.
+Voor jongeren en jongvolwassenen van 16 tot en met 27 jaar die ergens mee zitten en anoniem willen praten.
 
-Belangrijk: bij acute crisis, gevaar voor jezelf of anderen, of ernstige psychische nood is directe professionele hulp nodig. Een community kan steun geven, maar vervangt geen noodhulp.
+**Telefoon:** 0800 0450
+**Bellen en chatten:** iedere dag van 14.00 tot 22.00 uur
+**Website:** [injebol.nl](https://injebol.nl/)
 
-## Wat hulp niet hoeft te doen
+Bellen en chatten is gratis, anoniem en vertrouwelijk. De gesprekken worden gevoerd door getrainde vrijwilligers. Je hoeft niet eerst te weten wat er precies aan de hand is.
 
-Goede hulp haalt verdriet niet weg. Dat kan ook niet. Het doel is niet dat je iemand minder mist, sneller doorgaat of positiever leert denken. Goede hulp maakt ruimte voor wat er is. Ze helpt je dragen, ordenen, begrijpen, grenzen stellen, ademen, rust vinden of opnieuw richting voelen.
+### MIND Hulplijn
 
-Soms betekent hulp dat iemand zegt: wat jij voelt is niet gek. Soms betekent het dat je leert slapen. Soms betekent het dat je een gesprek met familie durft aan te gaan. Soms betekent het dat je stopt met jezelf veroordelen.
+Voor vragen, zorgen of onzekerheid over mentale en psychische klachten.
 
-Hulp is niet het einde van je eigen kracht. Het is een vorm van zorg naast je eigen kracht.
+**Telefoon:** 0900 1450
+**Telefonisch bereikbaar:** werkdagen van 09.00 tot 21.00 uur
+**Chat:** werkdagen van 09.00 tot 20.30 uur
+**WhatsApp:** 06 13 86 38 03, werkdagen van 09.00 tot 17.30 uur
+**E-mail:** [hulplijn@wijzijnmind.nl](mailto:hulplijn@wijzijnmind.nl)
+**Website:** [mindhulplijn.nl](https://mindhulplijn.nl/)
 
-## In gesprek met de community
+Bij MIND spreek je met deskundige hulpverleners. Zij luisteren, denken mee en kunnen helpen om gevoelens of gedachten beter te ordenen.
 
-Ervaringen van anderen kunnen helpen om de stap naar ondersteuning kleiner te maken. Niet als advies dat voor iedereen geldt, maar als herkenning.
+### Humanitas Steun bij Rouw
 
-Vragen die je kunt delen:
+Voor mensen die na het overlijden van een dierbare behoefte hebben aan langer durend persoonlijk contact.
 
-- Welke vorm van hulp heeft jou geholpen?
-- Wanneer merkte je dat je steun nodig had?
-- Wat vond je spannend aan hulp zoeken?
-- Welke organisatie of persoon maakte verschil?
-- Wat zou je zeggen tegen iemand die twijfelt om hulp te vragen?
+**Website:** [humanitas.nl/steun-bij-rouw](https://www.humanitas.nl/programmas/steun-bij-rouw/)
 
-## SEO
+Een vrijwilliger, vaak zelf een lotgenoot, komt gedurende een periode langs om te luisteren en naast iemand te staan. Humanitas biedt daarnaast op verschillende plaatsen lotgenotengroepen. Het precieze aanbod verschilt per regio.
 
-SEO titel: Hulp & ondersteuning | Rouwbegeleiding, lotgenotencontact en steun
+### IPSO-centra voor leven met en na kanker
 
-Meta description: Vind hulp bij rouw, verlies en kanker. Lees over rouwbegeleiding, lotgenotencontact, hulplijnen, AYA-zorg en professionele steun.
+Voor mensen met of na kanker, naasten, mantelzorgers en nabestaanden.
 
-URL slug: /hulp-en-ondersteuning
+**Website:** [ipso.nl](https://ipso.nl/)
 
-Kaarttekst: Voor iedereen die merkt dat tijd alleen niet genoeg is en zoekt naar steun die past bij zijn of haar situatie.
+Bij een IPSO-centrum kun je vaak zonder verwijzing binnenlopen voor een gesprek, lotgenotencontact of gewoon een kop koffie. De centra bieden een rustige en huiselijke plek waar aandacht is voor jouw verhaal en voor de niet-medische gevolgen van kanker.
+
+### Stichting Achter de Regenboog
+
+Voor kinderen, jongeren, ouders en gezinnen die te maken hebben met het overlijden van een dierbare.
+
+**Advieslijn:** 085 047 15 71
+**Website:** [achterderegenboog.nl](https://achterderegenboog.nl/)
+
+De stichting biedt informatie, advies en lotgenotenactiviteiten rond kinderen en rouw. Ook ouders en verzorgers kunnen contact opnemen om hun situatie te bespreken.
+
+## Je hoeft niet te wachten tot het te zwaar wordt
+
+Je mag ook bellen wanneer je vooral behoefte hebt aan een stem aan de andere kant. Je hoeft niet volledig vast te lopen en je hoeft geen duidelijke hulpvraag te formuleren.
+
+Misschien wil je vertellen over degene die je mist. Misschien voel je je alleen, boos of uitgeput. Misschien weet je juist niet wat je voelt. Ook dan mag je contact opnemen.
+
+Praten haalt het verlies niet weg. Het kan er wel voor zorgen dat je het op dat moment niet helemaal alleen hoeft te dragen.

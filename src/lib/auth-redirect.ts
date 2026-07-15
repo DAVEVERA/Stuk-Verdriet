@@ -1,10 +1,30 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
+function encodeBase64Url(value: string) {
+  return Buffer.from(value, "utf8").toString("base64url");
+}
+
+function decodeBase64Url(value: string) {
+  try {
+    return Buffer.from(value, "base64url").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+
 export function safeAuthNext(value: string | null) {
   if (!value) return "/community";
-  if (value === "/admin" || value === "/community" || value.startsWith("/community/")) return value;
+  const decoded = value.startsWith("b64:") ? decodeBase64Url(value.slice(4)) : value;
+  const normalized = decoded.startsWith("/") ? decoded : `/${decoded}`;
+  if (normalized === "/admin" || normalized === "/community" || normalized.startsWith("/community/")) {
+    return normalized;
+  }
   return "/community";
+}
+
+export function encodeAuthNext(value: string) {
+  return `b64:${encodeBase64Url(safeAuthNext(value))}`;
 }
 
 export async function handleAuthRedirect(request: Request) {

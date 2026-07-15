@@ -22,6 +22,9 @@ export function Header(_props: HeaderProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const navTabIndex = open ? undefined : -1;
+  const isCommunityPage = pathname === "/community";
+  const headerLogo = isCommunityPage ? "/brand/snaar-logo.png" : site.logo;
+  const headerLogoAlt = isCommunityPage ? "SNAAR logo" : "Stuk Verdriet logo";
 
   function openSidebar() {
     setOpen((current) => !current);
@@ -44,11 +47,11 @@ export function Header(_props: HeaderProps) {
 
   const logoTrigger = open ? (
     <button className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu sluiten" aria-expanded="true" aria-controls="primary-navigation">
-      <Image src={site.logo} alt="Stuk Verdriet logo" width={300} height={380} priority />
+      <Image src={headerLogo} alt={headerLogoAlt} width={300} height={380} priority />
     </button>
   ) : (
     <button className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu openen" aria-expanded="false" aria-controls="primary-navigation">
-      <Image src={site.logo} alt="Stuk Verdriet logo" width={300} height={380} priority />
+      <Image src={headerLogo} alt={headerLogoAlt} width={300} height={380} priority />
     </button>
   );
 
@@ -56,7 +59,7 @@ export function Header(_props: HeaderProps) {
     <>
       <div className="sidebar-header">
         <Link href="/" className="sidebar-logo" aria-label="Stuk Verdriet home">
-          <Image src={site.logo} alt="Stuk Verdriet logo" width={70} height={88} />
+          <Image src={headerLogo} alt={headerLogoAlt} width={70} height={88} />
         </Link>
         <button className="close-button" type="button" onClick={() => setOpen(false)} aria-label="Menu sluiten">
           <X size={18} aria-hidden />
@@ -75,7 +78,7 @@ export function Header(_props: HeaderProps) {
 
   return (
     <>
-      <header className={`site-header${open ? " nav-open" : ""}`}>
+      <header className={`site-header${isCommunityPage ? " community-logo-header" : ""}${open ? " nav-open" : ""}`}>
         <div className="header-inner">
           {logoTrigger}
 

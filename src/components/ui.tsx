@@ -2,11 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useRef, useState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import {
   Calendar,
+  ChevronDown,
   Download,
+  Edit3,
+  Grid3X3,
   Headphones,
   Heart,
   Instagram,
@@ -14,6 +19,8 @@ import {
   Mail,
   MessageCircle,
   Music2,
+  Search,
+  Send,
   Pause,
   Play,
   Shield,
@@ -30,9 +37,9 @@ import { FamilyStoryPopout } from "@/components/FamilyStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { SocialFollowTrigger } from "@/components/SocialFollowTrigger";
-import { createCommunityPost, supportPost, subscribeEpisodeSignup } from "@/lib/actions";
+import { createCommunityPost, sendCommunityMessage, signOut, startCommunityConversation, supportPost, subscribeEpisodeSignup, updateCommunityProfile } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
-import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
+import type { CommunityCategory, CommunityConversation, CommunityPost, CommunityProfile, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
 const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
 const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
@@ -53,6 +60,9 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
 }
 
 export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks }) {
+  const pathname = usePathname();
+  const isCommunityPage = pathname === "/community";
+  const footerLogo = isCommunityPage ? "/brand/snaar-logo.png" : site.logo;
   const footerFeatures = [
     {
       title: "Longeneeslijk",
@@ -79,7 +89,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
   return (
     <footer className="footer">
       <div className="footer-brand">
-        <Image src={site.logo} alt="" width={76} height={76} />
+        <Image src={footerLogo} alt="" width={76} height={76} />
         <h2>{site.name}</h2>
         <p className="slogan-text">{site.tagline}</p>
       </div>
@@ -141,6 +151,252 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
       </p>
     </footer>
   );
+}
+
+type CommunityAccountDockProps = {
+  isLoggedIn: boolean;
+  email?: string | null;
+  currentUserId?: string | null;
+  currentProfile?: CommunityProfile | null;
+  discoverableProfiles?: CommunityProfile[];
+  conversations?: CommunityConversation[];
+  posts: CommunityPost[];
+  hasSupabaseEnv: boolean;
+};
+
+type CommunityDockPanel = "menu" | "chats" | "notifications" | "account";
+
+export function CommunityAccountDock({
+  isLoggedIn,
+  email,
+  currentUserId,
+  currentProfile,
+  discoverableProfiles = [],
+  conversations = [],
+  posts,
+  hasSupabaseEnv
+}: CommunityAccountDockProps) {
+  const [activePanel, setActivePanel] = useState<CommunityDockPanel>("account");
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(conversations[0]?.id ?? null);
+  const people = getCommunityPeople(posts, discoverableProfiles);
+  const displayName = currentProfile?.display_name ?? email?.split("@")[0] ?? "Gast";
+  const initials = authorInitial(displayName);
+  const avatarUrl = currentProfile?.avatar_url ?? null;
+  const loginHref = "/login?next=%2Fcommunity";
+  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0] ?? null;
+  const activeParticipant = activeConversation ? getConversationPeer(activeConversation, currentUserId) : null;
+  const activeMessages = [...(activeConversation?.community_messages ?? [])].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(-6);
+
+  function openPanel(panel: CommunityDockPanel) {
+    setActivePanel((current) => (current === panel ? current : panel));
+  }
+
+  return (
+    <aside className="community-account-dock" aria-label="Community account">
+      <div className="community-dock-actions" aria-label="Community snelmenu">
+        <button className={activePanel === "menu" ? "active" : undefined} type="button" onClick={() => openPanel("menu")} aria-label="Menu" aria-pressed={activePanel === "menu"}>
+          <Grid3X3 size={21} aria-hidden />
+        </button>
+        <button className={activePanel === "chats" ? "active" : undefined} type="button" onClick={() => openPanel("chats")} aria-label="Berichten" aria-pressed={activePanel === "chats"}>
+          <Image src="/img/icons_SNAAR/chat_icon/icons8-chat-48.png" alt="" width={22} height={22} />
+        </button>
+        <button className={activePanel === "notifications" ? "active" : undefined} type="button" onClick={() => openPanel("notifications")} aria-label="Meldingen" aria-pressed={activePanel === "notifications"}>
+          <Image src="/img/icons_SNAAR/Bell_alerts/icons8-bell-50.png" alt="" width={22} height={22} />
+        </button>
+        <button className={activePanel === "account" ? "active profile" : "profile"} type="button" onClick={() => openPanel("account")} aria-label="Mijn profiel" aria-pressed={activePanel === "account"}>
+          <ProfileAvatar name={displayName} avatarUrl={avatarUrl} />
+          <ChevronDown size={14} aria-hidden />
+        </button>
+      </div>
+
+      <div className="community-dock-panel">
+        {activePanel === "menu" ? (
+          <div className="community-panel-section">
+            <div className="community-panel-heading">
+              <h2>Menu</h2>
+              <span>Community</span>
+            </div>
+            <Link className="community-panel-row primary" href={loginHref}>
+              <User size={20} aria-hidden />
+              <span>{isLoggedIn ? "Mijn profiel bekijken" : "Inloggen"}</span>
+            </Link>
+            <Link className="community-panel-row" href="#verhalen">
+              <Grid3X3 size={20} aria-hidden />
+              <span>Jouw Feed</span>
+            </Link>
+            <Link className="community-panel-row" href="#community-links">
+              <Heart size={20} aria-hidden />
+              <span>Handvatten</span>
+            </Link>
+          </div>
+        ) : null}
+
+        {activePanel === "chats" ? (
+          <div className="community-panel-section community-chat-panel">
+            <div className="community-panel-heading">
+              <h2>Berichten</h2>
+              <button type="button" aria-label="Nieuwe chat">
+                <Edit3 size={18} aria-hidden />
+              </button>
+            </div>
+            <label className="community-chat-search">
+              <span className="sr-only">Zoeken in SNAAR berichten</span>
+              <Search size={18} aria-hidden />
+              <input type="search" placeholder="Zoeken in SNAAR" />
+            </label>
+            <div className="community-chat-list">
+              {isLoggedIn && conversations.map((conversation) => {
+                const peer = getConversationPeer(conversation, currentUserId);
+                return (
+                  <button className={activeConversation?.id === conversation.id ? "community-chat-person active" : "community-chat-person"} type="button" key={conversation.id} onClick={() => setActiveConversationId(conversation.id)}>
+                    <ProfileAvatar name={peer?.display_name ?? "SNAAR"} avatarUrl={peer?.avatar_url ?? null} />
+                    <span>
+                      <strong>{peer?.display_name ?? "SNAAR gesprek"}</strong>
+                      <small>{conversation.community_messages?.at(-1)?.body ?? "Nog geen berichten"}</small>
+                    </span>
+                  </button>
+                );
+              })}
+              {isLoggedIn && !conversations.length ? <p className="community-panel-empty">Nog geen berichten. Start een gesprek met iemand uit de community.</p> : null}
+              {people.map((person) => (
+                <form action={startCommunityConversation} key={person.userId ?? person.name}>
+                  <input type="hidden" name="return_to" value="/community" readOnly />
+                  {person.userId ? <input type="hidden" name="participant_user_id" value={person.userId} readOnly /> : null}
+                  <button className="community-chat-person" type="submit" disabled={!isLoggedIn || !person.userId}>
+                    <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl ?? null} />
+                    <span>
+                      <strong>{person.name}</strong>
+                      <small>{isLoggedIn ? person.context : "Log in om prive te praten"}</small>
+                    </span>
+                  </button>
+                </form>
+              ))}
+            </div>
+            {isLoggedIn && activeConversation ? (
+              <div className="community-message-thread" aria-label={`Gesprek met ${activeParticipant?.display_name ?? "communitylid"}`}>
+                {activeMessages.length ? activeMessages.map((message) => (
+                  <p className={message.sender_id === currentUserId ? "own" : undefined} key={message.id}>{message.body}</p>
+                )) : <p>Nog geen berichten. Stuur de eerste rustige groet.</p>}
+              </div>
+            ) : null}
+            <form className="community-chat-compose" action={activeConversation ? sendCommunityMessage.bind(null, activeConversation.id) : undefined}>
+              <input type="hidden" name="return_to" value="/community" readOnly />
+              <input name="body" placeholder={isLoggedIn && activeConversation ? "Schrijf een privebericht..." : "Log in om prive te chatten"} disabled={!isLoggedIn || !activeConversation} />
+              {isLoggedIn && activeConversation ? (
+                <button type="submit" aria-label="Verstuur bericht">
+                  <Send size={17} aria-hidden />
+                </button>
+              ) : (
+                <Link href={loginHref}>Inloggen</Link>
+              )}
+            </form>
+          </div>
+        ) : null}
+
+        {activePanel === "notifications" ? (
+          <div className="community-panel-section">
+            <div className="community-panel-heading">
+              <h2>Meldingen</h2>
+              <span>Rustig overzicht</span>
+            </div>
+            <div className="community-notification-list">
+              {isLoggedIn ? (
+                <>
+                  <p><strong>Nog geen nieuwe meldingen</strong><span>Als iemand reageert, steun geeft of jou een bericht stuurt, zie je dat hier.</span></p>
+                  <p><strong>Profieltip</strong><span>Maak je profiel vindbaar als je openstaat voor rustig contact.</span></p>
+                </>
+              ) : (
+                <p><strong>Meldingen na inloggen</strong><span>Log in om reacties, steun en priveberichten op een plek te volgen.</span></p>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {activePanel === "account" ? (
+          <div className="community-panel-section">
+            <div className="community-panel-heading">
+              <h2>Mijn profiel</h2>
+              <span>{isLoggedIn ? "Ingelogd" : "Gast"}</span>
+            </div>
+            <div className="community-account-summary">
+              <ProfileAvatar name={displayName} avatarUrl={avatarUrl} large />
+              <div>
+                <strong>{isLoggedIn ? displayName : "Log in als je wilt reageren of delen."}</strong>
+                <p>{isLoggedIn ? "Bepaal hoe je zichtbaar bent in de community. Je kunt je naam, profielfoto en vindbaarheid aanpassen." : "Je kunt rustig meelezen zonder account. Log in als je wilt reageren, steun geven of zelf iets delen."}</p>
+              </div>
+            </div>
+            {isLoggedIn ? (
+              <>
+                <form className="community-profile-form" action={updateCommunityProfile}>
+                  <input type="hidden" name="return_to" value="/community" readOnly />
+                  <label>
+                    Naam
+                    <input name="display_name" defaultValue={displayName} maxLength={80} required />
+                  </label>
+                  <label>
+                    Profielfoto
+                    <input name="avatar_file" type="file" accept="image/png,image/jpeg,image/webp" />
+                  </label>
+                  <label className="community-checkbox-row">
+                    <input name="is_discoverable" type="checkbox" defaultChecked={currentProfile?.is_discoverable ?? false} />
+                    Vindbaar voor priveberichten
+                  </label>
+                  <button className="community-panel-button" type="submit">Profiel opslaan</button>
+                </form>
+                <form action={signOut}>
+                  <input type="hidden" name="next" value="/community" readOnly />
+                  <button className="community-panel-button secondary" type="submit">Uitloggen</button>
+                </form>
+              </>
+            ) : (
+              <Link className="community-panel-button" href={loginHref}>Inloggen om mee te doen</Link>
+            )}
+            {!hasSupabaseEnv ? <p className="small-note">Supabase env vars ontbreken nog.</p> : null}
+          </div>
+        ) : null}
+      </div>
+    </aside>
+  );
+}
+
+function ProfileAvatar({ name, avatarUrl, large = false }: { name: string; avatarUrl?: string | null; large?: boolean }) {
+  const className = large ? "community-profile-avatar large" : "community-profile-avatar";
+  if (avatarUrl) return <Image className={className} src={avatarUrl} alt="" width={large ? 52 : 34} height={large ? 52 : 34} />;
+  return <span className={className} aria-hidden>{authorInitial(name)}</span>;
+}
+
+function getConversationPeer(conversation: CommunityConversation, currentUserId?: string | null) {
+  return conversation.community_conversation_participants
+    ?.find((participant) => participant.user_id !== currentUserId)
+    ?.community_profiles ?? null;
+}
+
+function getCommunityPeople(posts: CommunityPost[], profiles: CommunityProfile[]) {
+  const people = new Map<string, { userId?: string; name: string; context: string; avatarUrl?: string | null }>();
+  profiles.forEach((profile) => {
+    people.set(profile.user_id, {
+      userId: profile.user_id,
+      name: profile.display_name,
+      context: "Beschikbaar voor rustig contact",
+      avatarUrl: profile.avatar_url
+    });
+  });
+  posts.forEach((post) => {
+    const name = displayAuthor(post.author_name, post.author_display_type);
+    if (!people.has(name)) {
+      people.set(name, {
+        name,
+        context: `${postTypeLabels[post.post_type ?? "story"]} over ${post.category}`
+      });
+    }
+  });
+  const collected = Array.from(people.values()).slice(0, 6);
+  if (collected.length) return collected;
+  return [
+    { name: "SNAAR community", context: "Maak contact met lotgenoten" },
+    { name: "Stuk Verdriet", context: "Vragen over reageren en delen" },
+    { name: "Nieuwe gebruiker", context: "Log in om jezelf vindbaar te maken" }
+  ];
 }
 
 export function GoFundMeSupportSection() {
@@ -476,7 +732,7 @@ function EpisodeQueueItem({ episode, active }: { episode: PodcastEpisode; active
         {getEpisodeAudioUrl(episode) ? <Play aria-hidden /> : <Headphones aria-hidden />}
       </div>
       <div>
-        <p className="eyebrow">S{episode.season_number} · E{episode.episode_number}</p>
+        <p className="eyebrow">S{episode.season_number} - E{episode.episode_number}</p>
         <h3>{episode.title}</h3>
         <EpisodeMeta episode={episode} />
       </div>
@@ -492,8 +748,8 @@ export function EpisodeMeta({ episode }: { episode: PodcastEpisode }) {
   return (
     <p className="meta">
       Seizoen {episode.season_number}, aflevering {episode.episode_number}
-      {episode.publication_date ? ` · ${formatDate(episode.publication_date)}` : ""}
-      {episode.duration ? ` · ${episode.duration}` : ""}
+      {episode.publication_date ? ` - ${formatDate(episode.publication_date)}` : ""}
+      {episode.duration ? ` - ${episode.duration}` : ""}
     </p>
   );
 }
@@ -603,16 +859,33 @@ const postTypeLabels: Record<NonNullable<CommunityPost["post_type"]>, string> = 
   link: "Handige link"
 };
 
+const snaarIcons = {
+  favoriteBefore: "/img/icons_SNAAR/favorite_before_click/icons8-favorite-48.png",
+  favoriteAfter: "/img/icons_SNAAR/heart_taped/icons8-mending-heart-48.png",
+  comment: "/img/icons_SNAAR/comment/icons8-comment-48.png",
+  share: "/img/icons_SNAAR/share_arrow/icons8-forward-arrow-48.png"
+};
+
 export function CommunityPostCard({ post, showActions = false }: { post: CommunityPost; showActions?: boolean }) {
   const postType = post.post_type ?? "story";
+  const authorName = displayAuthor(post.author_name, post.author_display_type);
+  const postUrl = `/community/${post.slug}`;
   return (
-    <article className="post-card">
-      {post.image_url ? <Image className="post-card-image" src={post.image_url} alt="" width={720} height={420} /> : null}
-      <p className="eyebrow">{postTypeLabels[postType]} · {post.category}</p>
+    <article className="post-card community-post-card">
+      <header className="community-post-author">
+        <span className="community-avatar" aria-hidden>{authorInitial(authorName)}</span>
+        <div>
+          <strong>{authorName}</strong>
+          <p>{postTypeLabels[postType]} - {post.category} - {formatDate(post.created_at)}</p>
+        </div>
+      </header>
+      {post.image_url ? (
+        <Image className="post-card-image" src={post.image_url} alt={`Afbeelding bij ${post.title}`} width={720} height={420} />
+      ) : null}
       <h3>
         <Link href={`/community/${post.slug}`}>{post.title}</Link>
       </h3>
-      <p>{post.body}</p>
+      <p className="community-post-body">{post.body}</p>
       {post.resource_url ? (
         <a className="community-resource-link" href={post.resource_url} target="_blank" rel="noopener noreferrer">
           {post.resource_label ?? "Bekijk gedeelde link"}
@@ -625,26 +898,44 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
           ))}
         </div>
       ) : null}
-      <div className="post-meta">
-        <span>{displayAuthor(post.author_name, post.author_display_type)}</span>
-        <span>{formatDate(post.created_at)}</span>
+      <div className="post-meta community-engagement-row">
+        <span><Image src={snaarIcons.favoriteAfter} alt="" width={16} height={16} /> {post.support_count} steun</span>
         <span>{post.reply_count} reacties</span>
-        <span>{post.support_count} steun</span>
       </div>
-      {showActions ? (
-        <div className="community-card-actions">
-          <Link className="text-link" href={`/community/${post.slug}`}>Lees en reageer</Link>
+      <div className="community-card-actions" role="group" aria-label="Berichtacties">
+        {showActions ? (
           <form action={supportPost.bind(null, post.id)}>
-            <button className="button" type="submit">Steun</button>
+            <button className="community-post-action" type="submit">
+              <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
+              Steun
+            </button>
           </form>
-        </div>
-      ) : null}
+        ) : (
+          <Link className="community-post-action" href={`/login?next=${encodeURIComponent(postUrl)}`}>
+            <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
+            Steun
+          </Link>
+        )}
+        <Link className="community-post-action" href={postUrl}>
+          <Image src={snaarIcons.comment} alt="" width={21} height={21} />
+          Reageer
+        </Link>
+        <SharePostButton postUrl={postUrl} title={post.title} />
+      </div>
+      <div className="community-inline-comment">
+        <span className="community-avatar community-avatar-small" aria-hidden>{showActions ? "J" : "S"}</span>
+        {showActions ? (
+          <Link href={postUrl}>Schrijf een reactie...</Link>
+        ) : (
+          <Link href={`/login?next=${encodeURIComponent(postUrl)}`}>Log in om te reageren...</Link>
+        )}
+      </div>
     </article>
   );
 }
 
 export function CommunityFeedback({ submitted, error }: { submitted?: boolean; error?: string | null }) {
-  if (submitted) return <p className="notice">Je verhaal is ontvangen en staat klaar voor moderatie.</p>;
+  if (submitted) return <p className="notice" role="status" aria-live="polite">Je verhaal is ontvangen en staat klaar voor moderatie.</p>;
   if (!error) return null;
   const messages: Record<string, string> = {
     "community-images": "Uploaden van de afbeelding is niet gelukt. Probeer een kleiner bestand of plaats je bericht zonder afbeelding.",
@@ -653,7 +944,7 @@ export function CommunityFeedback({ submitted, error }: { submitted?: boolean; e
     storage: "Afbeeldingen uploaden is nog niet goed gekoppeld. Controleer de Supabase Storage bucket.",
     supabase: "Community plaatsen vereist Supabase-configuratie."
   };
-  return <p className="notice">{messages[error] ?? "Controleer de invoer en probeer het opnieuw."}</p>;
+  return <p className="notice" role="alert">{messages[error] ?? "Controleer de invoer en probeer het opnieuw."}</p>;
 }
 
 export function CommunityStoryForm({
@@ -744,8 +1035,44 @@ export function CommunityStoryForm({
         Bericht
         <textarea name="body" required />
       </label>
-      <button className="button" type="submit">Verstuur ter goedkeuring</button>
+      <CommunitySubmitButton />
     </form>
+  );
+}
+
+function SharePostButton({ postUrl, title }: { postUrl: string; title: string }) {
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const sharePost = async () => {
+    const url = new URL(postUrl, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        setFeedback("Gedeeld");
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setFeedback("Link gekopieerd");
+    } catch {
+      setFeedback(null);
+    }
+  };
+
+  return (
+    <button className="community-post-action" type="button" onClick={sharePost} aria-label={`Deel ${title}`}>
+      <Image src={snaarIcons.share} alt="" width={21} height={21} />
+      <span>{feedback ?? "Deel"}</span>
+    </button>
+  );
+}
+
+function CommunitySubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="button" type="submit" disabled={pending} aria-disabled={pending}>
+      {pending ? "Wordt verstuurd..." : "Verstuur ter goedkeuring"}
+    </button>
   );
 }
 
@@ -843,6 +1170,10 @@ function displayAuthor(name: string | null, type: string) {
   if (type === "anonymous") return "Anoniem";
   if (type === "first_name" && name) return name.split(" ")[0];
   return name ?? "Communitylid";
+}
+
+function authorInitial(name: string) {
+  return (name.trim()[0] ?? "S").toUpperCase();
 }
 
 function getSpotifyEmbedUrl(value: string) {

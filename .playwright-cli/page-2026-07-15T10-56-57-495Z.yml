@@ -1,0 +1,252 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner:
+      - generic [ref=e3]:
+        - button "Menu openen" [ref=e4] [cursor=pointer]:
+          - img "SNAAR logo" [ref=e5]
+        - navigation "Hoofdnavigatie":
+          - link "Home":
+            - /url: /
+          - link "Podcast":
+            - /url: /podcast
+          - generic "Social media links":
+            - link "Instagram":
+              - /url: https://www.instagram.com/stukverdrietdepodcast/
+              - img "Instagram"
+            - link "Facebook":
+              - /url: https://www.facebook.com/stukverdriet
+              - img "Facebook"
+            - link "TikTok":
+              - /url: https://www.tiktok.com/@stuk.verdriet
+              - img "TikTok"
+    - main [ref=e6]:
+      - main [ref=e7]:
+        - generic [ref=e8]:
+          - heading "Hoe gevoelig de snaar ook is, hier raken we hem samen. Je hoeft het niet alleen te doen. We zijn er voor je. Laat van je horen." [level=1] [ref=e10]
+          - complementary "Community account" [ref=e11]:
+            - generic "Community snelmenu" [ref=e12]:
+              - button "Menu" [ref=e13] [cursor=pointer]
+              - button "Berichten" [ref=e16] [cursor=pointer]
+              - button "Meldingen" [ref=e17] [cursor=pointer]
+              - button "Mijn profiel" [pressed] [ref=e18] [cursor=pointer]:
+                - generic [ref=e19]: G
+            - generic [ref=e23]:
+              - generic [ref=e24]:
+                - heading "Mijn profiel" [level=2] [ref=e25]
+                - generic [ref=e26]: Gast
+              - generic [ref=e27]:
+                - generic [ref=e28]: G
+                - generic [ref=e29]:
+                  - strong [ref=e30]: Log in als je wilt reageren of delen.
+                  - paragraph [ref=e31]: Je kunt rustig meelezen zonder account. Log in als je wilt reageren, steun geven of zelf iets delen.
+              - link "Inloggen om mee te doen" [ref=e32] [cursor=pointer]:
+                - /url: /login?next=%2Fcommunity
+        - region "Community feed" [ref=e33]:
+          - region [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - heading "Jouw Feed" [level=2] [ref=e38]
+                - generic [ref=e39]: 4 bijdragen
+              - generic [ref=e40]:
+                - article [ref=e41]:
+                  - generic [ref=e42]:
+                    - generic [ref=e43]: A
+                    - generic [ref=e44]:
+                      - strong [ref=e45]: Anoniem
+                      - paragraph [ref=e46]: Vraag - Rouw algemeen - 14 juli 2026
+                  - heading [level=3] [ref=e47]:
+                    - link "Hoe houd je ruimte voor iemand die gemist wordt?" [ref=e48] [cursor=pointer]:
+                      - /url: /community/ruimte-voor-iemand-die-gemist-wordt
+                  - paragraph [ref=e49]: Soms wil ik iemands naam blijven noemen, maar ik twijfel of anderen dat zwaar vinden. Hoe doen jullie dat op verjaardagen, gewone dagen of momenten waarop iemand ineens heel dichtbij voelt?
+                  - generic "Tags" [ref=e50]: herkenning
+                  - generic [ref=e52]:
+                    - generic [ref=e53]: 18 steun
+                    - generic [ref=e54]: 4 reacties
+                  - group "Berichtacties" [ref=e55]:
+                    - link "Steun" [ref=e56] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fruimte-voor-iemand-die-gemist-wordt
+                    - link "Reageer" [ref=e57] [cursor=pointer]:
+                      - /url: /community/ruimte-voor-iemand-die-gemist-wordt
+                    - button "Deel Hoe houd je ruimte voor iemand die gemist wordt?" [ref=e58] [cursor=pointer]:
+                      - generic [ref=e59]: Deel
+                  - generic [ref=e60]:
+                    - generic [ref=e61]: S
+                    - link "Log in om te reageren..." [ref=e62] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fruimte-voor-iemand-die-gemist-wordt
+                - article [ref=e63]:
+                  - generic [ref=e64]:
+                    - generic [ref=e65]: S
+                    - generic [ref=e66]:
+                      - strong [ref=e67]: Susan
+                      - paragraph [ref=e68]: Tip - Herinneren - 13 juli 2026
+                  - heading [level=3] [ref=e69]:
+                    - link "Een klein ritueel voor een zware dag" [ref=e70] [cursor=pointer]:
+                      - /url: /community/klein-ritueel-voor-een-zware-dag
+                  - paragraph [ref=e71]: "Op dagen waarop alles scherp voelt, helpt het mij om iets kleins te doen dat niet hoeft te worden uitgelegd. Een kaars aan, een wandeling, een liedje, of gewoon even hardop zeggen: vandaag mis ik je."
+                  - generic "Tags" [ref=e72]:
+                    - generic [ref=e73]: ritueel
+                    - generic [ref=e74]: herinneren
+                  - generic [ref=e75]:
+                    - generic [ref=e76]: 31 steun
+                    - generic [ref=e77]: 7 reacties
+                  - group "Berichtacties" [ref=e78]:
+                    - link "Steun" [ref=e79] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fklein-ritueel-voor-een-zware-dag
+                    - link "Reageer" [ref=e80] [cursor=pointer]:
+                      - /url: /community/klein-ritueel-voor-een-zware-dag
+                    - button "Deel Een klein ritueel voor een zware dag" [ref=e81] [cursor=pointer]:
+                      - generic [ref=e82]: Deel
+                  - generic [ref=e83]:
+                    - generic [ref=e84]: S
+                    - link "Log in om te reageren..." [ref=e85] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fklein-ritueel-voor-een-zware-dag
+                - article [ref=e86]:
+                  - generic [ref=e87]:
+                    - generic [ref=e88]: D
+                    - generic [ref=e89]:
+                      - strong [ref=e90]: Daniela
+                      - paragraph [ref=e91]: Verhaal - Voor de omgeving - 12 juli 2026
+                  - heading [level=3] [ref=e92]:
+                    - link "Wat zeg je tegen iemand die net slecht nieuws heeft gekregen?" [ref=e93] [cursor=pointer]:
+                      - /url: /community/wat-zeg-je-bij-slecht-nieuws
+                  - paragraph [ref=e94]: "Ik merk dat veel mensen bang zijn om iets verkeerds te zeggen. Misschien helpt het om niet te zoeken naar de perfecte zin, maar naar aanwezigheid. Iets als: ik weet niet wat ik moet zeggen, maar ik ben er."
+                  - generic "Tags" [ref=e95]:
+                    - generic [ref=e96]: woorden
+                    - generic [ref=e97]: naasten
+                  - generic [ref=e98]:
+                    - generic [ref=e99]: 22 steun
+                    - generic [ref=e100]: 3 reacties
+                  - group "Berichtacties" [ref=e101]:
+                    - link "Steun" [ref=e102] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fwat-zeg-je-bij-slecht-nieuws
+                    - link "Reageer" [ref=e103] [cursor=pointer]:
+                      - /url: /community/wat-zeg-je-bij-slecht-nieuws
+                    - button "Deel Wat zeg je tegen iemand die net slecht nieuws heeft gekregen?" [ref=e104] [cursor=pointer]:
+                      - generic [ref=e105]: Deel
+                  - generic [ref=e106]:
+                    - generic [ref=e107]: S
+                    - link "Log in om te reageren..." [ref=e108] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fwat-zeg-je-bij-slecht-nieuws
+                - article [ref=e109]:
+                  - generic [ref=e110]:
+                    - generic [ref=e111]: A
+                    - generic [ref=e112]:
+                      - strong [ref=e113]: Anoniem
+                      - paragraph [ref=e114]: Handige link - Hulp & ondersteuning - 11 juli 2026
+                  - heading [level=3] [ref=e115]:
+                    - 'link "Handige route: hulp en ondersteuning" [ref=e116] [cursor=pointer]':
+                      - /url: /community/handige-route-hulp-en-ondersteuning
+                  - paragraph [ref=e117]: "Voor wie merkt dat lezen alleen niet genoeg is: verzamel hier rustige routes naar hulp, lotgenotencontact en steun die past bij rouw, ziekte of langdurige spanning."
+                  - link "Bekijk hulp en ondersteuning" [ref=e118] [cursor=pointer]:
+                    - /url: /themas/hulp-en-ondersteuning
+                  - generic "Tags" [ref=e119]:
+                    - generic [ref=e120]: hulp
+                    - generic [ref=e121]: lotgenoten
+                  - generic [ref=e122]:
+                    - generic [ref=e123]: 12 steun
+                    - generic [ref=e124]: 1 reacties
+                  - group "Berichtacties" [ref=e125]:
+                    - link "Steun" [ref=e126] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fhandige-route-hulp-en-ondersteuning
+                    - link "Reageer" [ref=e127] [cursor=pointer]:
+                      - /url: /community/handige-route-hulp-en-ondersteuning
+                    - 'button "Deel Handige route: hulp en ondersteuning" [ref=e128] [cursor=pointer]':
+                      - generic [ref=e129]: Deel
+                  - generic [ref=e130]:
+                    - generic [ref=e131]: S
+                    - link "Log in om te reageren..." [ref=e132] [cursor=pointer]:
+                      - /url: /login?next=%2Fcommunity%2Fhandige-route-hulp-en-ondersteuning
+        - region [ref=e133]:
+          - heading "Handige routes en gedeelde links" [level=2] [ref=e136]
+          - article [ref=e138]:
+            - generic [ref=e139]:
+              - generic [ref=e140]: A
+              - generic [ref=e141]:
+                - strong [ref=e142]: Anoniem
+                - paragraph [ref=e143]: Handige link - Hulp & ondersteuning - 11 juli 2026
+            - heading [level=3] [ref=e144]:
+              - 'link "Handige route: hulp en ondersteuning" [ref=e145] [cursor=pointer]':
+                - /url: /community/handige-route-hulp-en-ondersteuning
+            - paragraph [ref=e146]: "Voor wie merkt dat lezen alleen niet genoeg is: verzamel hier rustige routes naar hulp, lotgenotencontact en steun die past bij rouw, ziekte of langdurige spanning."
+            - link "Bekijk hulp en ondersteuning" [ref=e147] [cursor=pointer]:
+              - /url: /themas/hulp-en-ondersteuning
+            - generic "Tags" [ref=e148]:
+              - generic [ref=e149]: hulp
+              - generic [ref=e150]: lotgenoten
+            - generic [ref=e151]:
+              - generic [ref=e152]: 12 steun
+              - generic [ref=e153]: 1 reacties
+            - group "Berichtacties" [ref=e154]:
+              - link "Steun" [ref=e155] [cursor=pointer]:
+                - /url: /login?next=%2Fcommunity%2Fhandige-route-hulp-en-ondersteuning
+              - link "Reageer" [ref=e156] [cursor=pointer]:
+                - /url: /community/handige-route-hulp-en-ondersteuning
+              - 'button "Deel Handige route: hulp en ondersteuning" [ref=e157] [cursor=pointer]':
+                - generic [ref=e158]: Deel
+            - generic [ref=e159]:
+              - generic [ref=e160]: S
+              - link "Log in om te reageren..." [ref=e161] [cursor=pointer]:
+                - /url: /login?next=%2Fcommunity%2Fhandige-route-hulp-en-ondersteuning
+    - contentinfo [ref=e162]:
+      - generic [ref=e163]:
+        - heading "Stuk Verdriet" [level=2] [ref=e164]
+        - paragraph [ref=e165]: Verdriet verdient een stem.
+      - navigation "Footer navigatie" [ref=e166]:
+        - link "Home" [ref=e167] [cursor=pointer]:
+          - /url: /
+        - link "Podcast" [ref=e168] [cursor=pointer]:
+          - /url: /podcast
+        - link "Thema's" [ref=e169] [cursor=pointer]:
+          - /url: /themas
+        - link "Community" [ref=e170] [cursor=pointer]:
+          - /url: /community
+        - link "Over ons" [ref=e171] [cursor=pointer]:
+          - /url: /over
+        - link "Contact" [ref=e172] [cursor=pointer]:
+          - /url: /contact
+        - link "Algemene voorwaarden" [ref=e173] [cursor=pointer]:
+          - /url: /algemene-voorwaarden
+        - link "Privacyverklaring" [ref=e174] [cursor=pointer]:
+          - /url: /privacy
+        - link "Communityrichtlijnen" [ref=e175] [cursor=pointer]:
+          - /url: /communityrichtlijnen
+        - link "Cookieverklaring" [ref=e176] [cursor=pointer]:
+          - /url: /cookies
+      - generic [ref=e177]:
+        - link "info@stukverdriet.nl" [ref=e178] [cursor=pointer]:
+          - /url: mailto:info@stukverdriet.nl
+        - link "Afmelden of gegevens verwijderen" [ref=e182] [cursor=pointer]:
+          - /url: /afmelden
+        - link "Bezoek AYA Fonds" [ref=e183] [cursor=pointer]:
+          - /url: https://ayafonds.nl/
+          - img "AYA Fonds" [ref=e184]
+      - generic "Aanbevolen links" [ref=e185]:
+        - article [ref=e186]:
+          - link "Longeneeslijk openen" [ref=e187] [cursor=pointer]:
+            - /url: https://www.thema.nl/boek-longeneeslijk/
+            - img "Boekomslag Longeneeslijk van Eva Hermans-Kroot" [ref=e188]
+          - generic [ref=e189]:
+            - heading "Longeneeslijk" [level=3] [ref=e190]
+            - paragraph [ref=e191]: Het boek van Eva Kroot over leven met kanker, pech en geluk.
+          - link "Longeneeslijk openen via QR-link" [ref=e192] [cursor=pointer]:
+            - /url: https://www.thema.nl/boek-longeneeslijk/
+            - img "QR-code naar het boek Longeneeslijk bij Thema" [ref=e193]
+        - article [ref=e194]:
+          - link "Onvergetelijk openen" [ref=e195] [cursor=pointer]:
+            - /url: https://www.thema.nl/boek-onvergetelijk/
+            - img "Boekomslag Onvergetelijk van Matthijs Hermans en Hanneke Mijnster" [ref=e196]
+          - generic [ref=e197]:
+            - heading "Onvergetelijk" [level=3] [ref=e198]
+            - paragraph [ref=e199]: Een jaar later, over Eva, gemis en het fijne van herinneren.
+          - link "Onvergetelijk openen via QR-link" [ref=e200] [cursor=pointer]:
+            - /url: https://www.thema.nl/boek-onvergetelijk/
+            - img "QR-code naar het boek Onvergetelijk bij Thema" [ref=e201]
+      - paragraph [ref=e202]:
+        - generic [ref=e203]:
+          - text: © 2026 Stuk Verdriet - Met liefde gebouwd door
+          - link "MNRV" [ref=e204] [cursor=pointer]:
+            - /url: https://mnrv.nl
+        - link "Open de GoFundMe van Stuk Verdriet" [ref=e205] [cursor=pointer]:
+          - /url: https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken
+          - img "QR-code voor de GoFundMe van Stuk Verdriet" [ref=e206]
+  - button "Open Next.js Dev Tools" [ref=e212] [cursor=pointer]

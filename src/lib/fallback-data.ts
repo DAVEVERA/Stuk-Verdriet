@@ -202,15 +202,78 @@ export const fallbackPosts: CommunityPost[] = [
     title: "Hoe houd je ruimte voor iemand die gemist wordt?",
     slug: "ruimte-voor-iemand-die-gemist-wordt",
     body:
-      "Een voorbeeld van een goedgekeurde communityvraag. In de live omgeving worden nieuwe berichten eerst door de beheerder gelezen.",
+      "Soms wil ik iemands naam blijven noemen, maar ik twijfel of anderen dat zwaar vinden. Hoe doen jullie dat op verjaardagen, gewone dagen of momenten waarop iemand ineens heel dichtbij voelt?",
     image_url: null,
     category: "Rouw algemeen",
+    post_type: "question",
+    resource_url: null,
+    resource_label: null,
     tags: ["herkenning"],
     target_group: "naasten",
-    created_at: "2026-06-04T10:00:00.000Z",
+    created_at: "2026-07-14T10:00:00.000Z",
     status: "approved",
-    reply_count: 0,
-    support_count: 3
+    reply_count: 4,
+    support_count: 18
+  },
+  {
+    id: "post-2",
+    author_name: "Susan",
+    author_display_type: "first_name",
+    title: "Een klein ritueel voor een zware dag",
+    slug: "klein-ritueel-voor-een-zware-dag",
+    body:
+      "Op dagen waarop alles scherp voelt, helpt het mij om iets kleins te doen dat niet hoeft te worden uitgelegd. Een kaars aan, een wandeling, een liedje, of gewoon even hardop zeggen: vandaag mis ik je.",
+    image_url: null,
+    category: "Herinneren",
+    post_type: "tip",
+    resource_url: null,
+    resource_label: null,
+    tags: ["ritueel", "herinneren"],
+    target_group: "ouders",
+    created_at: "2026-07-13T18:20:00.000Z",
+    status: "approved",
+    reply_count: 7,
+    support_count: 31
+  },
+  {
+    id: "post-3",
+    author_name: "Daniela",
+    author_display_type: "first_name",
+    title: "Wat zeg je tegen iemand die net slecht nieuws heeft gekregen?",
+    slug: "wat-zeg-je-bij-slecht-nieuws",
+    body:
+      "Ik merk dat veel mensen bang zijn om iets verkeerds te zeggen. Misschien helpt het om niet te zoeken naar de perfecte zin, maar naar aanwezigheid. Iets als: ik weet niet wat ik moet zeggen, maar ik ben er.",
+    image_url: null,
+    category: "Voor de omgeving",
+    post_type: "story",
+    resource_url: null,
+    resource_label: null,
+    tags: ["woorden", "naasten"],
+    target_group: "vrienden",
+    created_at: "2026-07-12T12:45:00.000Z",
+    status: "approved",
+    reply_count: 3,
+    support_count: 22
+  },
+  {
+    id: "post-4",
+    author_name: null,
+    author_display_type: "anonymous",
+    title: "Handige route: hulp en ondersteuning",
+    slug: "handige-route-hulp-en-ondersteuning",
+    body:
+      "Voor wie merkt dat lezen alleen niet genoeg is: verzamel hier rustige routes naar hulp, lotgenotencontact en steun die past bij rouw, ziekte of langdurige spanning.",
+    image_url: null,
+    category: "Hulp & ondersteuning",
+    post_type: "link",
+    resource_url: "/themas/hulp-en-ondersteuning",
+    resource_label: "Bekijk hulp en ondersteuning",
+    tags: ["hulp", "lotgenoten"],
+    target_group: null,
+    created_at: "2026-07-11T09:15:00.000Z",
+    status: "approved",
+    reply_count: 1,
+    support_count: 12
   }
 ];
 

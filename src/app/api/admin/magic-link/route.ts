@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { safeAuthNext } from "@/lib/auth-redirect";
+import { encodeAuthNext, safeAuthNext } from "@/lib/auth-redirect";
 import { adminEmailList, createSupabasePublicClient, hasSupabaseEnv } from "@/lib/supabase";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${requestUrl.origin}/auth/callback?next=${encodeURIComponent(next)}`
+      emailRedirectTo: `${requestUrl.origin}/auth/callback?next=${encodeURIComponent(encodeAuthNext(next))}`
     }
   });
 

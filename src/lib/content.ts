@@ -4,6 +4,7 @@ import {
   fallbackFaqs,
   fallbackHosts,
   fallbackInterviews,
+  fallbackPosts,
   fallbackSeasons,
   fallbackSocialLinks,
   fallbackSponsors
@@ -105,9 +106,9 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
 
 export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
   const supabase = createSupabasePublicClient();
-  if (!supabase) return [];
+  if (!supabase) return fallbackPosts;
   const { data, error } = await supabase.from("community_posts").select("*").eq("status", "approved");
-  if (error || !data) return [];
+  if (error || !data || data.length === 0) return fallbackPosts;
   const posts = data as CommunityPost[];
   return posts
     .map((post) => ({

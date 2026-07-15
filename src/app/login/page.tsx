@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { signInWithEmail, signInWithProvider } from "@/lib/actions";
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string; next?: string; sent?: string; missing?: string }>;
@@ -16,29 +17,53 @@ const errorMessages: Record<string, string> = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = (await searchParams) ?? {};
-  const next = params.next ?? "/admin";
+  const next = params.next ?? "/community";
   const error = params.error ?? params.missing;
+  const isAdminLogin = next === "/admin";
 
   return (
     <div className="login-under-construction">
       <div className="login-uc-content">
-        <h1>Beheer login</h1>
-        <p>Log lokaal in om het adminportaal te bekijken en de beheerflow te controleren.</p>
+        <p className="eyebrow">{isAdminLogin ? "Beheer" : "SNAAR"}</p>
+        <h1>{isAdminLogin ? "Beheer login" : "Log in op SNAAR"}</h1>
+        <p>
+          {isAdminLogin
+            ? "Log lokaal in om het adminportaal te bekijken en de beheerflow te controleren."
+            : "Lees verhalen zonder account. Log in als je wilt reageren, steun geven of zelf iets wilt delen."}
+        </p>
 
-        <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
-          <input type="hidden" name="next" value={next} readOnly />
-          <label>
-            Gebruiker
-            <input name="username" autoComplete="username" required />
-          </label>
-          <label>
-            Wachtwoord
-            <input name="password" type="password" autoComplete="current-password" required />
-          </label>
-          <button className="button" type="submit">Inloggen</button>
-          {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
-          {params.sent ? <p className="notice">Magic link verzonden. Controleer je inbox.</p> : null}
-        </form>
+        {isAdminLogin ? (
+          <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
+            <input type="hidden" name="next" value={next} readOnly />
+            <label>
+              Gebruiker
+              <input name="username" autoComplete="username" required />
+            </label>
+            <label>
+              Wachtwoord
+              <input name="password" type="password" autoComplete="current-password" required />
+            </label>
+            <button className="button" type="submit">Inloggen</button>
+            {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
+          </form>
+        ) : (
+          <div className="community-login-options">
+            <form action={signInWithProvider.bind(null, "google")}>
+              <input type="hidden" name="next" value={next} readOnly />
+              <button className="button" type="submit">Verder met Google</button>
+            </form>
+            <form className="local-admin-login-form" action={signInWithEmail}>
+              <input type="hidden" name="next" value={next} readOnly />
+              <label>
+                E-mailadres
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <button className="text-link" type="submit">Stuur magic link</button>
+            </form>
+            {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
+            {params.sent ? <p className="notice">Magic link verzonden. Controleer je inbox.</p> : null}
+          </div>
+        )}
 
         <div className="login-uc-socials">
           <a
@@ -65,7 +90,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </a>
         </div>
 
-        <Link href="/" className="login-uc-back">Terug naar Stuk Verdriet</Link>
+        <Link href={next === "/admin" ? "/" : "/community"} className="login-uc-back">
+          Terug naar {next === "/admin" ? "Stuk Verdriet" : "SNAAR"}
+        </Link>
       </div>
     </div>
   );

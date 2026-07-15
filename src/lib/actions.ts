@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { encodeAuthNext } from "@/lib/auth-redirect";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { adminEmailList, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
@@ -14,6 +15,7 @@ const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "
 const communityImageMaxSize = 4 * 1024 * 1024;
 const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
+const communityAvatarMaxSize = 4 * 1024 * 1024;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
@@ -145,6 +147,11 @@ function adminReturnTarget(formData: FormData, status: "saved" | "error", code: 
 function isAllowedCommunityImage(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   return file.size <= communityImageMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
+}
+
+function isAllowedCommunityAvatar(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return file.size <= communityAvatarMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
 }
 
 async function uploadPublicFile(
@@ -370,7 +377,7 @@ export async function signInWithProvider(provider: "google", formData?: FormData
   const next = safeReturnPath(formData?.get("next") ?? null, "/community");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}` }
+    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(encodeAuthNext(next))}` }
   });
   if (error || !data.url) redirect("/login?error=oauth");
   redirect(data.url);
@@ -387,7 +394,7 @@ export async function signInWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
+      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(encodeAuthNext(next))}`
     }
   });
 
@@ -400,6 +407,134 @@ export async function signOut(formData?: FormData) {
   const next = safeReturnPath(formData?.get("next") ?? null, "/community");
   if (supabase) await supabase.auth.signOut();
   redirect(next);
+}
+
+async function requireCommunityUser(returnPath = "/community") {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) redirect(`/login?next=${encodeURIComponent(returnPath)}`);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(returnPath)}`);
+  return { supabase, user };
+}
+
+async function ensureCommunityProfile(user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null }) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return;
+  const fallbackName = typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()
+    ? user.user_metadata.full_name.trim()
+    : user.email?.split("@")[0] ?? "SNAAR gebruiker";
+  await admin
+    .from("community_profiles")
+    .upsert(
+      {
+        user_id: user.id,
+        display_name: fallbackName,
+        is_discoverable: false
+      },
+      { onConflict: "user_id", ignoreDuplicates: true }
+    );
+}
+
+export async function updateCommunityProfile(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(`${returnPath}?error=profile-storage`);
+
+  const displayName = String(formData.get("display_name") ?? "").trim();
+  if (!displayName || displayName.length > 80) redirect(`${returnPath}?error=profile-name`);
+
+  const avatar = getUploadFile(formData, "avatar_file");
+  let avatarUrl: string | null | undefined;
+  if (avatar) {
+    if (!isAllowedCommunityAvatar(avatar)) redirect(`${returnPath}?error=avatar`);
+    avatarUrl = await uploadPublicFile(admin, "community-avatars", `profiles/${user.id}`, avatar, "jpg", returnPath);
+  }
+
+  await admin.from("community_profiles").upsert({
+    user_id: user.id,
+    display_name: displayName,
+    ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
+    is_discoverable: formData.get("is_discoverable") === "on",
+    updated_at: new Date().toISOString()
+  }, { onConflict: "user_id" });
+
+  revalidatePath("/community");
+  redirect(`${returnPath}?profile=saved`);
+}
+
+export async function startCommunityConversation(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  const participantUserId = String(formData.get("participant_user_id") ?? "").trim();
+  const { user } = await requireCommunityUser(returnPath);
+  if (!participantUserId || participantUserId === user.id) redirect(`${returnPath}?error=chat-target`);
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(`${returnPath}?error=chat-service`);
+  await ensureCommunityProfile(user);
+
+  const { data: targetProfile } = await admin
+    .from("community_profiles")
+    .select("user_id")
+    .eq("user_id", participantUserId)
+    .eq("is_discoverable", true)
+    .maybeSingle();
+  if (!targetProfile) redirect(`${returnPath}?error=chat-target`);
+
+  const { data: myConversations } = await admin
+    .from("community_conversation_participants")
+    .select("conversation_id")
+    .eq("user_id", user.id);
+  const existingIds = (myConversations ?? []).map((row) => row.conversation_id).filter(Boolean);
+
+  if (existingIds.length) {
+    const { data: existing } = await admin
+      .from("community_conversation_participants")
+      .select("conversation_id")
+      .eq("user_id", participantUserId)
+      .in("conversation_id", existingIds)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.conversation_id) {
+      revalidatePath("/community");
+      redirect(`${returnPath}?conversation=${encodeURIComponent(existing.conversation_id)}`);
+    }
+  }
+
+  const { data: conversation, error } = await admin
+    .from("community_conversations")
+    .insert({ created_by: user.id })
+    .select("id")
+    .single();
+  if (error || !conversation?.id) redirect(`${returnPath}?error=chat-create`);
+
+  await admin.from("community_conversation_participants").insert([
+    { conversation_id: conversation.id, user_id: user.id },
+    { conversation_id: conversation.id, user_id: participantUserId }
+  ]);
+
+  revalidatePath("/community");
+  redirect(`${returnPath}?conversation=${encodeURIComponent(conversation.id)}`);
+}
+
+export async function sendCommunityMessage(conversationId: string, formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  const { supabase, user } = await requireCommunityUser(returnPath);
+  const body = String(formData.get("body") ?? "").trim();
+  if (!body || body.length > 2000) redirect(`${returnPath}?error=message`);
+  await ensureCommunityProfile(user);
+
+  const { error } = await supabase.from("community_messages").insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    body
+  });
+  if (error) redirect(`${returnPath}?error=message-send`);
+
+  revalidatePath("/community");
+  redirect(`${returnPath}?conversation=${encodeURIComponent(conversationId)}`);
 }
 
 export async function subscribeEpisodeSignup(formData: FormData) {

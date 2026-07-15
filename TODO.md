@@ -104,3 +104,64 @@ Add targeted footer links to the two current interview flyouts.
 ## Completion Marker
 
 INTERVIEW_FOOTER_LINKS_COMPLETE: true
+
+---
+
+## Goal
+
+Fix community login and make the community experience calmer under the name SNAAR.
+
+## Tasks
+
+- [x] Inspect login route and auth actions
+- [x] Replace community login dead-end with Google and magic-link login
+- [x] Keep local admin login available for admin route
+- [x] Rename the community surface to SNAAR
+- [x] Reduce visual density in the social feed layout
+- [x] Add preview posts for empty live community content
+- [x] Run typecheck, lint, build, and route smoke tests
+- [x] Final review
+
+## Completion Marker
+
+SNAAR_COMMUNITY_FLOW_PASS_COMPLETE: true
+
+---
+
+## Goal
+
+Make SNAAR fully mobile-first with a single Facebook-like vertical feed and icon-based post actions.
+
+## Tasks
+
+- [x] Remove side-by-side feed rails from the SNAAR community flow
+- [x] Keep the feed in one centered vertical scroll column on every viewport
+- [x] Add SNAAR action icons for support, comments, real sharing, feed, and handvatten
+- [x] Put the reaction/comment affordance directly under each post
+- [x] Verify typecheck, lint, build, and route smoke test
+- [x] Final review
+
+## Completion Marker
+
+SNAAR_MOBILE_FEED_PASS_COMPLETE: true
+
+---
+
+## Goal
+
+Finish the SNAAR community UX pass with mobile-first polish, accessible states, and browser-verified responsive behavior.
+
+## Tasks
+
+- [x] Run quality-auditor review against the community page
+- [x] Fix focus states and mobile tap targets
+- [x] Replace misleading share navigation with a real share/copy action
+- [x] Add screenreader-friendly form feedback and pending submit state
+- [x] Fix mobile anchor positioning below the fixed logo header
+- [x] Verify 320px, 390px, and desktop browser layouts
+- [x] Run typecheck, lint, and build
+- [x] Final review
+
+## Completion Marker
+
+SNAAR_COMMUNITY_UX_POLISH_COMPLETE: true
