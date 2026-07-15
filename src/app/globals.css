@@ -7255,6 +7255,7 @@ textarea {
   margin-top: 6px;
 }
 
+.community-login-options > .button,
 .community-login-options > form:first-child .button {
   width: 100%;
 }

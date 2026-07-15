@@ -21,6 +21,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const next = params.next ?? "/community";
   const error = params.error ?? params.missing;
   const isAdminLogin = next === "/admin";
+  const googleLoginHref = `/auth/google?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="login-under-construction">
@@ -49,10 +50,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </form>
         ) : (
           <div className="community-login-options">
-            <form action="/auth/google" method="get">
-              <input type="hidden" name="next" value={next} readOnly />
-              <button className="button" type="submit">Verder met Google</button>
-            </form>
+            <Link className="button" href={googleLoginHref}>Verder met Google</Link>
             <form className="local-admin-login-form" action={signInWithEmail}>
               <input type="hidden" name="next" value={next} readOnly />
               <label>
