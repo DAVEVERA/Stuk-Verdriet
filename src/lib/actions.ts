@@ -510,10 +510,14 @@ export async function startCommunityConversation(formData: FormData) {
     .single();
   if (error || !conversation?.id) redirect(`${returnPath}?error=chat-create`);
 
-  await admin.from("community_conversation_participants").insert([
+  const { error: participantsError } = await admin.from("community_conversation_participants").insert([
     { conversation_id: conversation.id, user_id: user.id },
     { conversation_id: conversation.id, user_id: participantUserId }
   ]);
+  if (participantsError) {
+    await admin.from("community_conversations").delete().eq("id", conversation.id);
+    redirect(`${returnPath}?error=chat-create`);
+  }
 
   revalidatePath("/community");
   redirect(`${returnPath}?conversation=${encodeURIComponent(conversation.id)}`);
@@ -534,6 +538,7 @@ export async function sendCommunityMessage(conversationId: string, formData: For
   if (error) redirect(`${returnPath}?error=message-send`);
 
   revalidatePath("/community");
+  revalidatePath("/community/profiel");
   redirect(`${returnPath}?conversation=${encodeURIComponent(conversationId)}`);
 }
 

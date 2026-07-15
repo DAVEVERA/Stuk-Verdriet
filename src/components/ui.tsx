@@ -153,9 +153,19 @@ type CommunityAccountDockProps = {
   conversations?: CommunityConversation[];
   posts: CommunityPost[];
   hasSupabaseEnv: boolean;
+  selectedConversationId?: string | null;
+  chatError?: string | null;
 };
 
 type CommunityDockPanel = "menu" | "chats" | "notifications" | "account";
+
+const communityChatErrors: Record<string, string> = {
+  "chat-target": "Kies een vindbaar communityprofiel om een gesprek te starten.",
+  "chat-service": "De berichtenservice is nog niet goed gekoppeld. Controleer de Supabase service-role configuratie.",
+  "chat-create": "Het gesprek kon niet worden aangemaakt. Probeer het opnieuw.",
+  "message": "Schrijf een bericht van maximaal 2000 tekens.",
+  "message-send": "Het bericht kon niet worden verzonden. Controleer of je nog deelnemer bent aan dit gesprek."
+};
 
 export function CommunityAccountDock({
   isLoggedIn,
@@ -165,18 +175,23 @@ export function CommunityAccountDock({
   discoverableProfiles = [],
   conversations = [],
   posts,
-  hasSupabaseEnv
+  hasSupabaseEnv,
+  selectedConversationId,
+  chatError
 }: CommunityAccountDockProps) {
-  const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(null);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(conversations[0]?.id ?? null);
+  const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(selectedConversationId ? "chats" : null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(selectedConversationId ?? conversations[0]?.id ?? null);
   const people = getCommunityPeople(posts, discoverableProfiles);
   const displayName = currentProfile?.display_name ?? email?.split("@")[0] ?? "Gast";
   const initials = authorInitial(displayName);
   const avatarUrl = currentProfile?.avatar_url ?? null;
   const loginHref = "/login?next=%2Fcommunity";
-  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0] ?? null;
+  const activeConversation = activeConversationId
+    ? conversations.find((conversation) => conversation.id === activeConversationId) ?? null
+    : null;
   const activeParticipant = activeConversation ? getConversationPeer(activeConversation, currentUserId) : null;
   const activeMessages = [...(activeConversation?.community_messages ?? [])].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(-6);
+  const chatErrorMessage = chatError ? communityChatErrors[chatError] : null;
 
   function openPanel(panel: CommunityDockPanel) {
     setActivePanel((current) => (current === panel ? null : panel));
@@ -226,10 +241,11 @@ export function CommunityAccountDock({
           <div className="community-panel-section community-chat-panel">
             <div className="community-panel-heading">
               <h2>Berichten</h2>
-              <button type="button" aria-label="Nieuwe chat">
+              <button type="button" aria-label="Nieuwe chat" onClick={() => setActiveConversationId(null)}>
                 <Edit3 size={18} aria-hidden />
               </button>
             </div>
+            {chatErrorMessage ? <p className="community-panel-alert">{chatErrorMessage}</p> : null}
             <label className="community-chat-search">
               <span className="sr-only">Zoeken in SNAAR berichten</span>
               <Search size={18} aria-hidden />
@@ -249,6 +265,11 @@ export function CommunityAccountDock({
                 );
               })}
               {isLoggedIn && !conversations.length ? <p className="community-panel-empty">Nog geen berichten. Start een gesprek met iemand uit de community.</p> : null}
+              {isLoggedIn && !discoverableProfiles.length ? (
+                <p className="community-panel-empty">
+                  Er zijn nog geen andere vindbare profielen. Zet je eigen profiel op vindbaar en nodig anderen uit om hetzelfde te doen.
+                </p>
+              ) : null}
               {people.map((person) => (
                 <form action={startCommunityConversation} key={person.userId ?? person.name}>
                   <input type="hidden" name="return_to" value="/community" readOnly />

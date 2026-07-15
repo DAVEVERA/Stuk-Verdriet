@@ -5,13 +5,13 @@ import Image from "next/image";
 import type { CommunityConversation, CommunityProfile } from "@/types/content";
 
 type CommunityPageProps = {
-  searchParams?: Promise<{ submitted?: string; error?: string; missing?: string }>;
+  searchParams?: Promise<{ submitted?: string; error?: string; missing?: string; conversation?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
-  await searchParams;
+  const params = (await searchParams) ?? {};
   const [categories, posts, supabase] = await Promise.all([
     getCommunityCategories(),
     getApprovedCommunityPosts(),
@@ -73,6 +73,8 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           conversations={conversations}
           posts={posts}
           hasSupabaseEnv={hasSupabaseEnv}
+          selectedConversationId={params.conversation ?? null}
+          chatError={params.error ?? null}
         />
       </section>
 
