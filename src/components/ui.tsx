@@ -145,7 +145,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
 
 export function GoFundMeSupportSection() {
   return (
-    <section className="gofundme-support-section" aria-label="Steun het gezin van Tycho">
+    <section className="gofundme-support-section" id="gofundme" aria-label="Steun het gezin van Tycho">
       <div className="gofundme-support-inner">
         <div className="gofundme-widget-card gofundme-widget-card--goal">
           <div className="gofundme-widget-goal-frame">

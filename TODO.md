@@ -85,3 +85,22 @@ Make the Stuk Verdriet admin portal understandable, task-led, mobile-first, and 
 ## Completion Marker
 
 ADMIN_REWORK_PASS_COMPLETE: true
+
+---
+
+## Goal
+
+Add targeted footer links to the two current interview flyouts.
+
+## Tasks
+
+- [x] Inspect current interview popout implementation
+- [x] Identify page anchors and social destinations
+- [x] Add the requested footer link sets per interview
+- [x] Keep the link layout mobile-first and accessible
+- [x] Run verification
+- [x] Final review
+
+## Completion Marker
+
+INTERVIEW_FOOTER_LINKS_COMPLETE: true

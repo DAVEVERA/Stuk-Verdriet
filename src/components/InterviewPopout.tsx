@@ -7,6 +7,26 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { formatDate } from "@/components/ui";
 import type { Interview, InterviewComment } from "@/types/interview";
 
+type InterviewFooterLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+};
+
+const interviewFooterLinks: Record<string, InterviewFooterLink[]> = {
+  "ik-ben-vooral-ik": [
+    { label: "Podcast", href: "#podcast" },
+    { label: "Instagram", href: "https://www.instagram.com/stukverdrietdepodcast/", external: true },
+    { label: "Waar heb je nu behoefte aan?", href: "#themas" }
+  ],
+  "mijn-verhaal-mag-erbij": [
+    { label: "GoFundMe", href: "#gofundme" },
+    { label: "Podcast", href: "#podcast" },
+    { label: "TikTok", href: "https://www.tiktok.com/@stuk.verdriet", external: true },
+    { label: "Instagram", href: "https://www.instagram.com/stukverdrietdepodcast/", external: true }
+  ]
+};
+
 type InterviewPopoutProps = {
   interview: Interview;
   comments: InterviewComment[];
@@ -36,6 +56,7 @@ export function InterviewPopout({
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const isContentAwareCover = interview.cover_image_url === "/img/DV.jpeg";
+  const footerLinks = interviewFooterLinks[interview.slug] ?? [];
 
   const handleLike = async () => {
     setIsLiking(true);
@@ -100,6 +121,23 @@ export function InterviewPopout({
               return null;
             })}
           </div>
+
+          {footerLinks.length ? (
+            <footer className="interview-popout-link-footer" aria-label="Verder lezen en volgen">
+              {footerLinks.map((link) => (
+                <a
+                  className="interview-popout-link"
+                  href={link.href}
+                  key={link.href}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noopener noreferrer" : undefined}
+                  onClick={link.external ? undefined : onClose}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </footer>
+          ) : null}
 
           <div className="interview-popout-actions">
             <button

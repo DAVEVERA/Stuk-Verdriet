@@ -7029,6 +7029,42 @@ textarea {
   margin: 12px 0;
 }
 
+.interview-popout-link-footer {
+  align-items: stretch;
+  border-top: 1px solid rgba(66, 86, 69, 0.1);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  margin: 20px 0 4px;
+  padding-top: 16px;
+}
+
+.interview-popout-link {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.74);
+  border: 1px solid rgba(66, 86, 69, 0.16);
+  border-radius: 6px;
+  color: var(--pine);
+  display: inline-flex;
+  font-size: 0.92rem;
+  font-weight: 760;
+  justify-content: center;
+  line-height: 1.2;
+  min-height: 44px;
+  padding: 10px 12px;
+  text-align: center;
+  text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.interview-popout-link:hover,
+.interview-popout-link:focus-visible {
+  background: rgba(138, 157, 139, 0.12);
+  border-color: rgba(66, 86, 69, 0.3);
+  outline: none;
+  transform: translateY(-1px);
+}
+
 .interview-popout-actions {
   border-top: 1px solid rgba(66, 86, 69, 0.1);
   display: flex;
@@ -7258,6 +7294,10 @@ textarea {
 /* ===== RESPONSIVE: TABLET (768px+) — Instagram-grid kolommen ===== */
 @media (min-width: 768px) {
   .interview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .interview-popout-link-footer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
