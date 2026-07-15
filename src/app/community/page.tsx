@@ -48,9 +48,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     <main className="community-platform-page">
       <section className="community-platform-hero">
         <div className="community-hero-brand-stage" aria-label="SNAAR">
-          <div className="community-hero-logo-mark">
-            <Image src="/img/icons_SNAAR/snaar_cirkel.png" alt="SNAAR" width={132} height={132} priority />
-          </div>
           <div className="community-hero-banner">
             <Image
               src="/img/icons_SNAAR/Snaar_hero.png"

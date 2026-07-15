@@ -2934,14 +2934,14 @@ textarea {
 }
 
 .community-platform-page {
-  --snaar-header-clearance: calc(150px + env(safe-area-inset-top));
+  --snaar-header-clearance: calc(112px + env(safe-area-inset-top));
   background:
     linear-gradient(180deg, rgba(66, 86, 69, 0.94) 0%, rgba(142, 152, 136, 0.74) 260px, #F2EFE9 520px, #F2EFE9 100%);
   color: var(--pine);
   display: grid;
   gap: clamp(12px, 3vw, 28px);
   margin-top: -1px;
-  padding: max(clamp(132px, 16vw, 168px), var(--snaar-header-clearance)) clamp(10px, 3vw, 40px) clamp(64px, 10vw, 128px);
+  padding: max(clamp(104px, 11vw, 124px), var(--snaar-header-clearance)) clamp(10px, 3vw, 40px) clamp(64px, 10vw, 128px);
 }
 
 .community-platform-hero,
@@ -2973,27 +2973,7 @@ textarea {
   display: grid;
   justify-items: center;
   max-width: 1040px;
-  padding-top: clamp(42px, 8vw, 68px);
   position: relative;
-  width: 100%;
-}
-
-.community-hero-logo-mark {
-  aspect-ratio: 1;
-  display: grid;
-  filter: drop-shadow(0 18px 28px rgba(20, 30, 22, 0.32));
-  left: 50%;
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  width: clamp(82px, 15vw, 132px);
-  z-index: 2;
-}
-
-.community-hero-logo-mark img {
-  animation: community-snaar-float 5.8s ease-in-out infinite;
-  height: 100%;
-  object-fit: contain;
   width: 100%;
 }
 
@@ -3011,17 +2991,6 @@ textarea {
 .community-hero-banner img {
   object-fit: cover;
   object-position: center;
-}
-
-@keyframes community-snaar-float {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-
-  50% {
-    transform: translateY(-7px) scale(1.025);
-  }
 }
 
 .community-platform-hero h1 {
@@ -3623,22 +3592,14 @@ textarea {
 
 @media (max-width: 820px) {
   .community-platform-page {
-    --snaar-header-clearance: calc(116px + env(safe-area-inset-top));
-    padding-top: max(116px, var(--snaar-header-clearance));
+    --snaar-header-clearance: calc(92px + env(safe-area-inset-top));
+    padding-top: max(92px, var(--snaar-header-clearance));
   }
 
   .community-platform-hero {
     gap: 14px;
     min-height: 0;
     padding-right: 0;
-  }
-
-  .community-hero-brand-stage {
-    padding-top: clamp(38px, 12vw, 54px);
-  }
-
-  .community-hero-logo-mark {
-    width: clamp(76px, 22vw, 96px);
   }
 
   .community-hero-banner {
@@ -3683,9 +3644,14 @@ textarea {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .community-hero-logo-mark img {
-    animation: none;
+@media (max-width: 520px) {
+  .community-platform-page {
+    --snaar-header-clearance: calc(136px + env(safe-area-inset-top));
+    padding-top: max(136px, var(--snaar-header-clearance));
+  }
+
+  .community-account-dock {
+    top: max(82px, calc(env(safe-area-inset-top) + 82px));
   }
 }
 
