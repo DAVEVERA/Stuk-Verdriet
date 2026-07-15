@@ -118,7 +118,7 @@ export type CommunityConversationParticipant = {
   user_id: string;
   last_read_at: string | null;
   created_at: string;
-  community_profiles?: CommunityProfile | null;
+  community_profiles?: CommunityProfile | CommunityProfile[] | null;
 };
 
 export type CommunityConversation = {

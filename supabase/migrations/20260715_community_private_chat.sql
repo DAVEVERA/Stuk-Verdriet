@@ -49,6 +49,27 @@ create index if not exists community_conversation_participants_user_idx
 create index if not exists community_messages_conversation_created_idx
   on community_messages(conversation_id, created_at desc);
 
+create schema if not exists private;
+
+create or replace function private.is_community_conversation_participant(conversation uuid)
+returns boolean
+language sql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+  select exists (
+    select 1
+    from public.community_conversation_participants p
+    where p.conversation_id = conversation
+      and p.user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function private.is_community_conversation_participant(uuid) from public;
+grant usage on schema private to authenticated;
+grant execute on function private.is_community_conversation_participant(uuid) to authenticated;
+
 alter table community_profiles enable row level security;
 alter table community_conversations enable row level security;
 alter table community_conversation_participants enable row level security;
@@ -82,14 +103,7 @@ drop policy if exists "participants can read conversations" on community_convers
 create policy "participants can read conversations"
 on community_conversations for select
 to authenticated
-using (
-  exists (
-    select 1
-    from community_conversation_participants p
-    where p.conversation_id = community_conversations.id
-      and p.user_id = (select auth.uid())
-  )
-);
+using (private.is_community_conversation_participant(id));
 
 drop policy if exists "users can create conversations" on community_conversations;
 create policy "users can create conversations"
@@ -101,14 +115,7 @@ drop policy if exists "participants can read participants" on community_conversa
 create policy "participants can read participants"
 on community_conversation_participants for select
 to authenticated
-using (
-  exists (
-    select 1
-    from community_conversation_participants own_participation
-    where own_participation.conversation_id = community_conversation_participants.conversation_id
-      and own_participation.user_id = (select auth.uid())
-  )
-);
+using (private.is_community_conversation_participant(conversation_id));
 
 drop policy if exists "users can add self as participant" on community_conversation_participants;
 create policy "users can add self as participant"
@@ -127,14 +134,7 @@ drop policy if exists "participants can read messages" on community_messages;
 create policy "participants can read messages"
 on community_messages for select
 to authenticated
-using (
-  exists (
-    select 1
-    from community_conversation_participants p
-    where p.conversation_id = community_messages.conversation_id
-      and p.user_id = (select auth.uid())
-  )
-);
+using (private.is_community_conversation_participant(conversation_id));
 
 drop policy if exists "participants can send messages" on community_messages;
 create policy "participants can send messages"
@@ -142,12 +142,7 @@ on community_messages for insert
 to authenticated
 with check (
   sender_id = (select auth.uid())
-  and exists (
-    select 1
-    from community_conversation_participants p
-    where p.conversation_id = community_messages.conversation_id
-      and p.user_id = (select auth.uid())
-  )
+  and private.is_community_conversation_participant(conversation_id)
 );
 
 create or replace function touch_community_conversation()
@@ -183,3 +178,33 @@ exception
   when undefined_object then
     null;
 end $$;
+
+drop policy if exists "authenticated users create pending posts" on community_posts;
+create policy "authenticated users create pending posts"
+on community_posts for insert
+to authenticated
+with check (status = 'pending' and (select auth.uid()) = user_id);
+
+drop policy if exists "authenticated users create pending replies" on community_replies;
+create policy "authenticated users create pending replies"
+on community_replies for insert
+to authenticated
+with check (status = 'pending' and (select auth.uid()) = user_id);
+
+drop policy if exists "authenticated users support once" on community_supports;
+create policy "authenticated users support once"
+on community_supports for insert
+to authenticated
+with check ((select auth.uid()) = user_id);
+
+drop policy if exists "authenticated users see own supports" on community_supports;
+create policy "authenticated users see own supports"
+on community_supports for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "authenticated users report content" on community_reports;
+create policy "authenticated users report content"
+on community_reports for insert
+to authenticated
+with check ((select auth.uid()) = user_id);

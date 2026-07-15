@@ -10,6 +10,7 @@ next-env.d.ts
 
 # Deployment/local platform state
 .vercel/
+supabase/.temp/
 
 # Local editor settings
 .vscode/

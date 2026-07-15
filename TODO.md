@@ -1,4 +1,4 @@
-# TODO
+﻿# TODO
 
 ## Goal
 
@@ -165,3 +165,4 @@ Finish the SNAAR community UX pass with mobile-first polish, accessible states, 
 ## Completion Marker
 
 SNAAR_COMMUNITY_UX_POLISH_COMPLETE: true
+

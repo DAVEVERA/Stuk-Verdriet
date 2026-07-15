@@ -14,7 +14,6 @@ import {
   Grid3X3,
   Headphones,
   Heart,
-  Instagram,
   Leaf,
   Mail,
   MessageCircle,
@@ -51,18 +50,10 @@ const gofundmeGoalBarUrl =
 const gofundmeQrCodeUrl =
   "https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-qr-code?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3";
 
-function TikTokIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-      <path d="M16.6 5.82c1.18.84 2.36 1.31 3.72 1.41v3.08a8.76 8.76 0 0 1-3.7-.82v5.67c0 3.18-2.58 5.76-5.76 5.76a5.76 5.76 0 0 1-2.2-11.08 5.8 5.8 0 0 1 2.2-.43c.33 0 .65.03.96.09v3.22a2.58 2.58 0 1 0 1.95 2.5V3.08h2.83v2.74Z" />
-    </svg>
-  );
-}
-
 export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks }) {
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community";
-  const footerLogo = isCommunityPage ? "/brand/snaar-logo.png" : site.logo;
+  const footerLogo = isCommunityPage ? "/img/icons_SNAAR/SNAAR_logo.png" : site.logo;
   const footerFeatures = [
     {
       title: "Longeneeslijk",
@@ -176,7 +167,7 @@ export function CommunityAccountDock({
   posts,
   hasSupabaseEnv
 }: CommunityAccountDockProps) {
-  const [activePanel, setActivePanel] = useState<CommunityDockPanel>("account");
+  const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(conversations[0]?.id ?? null);
   const people = getCommunityPeople(posts, discoverableProfiles);
   const displayName = currentProfile?.display_name ?? email?.split("@")[0] ?? "Gast";
@@ -188,7 +179,7 @@ export function CommunityAccountDock({
   const activeMessages = [...(activeConversation?.community_messages ?? [])].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(-6);
 
   function openPanel(panel: CommunityDockPanel) {
-    setActivePanel((current) => (current === panel ? current : panel));
+    setActivePanel((current) => (current === panel ? null : panel));
   }
 
   return (
@@ -209,14 +200,14 @@ export function CommunityAccountDock({
         </button>
       </div>
 
-      <div className="community-dock-panel">
+      {activePanel ? <div className="community-dock-panel">
         {activePanel === "menu" ? (
           <div className="community-panel-section">
             <div className="community-panel-heading">
               <h2>Menu</h2>
               <span>Community</span>
             </div>
-            <Link className="community-panel-row primary" href={loginHref}>
+            <Link className="community-panel-row primary" href={isLoggedIn ? "/community/profiel" : loginHref}>
               <User size={20} aria-hidden />
               <span>{isLoggedIn ? "Mijn profiel bekijken" : "Inloggen"}</span>
             </Link>
@@ -327,7 +318,11 @@ export function CommunityAccountDock({
             </div>
             {isLoggedIn ? (
               <>
-                <form className="community-profile-form" action={updateCommunityProfile}>
+                <Link className="community-panel-row" href="/community/profiel">
+                  <User size={20} aria-hidden />
+                  <span>Open mijn profielpagina</span>
+                </Link>
+                <form className="community-profile-form" action={updateCommunityProfile} encType="multipart/form-data">
                   <input type="hidden" name="return_to" value="/community" readOnly />
                   <label>
                     Naam
@@ -354,7 +349,7 @@ export function CommunityAccountDock({
             {!hasSupabaseEnv ? <p className="small-note">Supabase env vars ontbreken nog.</p> : null}
           </div>
         ) : null}
-      </div>
+      </div> : null}
     </aside>
   );
 }
@@ -366,9 +361,10 @@ function ProfileAvatar({ name, avatarUrl, large = false }: { name: string; avata
 }
 
 function getConversationPeer(conversation: CommunityConversation, currentUserId?: string | null) {
-  return conversation.community_conversation_participants
+  const rawProfile = conversation.community_conversation_participants
     ?.find((participant) => participant.user_id !== currentUserId)
     ?.community_profiles ?? null;
+  return Array.isArray(rawProfile) ? rawProfile[0] ?? null : rawProfile;
 }
 
 function getCommunityPeople(posts: CommunityPost[], profiles: CommunityProfile[]) {
@@ -427,10 +423,11 @@ export function GoFundMeSupportSection() {
 
 export function SocialLinksList({ links }: { links: SocialLinks }) {
   const entries = [
-    { label: "Instagram", href: links.instagram_url, className: "social-instagram", icon: <Instagram size={18} aria-hidden /> },
+    { label: "Instagram", href: links.instagram_url, className: "social-instagram", icon: <Image src="/img/instagram.png" alt="" width={18} height={18} /> },
+    { label: "Facebook", href: links.facebook_url, className: "social-facebook", icon: <Image src="/img/facebook.png" alt="" width={18} height={18} /> },
     { label: "Spotify", href: links.spotify_url, className: "social-spotify", icon: <Music2 size={18} aria-hidden /> },
     { label: "Mail", href: `mailto:${site.email}`, className: "social-mail", icon: <Mail size={18} aria-hidden /> },
-    { label: "TikTok", href: links.tiktok_url, className: "social-tiktok", icon: <TikTokIcon /> },
+    { label: "TikTok", href: links.tiktok_url, className: "social-tiktok", icon: <Image src="/img/tik-tok.png" alt="" width={18} height={18} /> },
     { label: "YouTube Music", href: links.youtube_music_url, className: "social-youtube-music", icon: <Youtube size={19} aria-hidden /> }
   ].flatMap((entry): { className: string; href: string; icon: ReactNode; label: string }[] =>
     entry.href ? [{ ...entry, href: entry.href }] : []
@@ -905,10 +902,7 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
       <div className="community-card-actions" role="group" aria-label="Berichtacties">
         {showActions ? (
           <form action={supportPost.bind(null, post.id)}>
-            <button className="community-post-action" type="submit">
-              <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
-              Steun
-            </button>
+            <SupportPostSubmitButton />
           </form>
         ) : (
           <Link className="community-post-action" href={`/login?next=${encodeURIComponent(postUrl)}`}>
@@ -1054,14 +1048,25 @@ function SharePostButton({ postUrl, title }: { postUrl: string; title: string })
       await navigator.clipboard.writeText(url);
       setFeedback("Link gekopieerd");
     } catch {
-      setFeedback(null);
+      setFeedback("Probeer opnieuw");
     }
   };
 
   return (
-    <button className="community-post-action" type="button" onClick={sharePost} aria-label={`Deel ${title}`}>
+    <button className="community-post-action" type="button" onClick={sharePost} aria-label={`Deel ${title}`} aria-live="polite">
       <Image src={snaarIcons.share} alt="" width={21} height={21} />
       <span>{feedback ?? "Deel"}</span>
+    </button>
+  );
+}
+
+function SupportPostSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="community-post-action" type="submit" disabled={pending} aria-disabled={pending}>
+      <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
+      <span>{pending ? "Steunt..." : "Steun"}</span>
     </button>
   );
 }

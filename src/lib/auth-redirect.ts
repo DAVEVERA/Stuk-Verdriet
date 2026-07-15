@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase";
+import type { EmailOtpType } from "@supabase/supabase-js";
+import { createSupabaseRouteClient } from "@/lib/supabase";
 
 function encodeBase64Url(value: string) {
   return Buffer.from(value, "utf8").toString("base64url");
@@ -27,31 +28,34 @@ export function encodeAuthNext(value: string) {
   return `b64:${encodeBase64Url(safeAuthNext(value))}`;
 }
 
+function safeEmailOtpType(value: string | null): EmailOtpType {
+  const allowed: EmailOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+  return allowed.includes(value as EmailOtpType) ? (value as EmailOtpType) : "email";
+}
+
 export async function handleAuthRedirect(request: Request) {
   const requestUrl = new URL(request.url);
-
   const next = safeAuthNext(requestUrl.searchParams.get("next"));
+  const redirectResponse = NextResponse.redirect(new URL(next, requestUrl.origin), 303);
 
-  // Magic link / email OTP confirm uses token_hash + type
+  // Magic link / email OTP confirm uses token_hash + type.
   const token_hash = requestUrl.searchParams.get("token_hash");
-  const type = requestUrl.searchParams.get("type"); // usually "email"
+  const type = requestUrl.searchParams.get("type");
   const code = requestUrl.searchParams.get("code");
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseRouteClient(redirectResponse);
   if (!supabase) {
-    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=missing-supabase`, requestUrl.origin));
+    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=missing-supabase`, requestUrl.origin), 303);
   }
 
   if (token_hash) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash,
-      type: (type === "email" ? "email" : "email") // je kan dit ook strict maken
+      type: safeEmailOtpType(type)
     });
 
     if (error) {
-      return NextResponse.redirect(
-        new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin)
-      );
+      return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin), 303);
     }
   }
 
@@ -59,11 +63,9 @@ export async function handleAuthRedirect(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      return NextResponse.redirect(
-        new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin)
-      );
+      return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin), 303);
     }
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  return redirectResponse;
 }

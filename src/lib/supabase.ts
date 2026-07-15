@@ -1,5 +1,6 @@
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,6 +36,25 @@ export async function createSupabaseServerClient() {
         } catch {
           // Server Components cannot always set cookies; middleware/actions can.
         }
+      }
+    }
+  });
+}
+
+export async function createSupabaseRouteClient(response: NextResponse) {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  const cookieStore = await cookies();
+
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieStore.set(name, value, options);
+          response.cookies.set(name, value, options);
+        });
       }
     }
   });

@@ -15,7 +15,8 @@ type HeaderProps = {
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/podcast", label: "Podcast" }
+  { href: "/podcast", label: "Podcast" },
+  { href: "/community", label: "Community" }
 ];
 
 export function Header(_props: HeaderProps) {
@@ -23,7 +24,7 @@ export function Header(_props: HeaderProps) {
   const [open, setOpen] = useState(false);
   const navTabIndex = open ? undefined : -1;
   const isCommunityPage = pathname === "/community";
-  const headerLogo = isCommunityPage ? "/brand/snaar-logo.png" : site.logo;
+  const headerLogo = isCommunityPage ? "/img/icons_SNAAR/SNAAR_logo.png" : site.logo;
   const headerLogoAlt = isCommunityPage ? "SNAAR logo" : "Stuk Verdriet logo";
 
   function openSidebar() {
