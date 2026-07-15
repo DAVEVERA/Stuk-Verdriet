@@ -53,7 +53,7 @@ const gofundmeQrCodeUrl =
 export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks }) {
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community";
-  const footerLogo = isCommunityPage ? "/img/icons_SNAAR/SNAAR_logo.png" : site.logo;
+  const footerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
   const footerFeatures = [
     {
       title: "Longeneeslijk",
