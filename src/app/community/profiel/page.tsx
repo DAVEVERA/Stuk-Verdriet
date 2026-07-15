@@ -7,7 +7,19 @@ import type { CommunityConversation, CommunityProfile } from "@/types/content";
 
 export const dynamic = "force-dynamic";
 
-export default async function CommunityProfilePage() {
+type CommunityProfilePageProps = {
+  searchParams?: Promise<{ error?: string; profile?: string }>;
+};
+
+const profileMessages: Record<string, string> = {
+  avatar: "Kies een jpg, png of webp van maximaal 3 MB.",
+  "profile-storage": "Opslaan lukt nu niet. Probeer het straks opnieuw.",
+  "profile-name": "Vul een naam in van maximaal 80 tekens.",
+  "community-avatars": "De profielfoto kon niet worden opgeslagen."
+};
+
+export default async function CommunityProfilePage({ searchParams }: CommunityProfilePageProps) {
+  const params = (await searchParams) ?? {};
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/login?next=%2Fcommunity%2Fprofiel");
 
@@ -65,6 +77,8 @@ export default async function CommunityProfilePage() {
         <article className="community-profile-card">
           <h2>Profiel aanpassen</h2>
           <p>Kies zelf hoe zichtbaar je bent. Je mag ook alleen initialen blijven gebruiken.</p>
+          {params.error ? <p className="notice">{profileMessages[params.error] ?? "Profiel opslaan lukte niet."}</p> : null}
+          {params.profile === "saved" ? <p className="notice">Je profiel is opgeslagen.</p> : null}
           <form className="community-profile-form" action={updateCommunityProfile} encType="multipart/form-data">
             <input type="hidden" name="return_to" value="/community/profiel" readOnly />
             <label>

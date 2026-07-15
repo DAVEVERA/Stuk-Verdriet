@@ -14,6 +14,11 @@ De gewenste ervaring is simpel: bezoekers loggen in bij Stuk Verdriet, keren ter
   - `https://stukverdriet.com/redirect`
   - `https://www.stukverdriet.com/redirect`
   - `http://localhost:3000/auth/callback`
+  - `http://localhost:3000/**`
+  - `http://localhost:3002/auth/callback`
+  - `http://localhost:3002/**`
+  - `http://127.0.0.1:3000/**`
+  - `http://127.0.0.1:3002/**`
   - `http://localhost:3000/redirect`
 - Email sender name: `Stuk Verdriet`
 - Email sender address: bijvoorbeeld `info@stukverdriet.com`

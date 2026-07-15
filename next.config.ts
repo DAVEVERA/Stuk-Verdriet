@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "5mb"
+    }
+  },
   turbopack: {
     root: process.cwd()
   },
@@ -16,6 +21,13 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     const isDev = process.env.NODE_ENV !== "production";
+    const formActionSrc = [
+      "form-action 'self'",
+      "https://stukverdriet.com",
+      "https://www.stukverdriet.com",
+      "https://stuk-verdriet-community.vercel.app",
+      "https://*.vercel.app"
+    ].join(" ");
     const scriptSrc = [
       "script-src 'self' 'unsafe-inline'",
       isDev ? "'unsafe-eval'" : null,
@@ -27,7 +39,7 @@ const nextConfig: NextConfig = {
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
-      "form-action 'self'",
+      formActionSrc,
       "frame-ancestors 'none'",
       "object-src 'none'",
       "img-src 'self' data: blob: https:",
