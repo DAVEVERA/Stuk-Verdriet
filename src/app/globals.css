@@ -2966,12 +2966,6 @@ textarea {
   margin-inline: 0;
 }
 
-.community-hero-copy {
-  max-width: min(100%, 39rem);
-  padding-inline: clamp(10px, 3vw, 40px);
-  width: 100%;
-}
-
 .community-hero-brand-stage {
   display: grid;
   justify-items: center;
@@ -2981,7 +2975,11 @@ textarea {
 }
 
 .community-hero-banner {
-  background: #1d251f;
+  background:
+    linear-gradient(90deg, rgba(12, 20, 15, 0.5) 0%, rgba(12, 20, 15, 0.26) 38%, rgba(12, 20, 15, 0.08) 72%),
+    linear-gradient(180deg, rgba(12, 20, 15, 0.24) 0%, rgba(12, 20, 15, 0.02) 46%, rgba(12, 20, 15, 0.36) 100%),
+    url("/hero/snaar-community-hero-desktop.png") center 42% / cover no-repeat,
+    #1d251f;
   box-shadow: 0 26px 70px rgba(20, 30, 22, 0.3);
   height: clamp(320px, 42vw, 620px);
   overflow: hidden;
@@ -2989,18 +2987,26 @@ textarea {
   width: 100%;
 }
 
-.community-hero-banner img {
-  object-fit: cover;
-  object-position: center 42%;
+.community-hero-text {
+  color: #fffdf8;
+  display: grid;
+  font-family: var(--font-slogan), cursive;
+  font-size: clamp(1.95rem, 3.35vw, 4.15rem);
+  font-weight: 400;
+  gap: 0.04em;
+  left: clamp(18px, 5vw, 86px);
+  line-height: 1.16;
+  margin: 0;
+  max-width: min(58vw, 760px);
+  position: absolute;
+  text-align: left;
+  text-shadow: 0 3px 18px rgba(5, 8, 6, 0.7);
+  top: clamp(116px, 14vw, 210px);
+  z-index: 2;
 }
 
-.community-platform-hero h1 {
-  color: var(--ink);
-  font-size: clamp(1.72rem, 4.7vw, 3.05rem);
-  line-height: 1.1;
-  margin-inline: auto;
-  max-width: 27ch;
-  text-wrap: balance;
+.community-hero-text span {
+  display: block;
 }
 
 .community-platform-hero p:not(.eyebrow),
@@ -3585,10 +3591,6 @@ textarea {
   .community-dock-actions {
     justify-content: end;
   }
-
-  .community-platform-hero h1 {
-    max-width: 28ch;
-  }
 }
 
 @media (max-width: 820px) {
@@ -3599,18 +3601,22 @@ textarea {
   }
 
   .community-hero-banner {
-    height: clamp(260px, 70vw, 360px);
+    background:
+      linear-gradient(180deg, rgba(12, 20, 15, 0.2) 0%, rgba(12, 20, 15, 0.04) 42%, rgba(12, 20, 15, 0.56) 100%),
+      linear-gradient(90deg, rgba(12, 20, 15, 0.42) 0%, rgba(12, 20, 15, 0.1) 70%),
+      url("/hero/snaar-community-hero-mobile.png") center top / cover no-repeat,
+      #1d251f;
+    height: clamp(430px, 112vw, 620px);
   }
 
-  .community-hero-copy {
-    max-width: 100%;
-    padding-right: 0;
-  }
-
-  .community-platform-hero h1 {
-    font-size: clamp(1.72rem, 8.4vw, 2.35rem);
-    line-height: 1.08;
-    max-width: 20ch;
+  .community-hero-text {
+    bottom: clamp(24px, 7vw, 38px);
+    font-size: clamp(1.35rem, 6.5vw, 2rem);
+    left: clamp(18px, 6vw, 32px);
+    line-height: 1.1;
+    max-width: min(92vw, 460px);
+    right: clamp(18px, 6vw, 32px);
+    top: auto;
   }
 
   .community-account-dock {

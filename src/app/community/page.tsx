@@ -1,7 +1,6 @@
 import { getApprovedCommunityPosts, getCommunityCategories } from "@/lib/content";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import { CommunityAccountDock, CommunityPostCard, Icon } from "@/components/ui";
-import Image from "next/image";
 import type { CommunityConversation, CommunityProfile } from "@/types/content";
 
 type CommunityPageProps = {
@@ -49,17 +48,13 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
       <section className="community-platform-hero">
         <div className="community-hero-brand-stage" aria-label="SNAAR">
           <div className="community-hero-banner">
-            <Image
-              src="/img/icons_SNAAR/Snaar_hero.png"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-            />
+            <h1 className="community-hero-text">
+              <span>Hoe gevoelig de snaar ook is,</span>
+              <span>hier raken we hem samen.</span>
+              <span>Je hoeft het niet alleen te doen.</span>
+              <span>We zijn er voor je. Laat van je horen.</span>
+            </h1>
           </div>
-        </div>
-        <div className="community-hero-copy">
-          <h1>Hoe gevoelig de snaar ook is, hier raken we hem samen. Je hoeft het niet alleen te doen. We zijn er voor je. Laat van je horen.</h1>
         </div>
         <CommunityAccountDock
           isLoggedIn={isLoggedIn}
