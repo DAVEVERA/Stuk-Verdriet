@@ -62,9 +62,13 @@ export async function POST(request: Request) {
     options: { redirectTo: redirectTo.toString() }
   });
 
-  if (error || !data.properties?.action_link) {
+  if (error || !data.properties?.hashed_token) {
     return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=email-login`, requestUrl.origin), 303);
   }
 
-  return NextResponse.redirect(data.properties.action_link, 303);
+  const verifyUrl = new URL("/auth/callback", requestUrl.origin);
+  verifyUrl.searchParams.set("token_hash", data.properties.hashed_token);
+  verifyUrl.searchParams.set("type", "magiclink");
+  verifyUrl.searchParams.set("next", encodeAuthNext(next));
+  return NextResponse.redirect(verifyUrl, 303);
 }

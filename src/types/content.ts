@@ -107,9 +107,62 @@ export type CommunityProfile = {
   user_id: string;
   display_name: string;
   avatar_url: string | null;
+  cover_url?: string | null;
+  bio?: string | null;
+  profile_details?: CommunityProfileDetails | null;
   is_discoverable: boolean;
   created_at?: string;
   updated_at?: string;
+};
+
+export type CommunityProfileDetails = {
+  category?: string;
+  pronouns?: string;
+  birthday?: string;
+  hometown?: string;
+  current_city?: string;
+  relationship_status?: string;
+  job_title?: string;
+  employer?: string;
+  education?: string;
+  hobbies?: string;
+  interests?: string;
+  places?: string;
+  website?: string;
+  contact_email?: string;
+  phone?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+};
+
+export type CommunityProfilePhoto = {
+  id: string;
+  user_id: string;
+  image_url: string;
+  caption: string | null;
+  display_order: number;
+  created_at: string;
+};
+
+export type CommunityProfileEvent = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  starts_at: string;
+  image_url: string | null;
+  created_at: string;
+};
+
+export type CommunityFriendship = {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  updated_at: string;
 };
 
 export type CommunityMessage = {

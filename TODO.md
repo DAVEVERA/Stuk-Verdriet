@@ -186,3 +186,24 @@ Replace the hero podcast player with the official Spotify embed while preserving
 ## Completion Marker
 
 SPOTIFY_HERO_PLAYER_COMPLETE: true
+
+---
+
+## Goal
+
+Fix SNAAR profile media and build a complete mobile-first personal profile with photos, events, friends, cover media, and saveable information.
+
+## Tasks
+
+- [x] Inspect current profile and avatar upload flow
+- [x] Identify the Next.js image host failure
+- [x] Define profile media, details, photos, events, and friendship data contracts
+- [x] Build profile navigation and responsive sections
+- [x] Add avatar, cover, photo, event, and profile-info forms
+- [x] Apply and verify the Supabase migration
+- [x] Run lint, typecheck, build, and browser verification
+- [x] Final review
+
+## Completion Marker
+
+SNAAR_PROFILE_EXPERIENCE_COMPLETE: true

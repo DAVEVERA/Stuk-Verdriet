@@ -16,6 +16,7 @@ const communityImageMaxSize = 4 * 1024 * 1024;
 const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 const communityAvatarMaxSize = 3 * 1024 * 1024;
+const communityCoverMaxSize = 5 * 1024 * 1024;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
@@ -140,6 +141,10 @@ function optionalUrl(value: FormDataEntryValue | null) {
   }
 }
 
+function withReturnStatus(path: string, key: string, value: string) {
+  return `${path}${path.includes("?") ? "&" : "?"}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
 function adminReturnTarget(formData: FormData, status: "saved" | "error", code: string, fallbackTab = "today") {
   const rawTab = String(formData.get("return_tab") ?? fallbackTab).trim();
   const tab = /^[a-z0-9-]+$/i.test(rawTab) ? rawTab : fallbackTab;
@@ -168,6 +173,15 @@ function isAllowedCommunityAvatar(file: File) {
   return file.size <= communityAvatarMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
 }
 
+function isAllowedCommunityCover(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return file.size <= communityCoverMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
+}
+
+function profileText(formData: FormData, name: string, maxLength = 160) {
+  return String(formData.get(name) ?? "").trim().slice(0, maxLength);
+}
+
 async function uploadPublicFile(
   admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
   bucket: string,
@@ -182,7 +196,7 @@ async function uploadPublicFile(
     contentType: file.type || undefined,
     upsert: true
   });
-  if (error) redirect(`${errorPath}?error=${bucket}`);
+  if (error) redirect(withReturnStatus(errorPath, "error", bucket));
   const {
     data: { publicUrl }
   } = admin.storage.from(bucket).getPublicUrl(path);
@@ -455,28 +469,201 @@ export async function updateCommunityProfile(formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
   const { user } = await requireCommunityUser(returnPath);
   const admin = createSupabaseAdminClient();
-  if (!admin) redirect(`${returnPath}?error=profile-storage`);
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
 
   const displayName = String(formData.get("display_name") ?? "").trim();
-  if (!displayName || displayName.length > 80) redirect(`${returnPath}?error=profile-name`);
+  if (!displayName || displayName.length > 80) redirect(withReturnStatus(returnPath, "error", "profile-name"));
 
   const avatar = getUploadFile(formData, "avatar_file");
   let avatarUrl: string | null | undefined;
   if (avatar) {
-    if (!isAllowedCommunityAvatar(avatar)) redirect(`${returnPath}?error=avatar`);
+    if (!isAllowedCommunityAvatar(avatar)) redirect(withReturnStatus(returnPath, "error", "avatar"));
     avatarUrl = await uploadPublicFile(admin, "community-avatars", `profiles/${user.id}`, avatar, "jpg", returnPath);
   }
 
-  await admin.from("community_profiles").upsert({
+  const { error } = await admin.from("community_profiles").upsert({
     user_id: user.id,
     display_name: displayName,
     ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
     is_discoverable: formData.get("is_discoverable") === "on",
     updated_at: new Date().toISOString()
   }, { onConflict: "user_id" });
+  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
 
   revalidatePath("/community");
-  redirect(`${returnPath}?profile=saved`);
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "saved"));
+}
+
+export async function updateCommunityProfileMedia(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  const avatar = getUploadFile(formData, "avatar_file");
+  const cover = getUploadFile(formData, "cover_file");
+  if (!avatar && !cover) redirect(withReturnStatus(returnPath, "error", "profile-media-empty"));
+  if (avatar && !isAllowedCommunityAvatar(avatar)) redirect(withReturnStatus(returnPath, "error", "avatar"));
+  if (cover && !isAllowedCommunityCover(cover)) redirect(withReturnStatus(returnPath, "error", "cover"));
+
+  const [avatarUrl, coverUrl] = await Promise.all([
+    avatar ? uploadPublicFile(admin, "community-profile-media", `${user.id}/avatar`, avatar, "jpg", returnPath) : Promise.resolve(undefined),
+    cover ? uploadPublicFile(admin, "community-profile-media", `${user.id}/cover`, cover, "jpg", returnPath) : Promise.resolve(undefined)
+  ]);
+  const { data: existingProfile } = await admin
+    .from("community_profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const fallbackName = typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()
+    ? user.user_metadata.full_name.trim()
+    : user.email?.split("@")[0] ?? "SNAAR gebruiker";
+  const { error } = await admin.from("community_profiles").upsert({
+    user_id: user.id,
+    display_name: existingProfile?.display_name ?? fallbackName,
+    ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+    ...(coverUrl ? { cover_url: coverUrl } : {}),
+    updated_at: new Date().toISOString()
+  }, { onConflict: "user_id", ignoreDuplicates: false });
+  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "media-saved"));
+}
+
+export async function updateCommunityProfileInfo(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  const displayName = profileText(formData, "display_name", 80);
+  if (!displayName) redirect(withReturnStatus(returnPath, "error", "profile-name"));
+  const website = optionalUrl(formData.get("website"));
+  const contactEmail = profileText(formData, "contact_email", 254).toLowerCase();
+  if (contactEmail && !emailPattern.test(contactEmail)) redirect(withReturnStatus(returnPath, "error", "profile-email"));
+
+  const profileDetails = {
+    category: profileText(formData, "category", 80),
+    pronouns: profileText(formData, "pronouns", 40),
+    birthday: profileText(formData, "birthday", 10),
+    hometown: profileText(formData, "hometown", 100),
+    current_city: profileText(formData, "current_city", 100),
+    relationship_status: profileText(formData, "relationship_status", 60),
+    job_title: profileText(formData, "job_title", 100),
+    employer: profileText(formData, "employer", 100),
+    education: profileText(formData, "education", 160),
+    hobbies: profileText(formData, "hobbies", 500),
+    interests: profileText(formData, "interests", 500),
+    places: profileText(formData, "places", 500),
+    website: website ?? "",
+    contact_email: contactEmail,
+    phone: profileText(formData, "phone", 40),
+    instagram: profileText(formData, "instagram", 100),
+    facebook: profileText(formData, "facebook", 160),
+    tiktok: profileText(formData, "tiktok", 100)
+  };
+
+  const { error } = await admin.from("community_profiles").upsert({
+    user_id: user.id,
+    display_name: displayName,
+    bio: profileText(formData, "bio", 500) || null,
+    profile_details: profileDetails,
+    is_discoverable: formData.get("is_discoverable") === "on",
+    updated_at: new Date().toISOString()
+  }, { onConflict: "user_id" });
+  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "info-saved"));
+}
+
+export async function addCommunityProfilePhoto(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const photo = getUploadFile(formData, "photo_file");
+  if (!photo || !isAllowedCommunityImage(photo)) redirect(withReturnStatus(returnPath, "error", "photo"));
+  const imageUrl = await uploadPublicFile(admin, "community-profile-media", `${user.id}/photos`, photo, "jpg", returnPath);
+  const { error } = await admin.from("community_profile_photos").insert({
+    user_id: user.id,
+    image_url: imageUrl,
+    caption: profileText(formData, "caption", 180) || null
+  });
+  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "photo-saved"));
+}
+
+export async function createCommunityProfileEvent(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const title = profileText(formData, "title", 120);
+  const startsAt = profileText(formData, "starts_at", 40);
+  if (!title || !startsAt || Number.isNaN(Date.parse(startsAt))) redirect(withReturnStatus(returnPath, "error", "event"));
+  const image = getUploadFile(formData, "event_image");
+  if (image && !isAllowedCommunityImage(image)) redirect(withReturnStatus(returnPath, "error", "photo"));
+  const imageUrl = image
+    ? await uploadPublicFile(admin, "community-profile-media", `${user.id}/events`, image, "jpg", returnPath)
+    : null;
+  const { error } = await admin.from("community_profile_events").insert({
+    user_id: user.id,
+    title,
+    starts_at: new Date(startsAt).toISOString(),
+    location: profileText(formData, "location", 140) || null,
+    description: profileText(formData, "description", 1000) || null,
+    image_url: imageUrl
+  });
+  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "event-saved"));
+}
+
+export async function sendCommunityFriendRequest(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const addresseeId = profileText(formData, "addressee_id", 64);
+  if (!addresseeId || addresseeId === user.id) redirect(withReturnStatus(returnPath, "error", "friend"));
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const { data: target } = await admin.from("community_profiles").select("user_id").eq("user_id", addresseeId).eq("is_discoverable", true).maybeSingle();
+  if (!target) redirect(withReturnStatus(returnPath, "error", "friend"));
+  const { error } = await admin.from("community_friendships").insert({ requester_id: user.id, addressee_id: addresseeId });
+  if (error && error.code !== "23505") redirect(withReturnStatus(returnPath, "error", "friend"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "friend-requested"));
+}
+
+export async function respondToCommunityFriendRequest(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const friendshipId = profileText(formData, "friendship_id", 64);
+  const response = String(formData.get("response") ?? "");
+  if (!friendshipId || !["accepted", "declined"].includes(response)) redirect(withReturnStatus(returnPath, "error", "friend"));
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const { error } = await admin.from("community_friendships").update({
+    status: response,
+    updated_at: new Date().toISOString()
+  }).eq("id", friendshipId).eq("addressee_id", user.id).eq("status", "pending");
+  if (error) redirect(withReturnStatus(returnPath, "error", "friend"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", response === "accepted" ? "friend-accepted" : "friend-declined"));
 }
 
 export async function startCommunityConversation(formData: FormData) {
