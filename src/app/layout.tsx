@@ -27,7 +27,7 @@ const jost = localFont({
 const slogan = localFont({
   src: [
     {
-      path: "./fonts/NothingYouCouldDo-Regular.ttf",
+      path: "../../assets/fonts/Nothing_You_Could_Do/NothingYouCouldDo-Regular.ttf",
       style: "normal",
       weight: "400"
     }

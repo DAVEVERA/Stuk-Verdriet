@@ -2991,17 +2991,17 @@ textarea {
   color: #fffdf8;
   display: grid;
   font-family: var(--font-slogan), cursive;
-  font-size: clamp(1.95rem, 3.35vw, 4.15rem);
+  font-size: clamp(1.9rem, 2.75vw, 3.35rem);
   font-weight: 400;
-  gap: 0.04em;
+  gap: 0.08em;
   left: clamp(18px, 5vw, 86px);
-  line-height: 1.16;
+  line-height: 1.12;
   margin: 0;
-  max-width: min(58vw, 760px);
+  max-width: min(56vw, 840px);
   position: absolute;
   text-align: left;
   text-shadow: 0 3px 18px rgba(5, 8, 6, 0.7);
-  top: clamp(116px, 14vw, 210px);
+  top: clamp(118px, 10.5vw, 176px);
   z-index: 2;
 }
 
