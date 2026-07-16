@@ -54,6 +54,13 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: "/audio/:path*.mpeg",
+        headers: [
+          { key: "Content-Type", value: "audio/mpeg" },
+          { key: "Accept-Ranges", value: "bytes" }
+        ]
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
