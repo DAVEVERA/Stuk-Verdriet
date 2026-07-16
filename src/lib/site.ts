@@ -1,3 +1,5 @@
+import { isCommunityStandaloneBuild } from "@/lib/community-visibility";
+
 export const site = {
   name: "Stuk Verdriet",
   tagline: "Verdriet verdient een stem.",
@@ -22,7 +24,7 @@ export const navigation = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast", panel: "podcast" },
   { href: "/themas", label: "Thema's", panel: "themas" },
-  { href: "/community", label: "Community", panel: "community" },
+  ...(isCommunityStandaloneBuild() ? [{ href: "/community", label: "Community", panel: "community" as const }] : []),
   { href: "/over", label: "Over ons", panel: "over" },
   { href: "/contact", label: "Contact", panel: "contact" }
 ];

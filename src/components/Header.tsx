@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { site } from "@/lib/site";
+import { isCommunityStandaloneBuild } from "@/lib/community-visibility";
 import type { SocialLinks } from "@/types/content";
 
 type HeaderProps = {
@@ -16,7 +17,7 @@ type HeaderProps = {
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast" },
-  { href: "/community", label: "Community" }
+  ...(isCommunityStandaloneBuild() ? [{ href: "/community", label: "Community" }] : [])
 ];
 
 export function Header(_props: HeaderProps) {

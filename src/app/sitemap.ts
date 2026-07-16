@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getApprovedCommunityPosts, getPublishedEpisodes } from "@/lib/content";
 import { getThemeArticles } from "@/lib/theme-articles";
 import { site } from "@/lib/site";
+import { isCommunityStandaloneBuild } from "@/lib/community-visibility";
 
 const productionSiteUrl = "https://stukverdriet.com";
 
@@ -9,7 +10,6 @@ const staticRoutes = [
   { path: "", priority: 1, changeFrequency: "weekly" },
   { path: "/podcast", priority: 0.9, changeFrequency: "weekly" },
   { path: "/themas", priority: 0.9, changeFrequency: "monthly" },
-  { path: "/community", priority: 0.8, changeFrequency: "weekly" },
   { path: "/over", priority: 0.7, changeFrequency: "monthly" },
   { path: "/contact", priority: 0.7, changeFrequency: "monthly" },
   { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
@@ -32,7 +32,11 @@ function getBaseUrl() {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
-  const [episodes, posts] = await Promise.all([getPublishedEpisodes(), getApprovedCommunityPosts()]);
+  const exposeCommunity = isCommunityStandaloneBuild();
+  const [episodes, posts] = await Promise.all([
+    getPublishedEpisodes(),
+    exposeCommunity ? getApprovedCommunityPosts() : Promise.resolve([])
+  ]);
   const themes = getThemeArticles();
 
   const entries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
