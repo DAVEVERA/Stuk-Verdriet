@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Captions, ChevronDown, Gauge, ListMusic, Pause, Play, SkipBack, SkipForward, StepBack, StepForward } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import type { PodcastEpisode } from "@/types/content";
 
 const fallbackAudioUrl = "/audio/Voor de vroege vogels.mp3";
-const playbackRates = [1, 1.5, 2] as const;
 
 function getEpisodeAudioUrl(episode: PodcastEpisode) {
   return episode.audio_file_url || fallbackAudioUrl;
@@ -32,55 +31,30 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState<(typeof playbackRates)[number]>(1);
-  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const activeCueRef = useRef<HTMLParagraphElement | null>(null);
 
   const effectiveSelectedId = playlist.some((item) => item.id === selectedId) ? selectedId : playlist[0]?.id ?? "";
   const selectedIndex = Math.max(0, playlist.findIndex((episode) => episode.id === effectiveSelectedId));
   const episode = playlist[selectedIndex] ?? playlist[0] ?? null;
-  const segments = episode?.transcript_segments ?? [];
-  const activeSegmentIndex = segments.findIndex((segment) => currentTime >= segment.start && currentTime < segment.end);
-  const transcriptToggle = isTranscriptOpen ? (
-    <button type="button" onClick={() => setIsTranscriptOpen(false)} aria-expanded="true" aria-controls="hero-player-transcript">
-      <Captions size={16} aria-hidden />
-      Transcript
-    </button>
-  ) : (
-    <button type="button" onClick={() => setIsTranscriptOpen(true)} aria-expanded="false" aria-controls="hero-player-transcript">
-      <Captions size={16} aria-hidden />
-      Transcript
-    </button>
-  );
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.playbackRate = playbackRate;
-  }, [playbackRate, episode?.id]);
-
-  useEffect(() => {
-    if (!isTranscriptOpen || activeSegmentIndex < 0) return;
-    activeCueRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [activeSegmentIndex, isTranscriptOpen]);
 
   if (!episode) return null;
 
-  async function togglePlay() {
+  async function playAudio() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) {
-      try {
-        await audio.play();
-        setIsPlaying(true);
-      } catch {
-        setIsPlaying(false);
-      }
-    } else {
-      audio.pause();
+    try {
+      await audio.play();
+      setIsPlaying(true);
+    } catch {
       setIsPlaying(false);
     }
+  }
+
+  function pauseAudio() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    setIsPlaying(false);
   }
 
   function seekBy(amount: number) {
@@ -97,7 +71,6 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
     window.setTimeout(() => {
       const audio = audioRef.current;
       if (!audio) return;
-      audio.playbackRate = playbackRate;
       if (autoplay) {
         void audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
@@ -111,7 +84,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
   }
 
   return (
-    <aside id="hero-player" className={`hero-podcast-player${isTranscriptOpen ? " transcript-open" : ""}`} aria-label="Podcastspeler">
+    <aside id="hero-player" className="hero-podcast-player" aria-label="Podcastspeler">
       <audio
         ref={audioRef}
         src={getEpisodeAudioUrl(episode)}
@@ -128,25 +101,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
           <p className="hero-player-kicker">Luister nu</p>
           <h2>{episode.title}</h2>
         </div>
-        <button className="hero-player-icon-button hero-player-primary" type="button" onClick={togglePlay} aria-label={isPlaying ? "Pauzeer aflevering" : "Speel aflevering af"}>
-          {isPlaying ? <Pause aria-hidden /> : <Play aria-hidden />}
-        </button>
       </div>
-
-      {episode.short_intro ? <p className="hero-player-intro">{episode.short_intro}</p> : null}
-
-      <label className="hero-player-select">
-        <ListMusic size={17} aria-hidden />
-        <span className="sr-only">Kies aflevering</span>
-        <select value={episode.id} onChange={(event) => selectEpisode(playlist.findIndex((item) => item.id === event.target.value), false)}>
-          {playlist.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.episode_number > 0 ? `S${item.season_number} E${item.episode_number} - ` : ""}{item.title}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={17} aria-hidden />
-      </label>
 
       <div className="hero-player-progress">
         <input
@@ -169,67 +124,24 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
       </div>
 
       <div className="hero-player-controls" aria-label="Podcastbediening">
-        <button type="button" onClick={() => moveEpisode(-1)} aria-label="Vorige aflevering">
-          <StepBack aria-hidden />
-        </button>
         <button type="button" onClick={() => seekBy(-15)} aria-label="15 seconden terug">
           <SkipBack aria-hidden />
           <span>15</span>
         </button>
-        <button className="hero-player-main-control" type="button" onClick={togglePlay} aria-label={isPlaying ? "Pauzeer" : "Speel af"}>
-          {isPlaying ? <Pause aria-hidden /> : <Play aria-hidden />}
+        <button type="button" onClick={pauseAudio} aria-label="Pauzeer">
+          <Pause aria-hidden />
         </button>
-        <button type="button" onClick={() => seekBy(30)} aria-label="30 seconden vooruit">
+        <button className="hero-player-main-control" type="button" onClick={playAudio} aria-label="Speel af">
+          <Play aria-hidden />
+        </button>
+        <button type="button" onClick={() => seekBy(15)} aria-label="15 seconden vooruit">
           <SkipForward aria-hidden />
-          <span>30</span>
+          <span>15</span>
         </button>
-        <button type="button" onClick={() => moveEpisode(1)} aria-label="Volgende aflevering">
-          <StepForward aria-hidden />
-        </button>
-      </div>
-
-      <div className="hero-player-tools">
-        <label>
-          <Gauge size={16} aria-hidden />
-          <span className="sr-only">Afspeelsnelheid</span>
-          <select value={playbackRate} onChange={(event) => setPlaybackRate(Number(event.target.value) as (typeof playbackRates)[number])}>
-            {playbackRates.map((rate) => (
-              <option key={rate} value={rate}>
-                {rate}x
-              </option>
-            ))}
-          </select>
-        </label>
-        {transcriptToggle}
       </div>
 
       <div className="hero-player-signup-promo">
-        <div>
-          <h3>Seintje bij nieuw</h3>
-          <p>We zorgen dat je niets mist!</p>
-        </div>
         <a href="#aanmelden">Geef mij een seintje</a>
-      </div>
-
-      <div id="hero-player-transcript" className={`hero-player-transcript${isTranscriptOpen ? " open" : ""}`}>
-        {segments.length ? (
-          <div className="hero-player-transcript-scroll" aria-live="polite">
-            {segments.map((segment, index) => (
-              <p
-                key={`${segment.start}-${index}`}
-                ref={index === activeSegmentIndex ? activeCueRef : null}
-                className={index === activeSegmentIndex ? "active" : ""}
-              >
-                <span>{formatTime(segment.start)}</span>
-                {segment.text}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <p className="hero-player-transcript-empty">
-            Nederlands transcript is nog niet beschikbaar voor deze aflevering.
-          </p>
-        )}
       </div>
     </aside>
   );
