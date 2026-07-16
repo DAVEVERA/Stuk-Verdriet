@@ -54,7 +54,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
               alt=""
               fill
               priority
-              sizes="(max-width: 820px) calc(100vw - 20px), 1040px"
+              sizes="100vw"
             />
           </div>
         </div>
