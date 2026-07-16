@@ -52,7 +52,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
               <span>Hoe gevoelig de snaar ook is,</span>
               <span>hier raken we hem samen.</span>
               <span>Je hoeft het niet alleen te doen.</span>
-              <span>We zijn er voor je. Laat van je horen.</span>
             </h1>
           </div>
         </div>

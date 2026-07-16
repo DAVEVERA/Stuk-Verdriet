@@ -2991,22 +2991,23 @@ textarea {
   color: #fffdf8;
   display: grid;
   font-family: var(--font-slogan), cursive;
-  font-size: clamp(1.9rem, 2.75vw, 3.35rem);
+  font-size: clamp(2.15rem, 3vw, 3.75rem);
   font-weight: 400;
-  gap: 0.08em;
+  gap: 0.1em;
   left: clamp(18px, 5vw, 86px);
   line-height: 1.12;
   margin: 0;
-  max-width: min(56vw, 840px);
+  max-width: min(62vw, 980px);
   position: absolute;
   text-align: left;
   text-shadow: 0 3px 18px rgba(5, 8, 6, 0.7);
-  top: clamp(118px, 10.5vw, 176px);
+  top: clamp(132px, 11vw, 192px);
   z-index: 2;
 }
 
 .community-hero-text span {
   display: block;
+  white-space: nowrap;
 }
 
 .community-platform-hero p:not(.eyebrow),
@@ -3611,12 +3612,16 @@ textarea {
 
   .community-hero-text {
     bottom: clamp(24px, 7vw, 38px);
-    font-size: clamp(1.35rem, 6.5vw, 2rem);
+    font-size: clamp(1.25rem, 5.7vw, 1.72rem);
     left: clamp(18px, 6vw, 32px);
     line-height: 1.1;
     max-width: min(92vw, 460px);
     right: clamp(18px, 6vw, 32px);
     top: auto;
+  }
+
+  .community-hero-text span {
+    white-space: normal;
   }
 
   .community-account-dock {
