@@ -166,3 +166,23 @@ Finish the SNAAR community UX pass with mobile-first polish, accessible states, 
 
 SNAAR_COMMUNITY_UX_POLISH_COMPLETE: true
 
+---
+
+## Goal
+
+Replace the hero podcast player with the official Spotify embed while preserving the Stuk Verdriet card and signup CTA.
+
+## Tasks
+
+- [x] Inspect current hero player implementation
+- [x] Inspect provided Spotify embed HTML
+- [x] Replace custom audio controls with Spotify iframe
+- [x] Preserve player card container and signup CTA
+- [x] Add fallback Spotify episode URL for demo/local data
+- [x] Run lint, typecheck, and build
+- [x] Browser-check mobile and desktop hero layout
+- [x] Final review
+
+## Completion Marker
+
+SPOTIFY_HERO_PLAYER_COMPLETE: true

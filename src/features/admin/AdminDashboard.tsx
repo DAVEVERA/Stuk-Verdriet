@@ -35,7 +35,7 @@ import {
   XCircle
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { archiveEpisode, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
+import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
 import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, SiteDesignSettings } from "@/types/content";
 
@@ -52,6 +52,14 @@ type AdminReport = {
   reason: string;
   created_at: string;
   post_id: string | null;
+  reply_id?: string | null;
+  target_type?: string | null;
+  target_id?: string | null;
+  report_category?: string | null;
+  details?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  metadata?: Record<string, unknown> | null;
   resolved_at: string | null;
 };
 
@@ -840,13 +848,8 @@ function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pen
         </article>
         <article className="admin-panel review-lane">
           <h3>Meldingen</h3>
-          <ModuleReadiness state="Alleen lezen" detail="Meldingen worden hier zichtbaar gemaakt. Oplossen/negeren vraagt nog een server action." />
           {reports.length ? reports.map((report) => (
-            <div className="review-card" key={report.id}>
-              <div className="review-card-top"><span>Open</span><small>{new Date(report.created_at).toLocaleDateString("nl-NL")}</small></div>
-              <p>{report.reason}</p>
-              <small>Post: {report.post_id ?? "onbekend"}</small>
-            </div>
+            <AdminReportCard report={report} key={report.id} />
           )) : <p className="empty-state">Geen open meldingen.</p>}
         </article>
       </div>
@@ -1175,8 +1178,43 @@ function CommunityModeration({ pendingPosts, reports }: { pendingPosts: AdminPos
       </article>
       <article className="admin-panel">
         <h2>Meldingen</h2>
-        {reports.length ? reports.map((report) => <p key={report.id}>{report.reason}</p>) : <p>Geen open meldingen.</p>}
+        <div className="review-lane">
+          {reports.length ? reports.map((report) => <AdminReportCard report={report} key={report.id} />) : <p>Geen open meldingen.</p>}
+        </div>
       </article>
+    </div>
+  );
+}
+
+function AdminReportCard({ report }: { report: AdminReport }) {
+  const targetType = report.target_type ?? (report.reply_id ? "reply" : "post");
+  const targetId = report.target_id ?? report.reply_id ?? report.post_id;
+  return (
+    <div className="review-card">
+      <div className="review-card-top">
+        <span>{report.priority === "high" ? "Hoog" : "Open"}</span>
+        <small>{new Date(report.created_at).toLocaleDateString("nl-NL")}</small>
+      </div>
+      <p>{report.details || report.reason}</p>
+      <small>
+        {report.report_category ?? "melding"} - {targetType}: {targetId ?? "onbekend"}
+      </small>
+      <div className="subtle-actions">
+        <form action={resolveCommunityReport.bind(null, report.id)}>
+          <input type="hidden" name="resolution_note" value="Afgehandeld vanuit admin portaal" readOnly />
+          <button className="button" type="submit">Markeer opgelost</button>
+        </form>
+        {report.post_id ? (
+          <form action={moderatePost.bind(null, report.post_id, "archived")}>
+            <button className="text-link danger" type="submit">Verberg post</button>
+          </form>
+        ) : null}
+        {report.reply_id ? (
+          <form action={moderateCommunityReply.bind(null, report.reply_id, "archived")}>
+            <button className="text-link danger" type="submit">Verberg reactie</button>
+          </form>
+        ) : null}
+      </div>
     </div>
   );
 }

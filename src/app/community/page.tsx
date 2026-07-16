@@ -11,15 +11,15 @@ export const dynamic = "force-dynamic";
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
   const params = (await searchParams) ?? {};
-  const [categories, posts, supabase] = await Promise.all([
+  const [categories, supabase] = await Promise.all([
     getCommunityCategories(),
-    getApprovedCommunityPosts(),
     createSupabaseServerClient()
   ]);
   const {
     data: { user }
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
   const isLoggedIn = Boolean(user);
+  const posts = await getApprovedCommunityPosts(user?.id ?? null);
   let currentProfile: CommunityProfile | null = null;
   let discoverableProfiles: CommunityProfile[] = [];
   let conversations: CommunityConversation[] = [];
@@ -103,9 +103,13 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           </div>
         </div>
         {linkPosts.length ? (
-          <div className="post-grid compact community-link-grid">
+          <div className="community-prefooter-link-grid">
             {linkPosts.map((post) => (
-              <CommunityPostCard key={post.id} post={post} showActions={isLoggedIn} />
+              <a className="community-prefooter-link" key={post.id} href={post.resource_url ?? `/community/${post.slug}`} target={post.resource_url ? "_blank" : undefined} rel={post.resource_url ? "noopener noreferrer" : undefined}>
+                <span>{post.category}</span>
+                <strong>{post.resource_label ?? post.title}</strong>
+                <small>{post.body}</small>
+              </a>
             ))}
           </div>
         ) : (

@@ -36,9 +36,9 @@ import { FamilyStoryPopout } from "@/components/FamilyStoryPopout";
 import { HeroSlider } from "@/components/HeroSlider";
 import { SusanStoryPopout } from "@/components/SusanStoryPopout";
 import { SocialFollowTrigger } from "@/components/SocialFollowTrigger";
-import { createCommunityPost, sendCommunityMessage, signOut, startCommunityConversation, supportPost, subscribeEpisodeSignup, updateCommunityProfile } from "@/lib/actions";
+import { createCommunityPost, createCommunityReply, reportCommunityContent, sendCommunityMessage, signOut, startCommunityConversation, supportPost, subscribeEpisodeSignup, updateCommunityProfile } from "@/lib/actions";
 import { navigation, site } from "@/lib/site";
-import type { CommunityCategory, CommunityConversation, CommunityPost, CommunityProfile, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
+import type { CommunityCategory, CommunityConversation, CommunityPost, CommunityProfile, CommunityReply, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks } from "@/types/content";
 
 const podcastPlaceholderAudioUrl = "/audio/podcast-placeholder.wav";
 const podcastInstagramProfileUrl = "https://www.instagram.com/stukverdrietdepodcast/";
@@ -879,7 +879,7 @@ const postTypeLabels: Record<NonNullable<CommunityPost["post_type"]>, string> = 
 
 const snaarIcons = {
   favoriteBefore: "/img/icons_SNAAR/favorite_before_click/icons8-favorite-48.png",
-  favoriteAfter: "/img/icons_SNAAR/heart_taped/icons8-mending-heart-48.png",
+  favoriteAfter: "/img/icons_SNAAR/favorite_after_click/icons8-favorite-100.png",
   comment: "/img/icons_SNAAR/comment/icons8-comment-48.png",
   share: "/img/icons_SNAAR/share_arrow/icons8-forward-arrow-48.png"
 };
@@ -891,7 +891,7 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
   return (
     <article className="post-card community-post-card">
       <header className="community-post-author">
-        <span className="community-avatar" aria-hidden>{authorInitial(authorName)}</span>
+        <ProfileAvatar name={authorName} avatarUrl={post.author_avatar_url ?? null} />
         <div>
           <strong>{authorName}</strong>
           <p>{postTypeLabels[postType]} - {post.category} - {formatDate(post.created_at)}</p>
@@ -923,7 +923,8 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
       <div className="community-card-actions" role="group" aria-label="Berichtacties">
         {showActions ? (
           <form action={supportPost.bind(null, post.id)}>
-            <SupportPostSubmitButton />
+            <input type="hidden" name="return_to" value="/community" readOnly />
+            <SupportPostSubmitButton supported={Boolean(post.has_supported)} />
           </form>
         ) : (
           <Link className="community-post-action" href={`/login?next=${encodeURIComponent(postUrl)}`}>
@@ -937,15 +938,96 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
         </Link>
         <SharePostButton postUrl={postUrl} title={post.title} />
       </div>
+      {showActions ? <CommunityReportMenu targetType="post" targetId={post.id} hasImage={Boolean(post.image_url)} /> : null}
+      {post.replies?.length ? (
+        <div className="community-comment-thread" aria-label={`Reacties op ${post.title}`}>
+          {post.replies.map((reply) => (
+            <CommunityInlineReply key={reply.id} postId={post.id} reply={reply} showActions={showActions} />
+          ))}
+          {post.reply_count > post.replies.length ? (
+            <Link className="community-comment-more" href={postUrl}>Bekijk alle {post.reply_count} reacties</Link>
+          ) : null}
+        </div>
+      ) : null}
       <div className="community-inline-comment">
         <span className="community-avatar community-avatar-small" aria-hidden>{showActions ? "J" : "S"}</span>
         {showActions ? (
-          <Link href={postUrl}>Schrijf een reactie...</Link>
+          <form className="community-inline-reply-form" action={createCommunityReply.bind(null, post.id)}>
+            <input type="hidden" name="return_to" value="/community" readOnly />
+            <input type="hidden" name="author_display_type" value="first_name" readOnly />
+            <input name="body" placeholder="Schrijf een reactie..." required />
+            <button type="submit" aria-label="Reactie plaatsen"><Send size={16} aria-hidden /></button>
+          </form>
         ) : (
           <Link href={`/login?next=${encodeURIComponent(postUrl)}`}>Log in om te reageren...</Link>
         )}
       </div>
     </article>
+  );
+}
+
+function CommunityInlineReply({ postId, reply, showActions, depth = 0 }: { postId: string; reply: CommunityReply; showActions: boolean; depth?: number }) {
+  const authorName = displayAuthor(reply.author_name, reply.author_display_type);
+  const childReplies = reply.replies ?? [];
+  return (
+    <article className={depth ? "community-comment-card is-reply" : "community-comment-card"}>
+      <ProfileAvatar name={authorName} avatarUrl={reply.author_avatar_url ?? null} />
+      <div className="community-comment-bubble">
+        <strong>{authorName}</strong>
+        <p>{reply.body}</p>
+        <div className="community-comment-actions">
+          <span>{formatDate(reply.created_at)}</span>
+          {showActions ? (
+            <>
+              <details>
+                <summary>Reageer</summary>
+                <form className="community-inline-reply-form compact" action={createCommunityReply.bind(null, postId)}>
+                  <input type="hidden" name="return_to" value="/community" readOnly />
+                  <input type="hidden" name="parent_reply_id" value={reply.id} readOnly />
+                  <input type="hidden" name="author_display_type" value="first_name" readOnly />
+                  <input name="body" placeholder="Antwoord..." required />
+                  <button type="submit" aria-label="Antwoord plaatsen"><Send size={14} aria-hidden /></button>
+                </form>
+              </details>
+              <form action={reportCommunityContent.bind(null, "reply", reply.id)}>
+                <input type="hidden" name="return_to" value="/community" readOnly />
+                <input type="hidden" name="report_category" value="taalgebruik" readOnly />
+                <button type="submit">Melden</button>
+              </form>
+            </>
+          ) : null}
+        </div>
+        {depth < 1 && childReplies.length ? (
+          <div className="community-comment-children">
+            {childReplies.map((child) => (
+              <CommunityInlineReply key={child.id} postId={postId} reply={child} showActions={showActions} depth={depth + 1} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function CommunityReportMenu({ targetType, targetId, hasImage }: { targetType: "post"; targetId: string; hasImage: boolean }) {
+  const items = [
+    { label: "Post melden", type: targetType, category: "ongepast" },
+    { label: "Taalgebruik melden", type: "language", category: "taalgebruik" },
+    ...(hasImage ? [{ label: "Afbeelding melden", type: "image", category: "afbeelding" }] : [])
+  ];
+  return (
+    <details className="community-report-menu">
+      <summary>Melden</summary>
+      <div>
+        {items.map((item) => (
+          <form action={reportCommunityContent.bind(null, item.type, targetId)} key={item.label}>
+            <input type="hidden" name="return_to" value="/community" readOnly />
+            <input type="hidden" name="report_category" value={item.category} readOnly />
+            <button type="submit">{item.label}</button>
+          </form>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -1081,13 +1163,13 @@ function SharePostButton({ postUrl, title }: { postUrl: string; title: string })
   );
 }
 
-function SupportPostSubmitButton() {
+function SupportPostSubmitButton({ supported }: { supported: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <button className="community-post-action" type="submit" disabled={pending} aria-disabled={pending}>
-      <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
-      <span>{pending ? "Steunt..." : "Steun"}</span>
+    <button className={supported ? "community-post-action is-supported" : "community-post-action"} type="submit" disabled={pending} aria-disabled={pending} aria-pressed={supported}>
+      <Image src={supported ? snaarIcons.favoriteAfter : snaarIcons.favoriteBefore} alt="" width={21} height={21} />
+      <span>{pending ? "Steunt..." : supported ? "Gesteund" : "Steun"}</span>
     </button>
   );
 }

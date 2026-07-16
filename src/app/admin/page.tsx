@@ -51,7 +51,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [{ data: pendingPosts }, { data: reports }, { data: seasons }, { data: episodes }, { data: pendingInterviewComments }] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
-        admin.from("community_reports").select("id,reason,created_at,post_id,resolved_at").is("resolved_at", null).order("created_at", { ascending: false }),
+        admin.from("community_reports").select("*").is("resolved_at", null).order("created_at", { ascending: false }),
         admin.from("podcast_seasons").select("*").order("season_number", { ascending: true }),
         admin.from("podcast_episodes").select("*").order("season_number", { ascending: true }).order("episode_number", { ascending: true }),
         admin

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createCommunityReply, reportPost, supportPost } from "@/lib/actions";
+import { createCommunityReply, reportCommunityContent, reportPost, supportPost } from "@/lib/actions";
 import { getApprovedCommunityPostBySlug, getApprovedCommunityReplies } from "@/lib/content";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import type { AuthorDisplayType, CommunityReply } from "@/types/content";
@@ -71,13 +71,17 @@ export default async function CommunityPostPage({ params }: CommunityPostPagePro
               Reactie
               <textarea name="body" required />
             </label>
+            <input type="hidden" name="return_to" value={`/community/${post.slug}`} readOnly />
             <button className="button" type="submit">Verstuur ter goedkeuring</button>
           </form>
           <div className="community-post-actions">
             <form action={supportPost.bind(null, post.id)}>
+              <input type="hidden" name="return_to" value={`/community/${post.slug}`} readOnly />
               <button className="button" type="submit">Steun dit bericht</button>
             </form>
             <form action={reportPost.bind(null, post.id)}>
+              <input type="hidden" name="return_to" value={`/community/${post.slug}`} readOnly />
+              <input type="hidden" name="report_category" value="ongepast" readOnly />
               <input type="hidden" name="reason" value="Gemeld vanuit community detailpagina" readOnly />
               <button className="text-link" type="submit">Melden</button>
             </form>
@@ -103,6 +107,28 @@ function CommunityReplyCard({ reply }: { reply: CommunityReply }) {
         <span>{displayAuthor(reply.author_name, reply.author_display_type)}</span>
         <span>{formatDate(reply.created_at)}</span>
       </div>
+      <details className="community-reply-action">
+        <summary>Reageer</summary>
+        <form className="form-grid story-form" action={createCommunityReply.bind(null, reply.post_id)}>
+          <input type="hidden" name="return_to" value={`/community`} readOnly />
+          <input type="hidden" name="parent_reply_id" value={reply.id} readOnly />
+          <input type="hidden" name="author_display_type" value="first_name" readOnly />
+          <textarea name="body" required placeholder="Schrijf een antwoord..." />
+          <button className="button" type="submit">Antwoord ter goedkeuring</button>
+        </form>
+      </details>
+      <form action={reportCommunityContent.bind(null, "reply", reply.id)}>
+        <input type="hidden" name="return_to" value="/community" readOnly />
+        <input type="hidden" name="report_category" value="taalgebruik" readOnly />
+        <button className="text-link" type="submit">Reactie melden</button>
+      </form>
+      {reply.replies?.length ? (
+        <div className="community-reply-children">
+          {reply.replies.map((child) => (
+            <CommunityReplyCard key={child.id} reply={child} />
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }

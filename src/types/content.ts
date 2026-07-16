@@ -66,8 +66,10 @@ export type CommunityCategory = {
 
 export type CommunityPost = {
   id: string;
+  user_id?: string | null;
   author_name: string | null;
   author_display_type: AuthorDisplayType;
+  author_avatar_url?: string | null;
   title: string;
   slug: string;
   body: string;
@@ -83,17 +85,22 @@ export type CommunityPost = {
   status: CommunityStatus;
   reply_count: number;
   support_count: number;
+  has_supported?: boolean;
+  replies?: CommunityReply[];
 };
 
 export type CommunityReply = {
   id: string;
   post_id: string;
   user_id?: string | null;
+  parent_reply_id?: string | null;
   author_name: string | null;
   author_display_type: AuthorDisplayType;
+  author_avatar_url?: string | null;
   body: string;
   created_at: string;
   status: CommunityStatus;
+  replies?: CommunityReply[];
 };
 
 export type CommunityProfile = {

@@ -159,7 +159,7 @@ export const fallbackEpisodes: PodcastEpisode[] = [
     short_intro: "Luister naar deze bijzondere aflevering.",
     description: "Deze aflevering kun je nu beluisteren.",
     audio_file_url: "/audio/Aflevering 1.mpeg",
-    spotify_url: null,
+    spotify_url: "https://open.spotify.com/episode/3Eh39z3GjPJB5ivTEB4zyX",
     podimo_url: null,
     apple_podcast_url: null,
     image_url:

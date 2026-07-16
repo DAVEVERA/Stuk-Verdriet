@@ -1,6 +1,6 @@
 "use server";
 
-import { createSign } from "crypto";
+import { createHash, createSign } from "crypto";
 import { readFileSync } from "fs";
 import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
@@ -19,6 +19,8 @@ const communityAvatarMaxSize = 3 * 1024 * 1024;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
+const communityReportTypes = new Set(["post", "reply", "image", "language"]);
+const communityReportCategories = new Set(["ongepast", "taalgebruik", "afbeelding", "spam", "veiligheid", "anders"]);
 
 type EpisodeSignupPayload = {
   name: string;
@@ -142,6 +144,18 @@ function adminReturnTarget(formData: FormData, status: "saved" | "error", code: 
   const rawTab = String(formData.get("return_tab") ?? fallbackTab).trim();
   const tab = /^[a-z0-9-]+$/i.test(rawTab) ? rawTab : fallbackTab;
   return `/admin?tab=${encodeURIComponent(tab)}&${status}=${encodeURIComponent(code)}`;
+}
+
+function moderationHash(value: string | null | undefined) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return null;
+  const pepper = process.env.MODERATION_HASH_PEPPER ?? process.env.NEXTAUTH_SECRET ?? "stuk-verdriet-community";
+  return createHash("sha256").update(`${pepper}:${raw}`).digest("hex");
+}
+
+async function fileSha256(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return createHash("sha256").update(buffer).digest("hex");
 }
 
 function isAllowedCommunityImage(file: File) {
@@ -601,10 +615,12 @@ export async function createCommunityPost(formData: FormData) {
   const postSlug = `${slugify(title)}-${Date.now()}`;
   const image = getUploadFile(formData, "image_file");
   let imageUrl: string | null = null;
+  let imageHash: string | null = null;
   if (image) {
     if (!isAllowedCommunityImage(image)) redirect(`${returnPath}?error=image`);
     const admin = createSupabaseAdminClient();
     if (!admin) redirect(`${returnPath}?error=storage`);
+    imageHash = await fileSha256(image);
     imageUrl = await uploadPublicFile(admin, "community-images", `community/${user.id}/${postSlug}`, image, "jpg", returnPath);
   }
 
@@ -616,6 +632,7 @@ export async function createCommunityPost(formData: FormData) {
     slug: postSlug,
     body,
     image_url: imageUrl,
+    image_hash: imageHash,
     category,
     post_type: postType,
     resource_url: resourceUrl,
@@ -632,55 +649,101 @@ export async function createCommunityPost(formData: FormData) {
 }
 
 export async function createCommunityReply(postId: string, formData: FormData) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/login");
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  const { supabase, user } = await requireCommunityUser(returnPath);
 
   const body = String(formData.get("body") ?? "").trim();
   const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
+  const parentReplyId = String(formData.get("parent_reply_id") ?? "").trim() || null;
   if (!body) return;
 
-  await supabase.from("community_replies").insert({
+  const payload = {
     post_id: postId,
     user_id: user.id,
     author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
     author_display_type: authorDisplayType,
     body,
-    status: "pending"
-  });
+    status: "pending",
+    ...(parentReplyId ? { parent_reply_id: parentReplyId } : {})
+  };
+
+  const { error } = await supabase.from("community_replies").insert(payload);
+  if (error && parentReplyId) {
+    await supabase.from("community_replies").insert({
+      post_id: postId,
+      user_id: user.id,
+      author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
+      author_display_type: authorDisplayType,
+      body,
+      status: "pending"
+    });
+  }
 
   revalidatePath("/community");
+  revalidatePath(returnPath);
 }
 
-export async function supportPost(postId: string) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/login");
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export async function supportPost(postId: string, formData?: FormData) {
+  const returnPath = safeReturnPath(formData?.get("return_to") ?? null, "/community");
+  const { supabase, user } = await requireCommunityUser(returnPath);
   await supabase.from("community_supports").upsert({ post_id: postId, user_id: user.id }, { onConflict: "post_id,user_id", ignoreDuplicates: true });
 
   revalidatePath("/community");
+  revalidatePath(returnPath);
+}
+
+export async function reportCommunityContent(targetType: string, targetId: string, formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  const { supabase, user } = await requireCommunityUser(returnPath);
+  const normalizedType = communityReportTypes.has(targetType) ? targetType : "post";
+  const categoryInput = String(formData.get("report_category") ?? formData.get("reason") ?? "ongepast").trim().toLowerCase();
+  const category = communityReportCategories.has(categoryInput) ? categoryInput : "anders";
+  const details = String(formData.get("details") ?? formData.get("reason") ?? "").trim().slice(0, 1000);
+  const ip = await requestIpAddress();
+  const emailHash = moderationHash(user.email);
+  const ipHash = moderationHash(ip);
+  const reason = details || `${category} gemeld op ${normalizedType}`;
+  let imageContext: { image_hash?: string | null; image_url?: string | null } = {};
+  if (normalizedType === "image") {
+    const admin = createSupabaseAdminClient();
+    const { data: postImage } = admin
+      ? await admin.from("community_posts").select("image_hash,image_url").eq("id", targetId).maybeSingle()
+      : await supabase.from("community_posts").select("image_hash,image_url").eq("id", targetId).maybeSingle();
+    imageContext = {
+      image_hash: typeof postImage?.image_hash === "string" ? postImage.image_hash : null,
+      image_url: typeof postImage?.image_url === "string" ? postImage.image_url : null
+    };
+  }
+  const basePayload = {
+    user_id: user.id,
+    reason,
+    post_id: normalizedType === "post" || normalizedType === "image" || normalizedType === "language" ? targetId : null,
+    reply_id: normalizedType === "reply" ? targetId : null
+  };
+  const richPayload = {
+    ...basePayload,
+    target_type: normalizedType,
+    target_id: targetId,
+    report_category: category,
+    details,
+    status: "open",
+    priority: category === "veiligheid" ? "high" : "normal",
+    metadata: {
+      reporter_email_hash: emailHash,
+      reporter_ip_hash: ipHash,
+      ...imageContext,
+      reported_from: returnPath
+    }
+  };
+
+  const { error } = await supabase.from("community_reports").insert(richPayload);
+  if (error) await supabase.from("community_reports").insert(basePayload);
+  revalidatePath("/admin");
+  revalidatePath(returnPath);
 }
 
 export async function reportPost(postId: string, formData: FormData) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/login");
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  await supabase.from("community_reports").insert({
-    post_id: postId,
-    user_id: user.id,
-    reason: String(formData.get("reason") ?? "Ongepaste inhoud").slice(0, 500)
-  });
-  revalidatePath("/admin");
+  await reportCommunityContent("post", postId, formData);
 }
 
 export async function moderatePost(postId: string, status: "approved" | "rejected" | "archived") {
@@ -688,6 +751,33 @@ export async function moderatePost(postId: string, status: "approved" | "rejecte
   await supabase.from("community_posts").update({ status }).eq("id", postId);
   revalidatePath("/admin");
   revalidatePath("/community");
+}
+
+export async function moderateCommunityReply(replyId: string, status: "approved" | "rejected" | "archived") {
+  const supabase = await requireAdminClient();
+  await supabase.from("community_replies").update({ status }).eq("id", replyId);
+  revalidatePath("/admin");
+  revalidatePath("/community");
+}
+
+export async function resolveCommunityReport(reportId: string, formData: FormData) {
+  const supabase = await requireAdminClient();
+  const note = String(formData.get("resolution_note") ?? "").trim().slice(0, 500);
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("community_reports")
+    .update({
+      status: "resolved",
+      resolved_at: now,
+      reviewed_at: now,
+      resolution_note: note || null
+    })
+    .eq("id", reportId);
+
+  if (error) {
+    await supabase.from("community_reports").update({ resolved_at: now }).eq("id", reportId);
+  }
+  revalidatePath("/admin");
 }
 
 export async function moderateInterviewComment(commentId: string, interviewId: string, status: "approved" | "rejected") {

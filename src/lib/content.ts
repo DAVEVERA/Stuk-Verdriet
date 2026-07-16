@@ -10,7 +10,7 @@ import {
   fallbackSponsors
 } from "@/lib/fallback-data";
 import { normalizeSectionDesign } from "@/lib/section-design";
-import { createSupabasePublicClient } from "@/lib/supabase";
+import { createSupabaseAdminClient, createSupabasePublicClient } from "@/lib/supabase";
 import type {
   CommunityCategory,
   CommunityPost,
@@ -51,6 +51,56 @@ function normalizeCategory(category: CommunityCategory): CommunityCategory {
     slug: "naasten-en-familie",
     description: "Voor broers, zussen, partners, vrienden en andere naasten."
   };
+}
+
+type CommunityProfileLookup = {
+  user_id: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+};
+
+function normalizeCommunityPost(post: CommunityPost): CommunityPost {
+  return {
+    ...post,
+    image_url: post.image_url ?? null,
+    post_type: post.post_type ?? "story",
+    resource_url: post.resource_url ?? null,
+    resource_label: post.resource_label ?? null,
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    replies: Array.isArray(post.replies) ? post.replies : []
+  };
+}
+
+function attachReplyTree(replies: CommunityReply[]) {
+  const byId = new Map<string, CommunityReply>();
+  replies.forEach((reply) => byId.set(reply.id, { ...reply, replies: [] }));
+
+  const topLevel: CommunityReply[] = [];
+  byId.forEach((reply) => {
+    if (reply.parent_reply_id && byId.has(reply.parent_reply_id)) {
+      byId.get(reply.parent_reply_id)?.replies?.push(reply);
+    } else {
+      topLevel.push(reply);
+    }
+  });
+
+  return topLevel;
+}
+
+function applyProfilesToPosts(posts: CommunityPost[], profiles: Map<string, CommunityProfileLookup>) {
+  return posts.map((post) => ({
+    ...post,
+    author_name: post.author_name ?? (post.user_id ? profiles.get(post.user_id)?.display_name ?? null : null),
+    author_avatar_url: post.user_id ? profiles.get(post.user_id)?.avatar_url ?? null : null
+  }));
+}
+
+function applyProfilesToReplies(replies: CommunityReply[], profiles: Map<string, CommunityProfileLookup>) {
+  return replies.map((reply) => ({
+    ...reply,
+    author_name: reply.author_name ?? (reply.user_id ? profiles.get(reply.user_id)?.display_name ?? null : null),
+    author_avatar_url: reply.user_id ? profiles.get(reply.user_id)?.avatar_url ?? null : null
+  }));
 }
 
 async function fromTable<T>(table: string, fallback: T[], query = "status.eq.published") {
@@ -104,20 +154,58 @@ export async function getCommunityCategories(): Promise<CommunityCategory[]> {
   return [...uniqueCategories.values()];
 }
 
-export async function getApprovedCommunityPosts(): Promise<CommunityPost[]> {
-  const supabase = createSupabasePublicClient();
+export async function getApprovedCommunityPosts(currentUserId?: string | null): Promise<CommunityPost[]> {
+  const supabase = createSupabaseAdminClient() ?? createSupabasePublicClient();
   if (!supabase) return fallbackPosts;
   const { data, error } = await supabase.from("community_posts").select("*").eq("status", "approved");
   if (error || !data || data.length === 0) return fallbackPosts;
-  const posts = data as CommunityPost[];
-  return posts
+  const posts = (data as CommunityPost[]).map(normalizeCommunityPost);
+  const postIds = posts.map((post) => post.id);
+  const postUserIds = posts.map((post) => post.user_id).filter((value): value is string => Boolean(value));
+
+  const [{ data: supportRows }, { data: replyRows }] = await Promise.all([
+    currentUserId && postIds.length
+      ? supabase.from("community_supports").select("post_id").eq("user_id", currentUserId).in("post_id", postIds)
+      : Promise.resolve({ data: [] as Array<{ post_id: string }> }),
+    postIds.length
+      ? supabase
+          .from("community_replies")
+          .select("*")
+          .in("post_id", postIds)
+          .eq("status", "approved")
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] as CommunityReply[] })
+  ]);
+
+  const replies = ((replyRows ?? []) as CommunityReply[]).map((reply) => ({ ...reply, replies: [] }));
+  const replyUserIds = replies.map((reply) => reply.user_id).filter((value): value is string => Boolean(value));
+  const userIds = [...new Set([...postUserIds, ...replyUserIds])];
+  const profiles = new Map<string, CommunityProfileLookup>();
+
+  if (userIds.length) {
+    const { data: profileRows } = await supabase
+      .from("community_profiles")
+      .select("user_id,display_name,avatar_url")
+      .in("user_id", userIds);
+    ((profileRows ?? []) as CommunityProfileLookup[]).forEach((profile) => profiles.set(profile.user_id, profile));
+  }
+
+  const supported = new Set(((supportRows ?? []) as Array<{ post_id: string }>).map((row) => row.post_id));
+  const repliesByPost = new Map<string, CommunityReply[]>();
+  attachReplyTree(applyProfilesToReplies(replies, profiles)).forEach((reply) => {
+    const list = repliesByPost.get(reply.post_id) ?? [];
+    list.push(reply);
+    repliesByPost.set(reply.post_id, list);
+  });
+
+  return applyProfilesToPosts(posts, profiles)
     .map((post) => ({
       ...post,
-      image_url: post.image_url ?? null,
-      post_type: post.post_type ?? "story",
-      resource_url: post.resource_url ?? null,
-      resource_label: post.resource_label ?? null,
-      tags: Array.isArray(post.tags) ? post.tags : []
+      has_supported: supported.has(post.id),
+      replies: (repliesByPost.get(post.id) ?? []).slice(0, 3).map((reply) => ({
+        ...reply,
+        replies: (reply.replies ?? []).slice(0, 2)
+      }))
     }))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
@@ -128,16 +216,26 @@ export async function getApprovedCommunityPostBySlug(slug: string) {
 }
 
 export async function getApprovedCommunityReplies(postId: string): Promise<CommunityReply[]> {
-  const supabase = createSupabasePublicClient();
+  const supabase = createSupabaseAdminClient() ?? createSupabasePublicClient();
   if (!supabase) return [];
   const { data, error } = await supabase
     .from("community_replies")
-    .select("id,post_id,author_name,author_display_type,body,created_at,status")
+    .select("*")
     .eq("post_id", postId)
     .eq("status", "approved")
     .order("created_at", { ascending: true });
   if (error || !data) return [];
-  return data as CommunityReply[];
+  const replies = data as CommunityReply[];
+  const userIds = [...new Set(replies.map((reply) => reply.user_id).filter((value): value is string => Boolean(value)))];
+  const profiles = new Map<string, CommunityProfileLookup>();
+  if (userIds.length) {
+    const { data: profileRows } = await supabase
+      .from("community_profiles")
+      .select("user_id,display_name,avatar_url")
+      .in("user_id", userIds);
+    ((profileRows ?? []) as CommunityProfileLookup[]).forEach((profile) => profiles.set(profile.user_id, profile));
+  }
+  return attachReplyTree(applyProfilesToReplies(replies, profiles));
 }
 
 export async function getPublishedHosts(): Promise<HostProfile[]> {
