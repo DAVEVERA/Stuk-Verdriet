@@ -2736,7 +2736,7 @@ textarea {
 .community-platform-page {
   background:
     linear-gradient(180deg, rgba(66, 86, 69, 0.94) 0%, rgba(142, 152, 136, 0.74) 260px, #F2EFE9 520px, #F2EFE9 100%);
-  color: var(--pine);
+  color: var(--white);
   display: grid;
   gap: clamp(12px, 3vw, 28px);
   margin-top: -1px;
@@ -2788,11 +2788,11 @@ textarea {
 }
 
 .community-hero-text {
-  color: var(--pine);
+  color: var(--White);
   display: grid;
   font-family: var(--font-slogan), "Nothing You Could Do", cursive;
   font-size: clamp(2.5rem, 3.35vw, 4.45rem);
-  font-weight: 400;
+  font-weight: 200;
   gap: 0.04em;
   left: clamp(18px, 5vw, 86px);
   letter-spacing: 0;
