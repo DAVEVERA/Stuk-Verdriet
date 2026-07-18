@@ -33,6 +33,67 @@ function safeEmailOtpType(value: string | null): EmailOtpType {
   return allowed.includes(value as EmailOtpType) ? (value as EmailOtpType) : "email";
 }
 
+function authErrorUrl(origin: string, next: string, error: string) {
+  return new URL(`/login?next=${encodeURIComponent(next)}&error=${encodeURIComponent(error)}`, origin);
+}
+
+function fragmentSessionBridge() {
+  const html = `<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Inloggen...</title>
+  </head>
+  <body>
+    <p>Je wordt ingelogd...</p>
+    <script>
+      (async function () {
+        var target = new URL(window.location.href);
+        var next = target.searchParams.get("next") || "/community";
+        var hash = new URLSearchParams(window.location.hash.slice(1));
+        var accessToken = hash.get("access_token");
+        var refreshToken = hash.get("refresh_token");
+        window.history.replaceState(null, "", target.pathname + target.search);
+
+        if (!accessToken || !refreshToken) {
+          window.location.replace("/login?next=" + encodeURIComponent(next) + "&error=callback");
+          return;
+        }
+
+        try {
+          var response = await fetch("/auth/session", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+              next: next
+            })
+          });
+          var result = await response.json();
+          if (!response.ok || !result.next) throw new Error("session");
+          window.location.replace(result.next);
+        } catch {
+          window.location.replace("/login?next=" + encodeURIComponent(next) + "&error=callback");
+        }
+      })();
+    </script>
+  </body>
+</html>`;
+
+  return new NextResponse(html, {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
+      "Referrer-Policy": "no-referrer"
+    }
+  });
+}
+
 export async function handleAuthRedirect(request: Request) {
   const requestUrl = new URL(request.url);
   const next = safeAuthNext(requestUrl.searchParams.get("next"));
@@ -43,9 +104,13 @@ export async function handleAuthRedirect(request: Request) {
   const type = requestUrl.searchParams.get("type");
   const code = requestUrl.searchParams.get("code");
 
+  if (!token_hash && !code) {
+    return fragmentSessionBridge();
+  }
+
   const supabase = await createSupabaseRouteClient(redirectResponse);
   if (!supabase) {
-    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=missing-supabase`, requestUrl.origin), 303);
+    return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "missing-supabase"), 303);
   }
 
   if (token_hash) {
@@ -55,7 +120,7 @@ export async function handleAuthRedirect(request: Request) {
     });
 
     if (error) {
-      return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin), 303);
+      return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "callback"), 303);
     }
   }
 
@@ -63,7 +128,7 @@ export async function handleAuthRedirect(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}&error=callback`, requestUrl.origin), 303);
+      return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "callback"), 303);
     }
   }
 
