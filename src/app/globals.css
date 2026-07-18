@@ -8828,6 +8828,32 @@ textarea {
   padding-top: 14px;
 }
 
+.community-profile-search {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.community-profile-search label {
+  color: var(--pine);
+  display: grid;
+  font-size: 0.86rem;
+  font-weight: 750;
+  gap: 6px;
+}
+
+.community-profile-search input {
+  background: #f7f8f5;
+  border: 1px solid rgba(66, 86, 69, 0.28);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 44px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
 .community-profile-empty {
   align-items: center;
   color: var(--eucalyptus);

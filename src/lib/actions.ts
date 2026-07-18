@@ -551,7 +551,6 @@ export async function updateCommunityProfileInfo(formData: FormData) {
   const profileDetails = {
     category: profileText(formData, "category", 80),
     pronouns: profileText(formData, "pronouns", 40),
-    birthday: profileText(formData, "birthday", 10),
     hometown: profileText(formData, "hometown", 100),
     current_city: profileText(formData, "current_city", 100),
     relationship_status: profileText(formData, "relationship_status", 60),
@@ -629,7 +628,7 @@ export async function createCommunityProfileEvent(formData: FormData) {
   });
   if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
   revalidatePath("/community/profiel");
-  redirect(withReturnStatus(returnPath, "profile", "event-saved"));
+  redirect(withReturnStatus(returnPath, "profile", "moment-saved"));
 }
 
 export async function sendCommunityFriendRequest(formData: FormData) {
@@ -637,16 +636,16 @@ export async function sendCommunityFriendRequest(formData: FormData) {
   if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
   const { user } = await requireCommunityUser(returnPath);
   const addresseeId = profileText(formData, "addressee_id", 64);
-  if (!addresseeId || addresseeId === user.id) redirect(withReturnStatus(returnPath, "error", "friend"));
+  if (!addresseeId || addresseeId === user.id) redirect(withReturnStatus(returnPath, "error", "connection"));
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
   await ensureCommunityProfile(user);
   const { data: target } = await admin.from("community_profiles").select("user_id").eq("user_id", addresseeId).eq("is_discoverable", true).maybeSingle();
-  if (!target) redirect(withReturnStatus(returnPath, "error", "friend"));
+  if (!target) redirect(withReturnStatus(returnPath, "error", "connection"));
   const { error } = await admin.from("community_friendships").insert({ requester_id: user.id, addressee_id: addresseeId });
-  if (error && error.code !== "23505") redirect(withReturnStatus(returnPath, "error", "friend"));
+  if (error && error.code !== "23505") redirect(withReturnStatus(returnPath, "error", "connection"));
   revalidatePath("/community/profiel");
-  redirect(withReturnStatus(returnPath, "profile", "friend-requested"));
+  redirect(withReturnStatus(returnPath, "profile", "connection-requested"));
 }
 
 export async function respondToCommunityFriendRequest(formData: FormData) {
@@ -655,16 +654,48 @@ export async function respondToCommunityFriendRequest(formData: FormData) {
   const { user } = await requireCommunityUser(returnPath);
   const friendshipId = profileText(formData, "friendship_id", 64);
   const response = String(formData.get("response") ?? "");
-  if (!friendshipId || !["accepted", "declined"].includes(response)) redirect(withReturnStatus(returnPath, "error", "friend"));
+  if (!friendshipId || !["accepted", "declined"].includes(response)) redirect(withReturnStatus(returnPath, "error", "connection"));
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
   const { error } = await admin.from("community_friendships").update({
     status: response,
     updated_at: new Date().toISOString()
   }).eq("id", friendshipId).eq("addressee_id", user.id).eq("status", "pending");
-  if (error) redirect(withReturnStatus(returnPath, "error", "friend"));
+  if (error) redirect(withReturnStatus(returnPath, "error", "connection"));
   revalidatePath("/community/profiel");
-  redirect(withReturnStatus(returnPath, "profile", response === "accepted" ? "friend-accepted" : "friend-declined"));
+  redirect(withReturnStatus(returnPath, "profile", response === "accepted" ? "connection-accepted" : "connection-declined"));
+}
+
+export async function deleteCommunityProfileEvent(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const eventId = profileText(formData, "event_id", 64);
+  if (!eventId) redirect(withReturnStatus(returnPath, "error", "event"));
+  const { error } = await admin.from("community_profile_events").delete().eq("id", eventId).eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "event"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "moment-deleted"));
+}
+
+export async function deleteCommunityConnection(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const friendshipId = profileText(formData, "friendship_id", 64);
+  if (!friendshipId) redirect(withReturnStatus(returnPath, "error", "connection"));
+  const { error } = await admin
+    .from("community_friendships")
+    .delete()
+    .eq("id", friendshipId)
+    .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+  if (error) redirect(withReturnStatus(returnPath, "error", "connection"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "connection-removed"));
 }
 
 export async function startCommunityConversation(formData: FormData) {

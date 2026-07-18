@@ -15,6 +15,8 @@ import {
 import {
   addCommunityProfilePhoto,
   createCommunityProfileEvent,
+  deleteCommunityConnection,
+  deleteCommunityProfileEvent,
   respondToCommunityFriendRequest,
   sendCommunityFriendRequest,
   signOut,
@@ -34,7 +36,7 @@ import type {
 export const dynamic = "force-dynamic";
 
 type ProfileTab = "all" | "info" | "activity" | "reels" | "photos" | "events" | "friends";
-type FriendsTab = "friends" | "requests" | "birthdays" | "hometown" | "followers" | "following";
+type ConnectionsTab = "connections" | "requests" | "moments" | "hometown" | "find";
 
 type CommunityProfilePageProps = {
   searchParams?: Promise<{
@@ -42,6 +44,8 @@ type CommunityProfilePageProps = {
     profile?: string;
     tab?: string;
     friends?: string;
+    connections?: string;
+    q?: string;
     events?: string;
   }>;
 };
@@ -50,8 +54,9 @@ const profileMessages: Record<string, string> = {
   avatar: "Kies een jpg, png of webp van maximaal 3 MB.",
   cover: "Kies een jpg, png of webp van maximaal 5 MB.",
   photo: "Kies een geldige foto van maximaal 4 MB.",
-  event: "Vul voor het evenement minimaal een titel en datum in.",
-  friend: "Dit vriendschapsverzoek kon niet worden verwerkt.",
+  event: "Vul voor het moment minimaal een titel en datum in.",
+  friend: "Dit verbindingsverzoek kon niet worden verwerkt.",
+  connection: "Dit verbindingsverzoek kon niet worden verwerkt.",
   invalid: "Je sessie kon niet veilig worden gecontroleerd. Vernieuw de pagina en probeer opnieuw.",
   "profile-email": "Vul een geldig e-mailadres in.",
   "profile-media-empty": "Kies eerst een foto om te uploaden.",
@@ -66,10 +71,16 @@ const successMessages: Record<string, string> = {
   "media-saved": "Je profielafbeelding is bijgewerkt.",
   "info-saved": "Je profielinformatie is opgeslagen.",
   "photo-saved": "De foto staat nu in je profiel.",
-  "event-saved": "Het evenement is toegevoegd.",
-  "friend-requested": "Vriendschapsverzoek verstuurd.",
-  "friend-accepted": "Jullie zijn nu vrienden.",
-  "friend-declined": "Het verzoek is verwijderd."
+  "event-saved": "Het moment is toegevoegd.",
+  "moment-saved": "Het moment is toegevoegd.",
+  "moment-deleted": "Moment verwijderd.",
+  "friend-requested": "Verbindingsverzoek verstuurd.",
+  "friend-accepted": "Jullie hebben elkaar gevonden.",
+  "friend-declined": "Het verzoek is verwijderd.",
+  "connection-requested": "Verbindingsverzoek verstuurd.",
+  "connection-accepted": "Jullie hebben elkaar gevonden.",
+  "connection-declined": "Het verzoek is verwijderd.",
+  "connection-removed": "Verbinding verbroken."
 };
 
 const profileTabs: Array<{ id: ProfileTab; label: string }> = [
@@ -78,17 +89,16 @@ const profileTabs: Array<{ id: ProfileTab; label: string }> = [
   { id: "activity", label: "Bijdragen" },
   { id: "reels", label: "Reels" },
   { id: "photos", label: "Foto's" },
-  { id: "events", label: "Evenementen" },
-  { id: "friends", label: "Vrienden" }
+  { id: "events", label: "Momenten" },
+  { id: "friends", label: "Verbindingen" }
 ];
 
-const friendsTabs: Array<{ id: FriendsTab; label: string }> = [
-  { id: "friends", label: "Vrienden" },
-  { id: "requests", label: "Verzoeken" },
-  { id: "birthdays", label: "Verjaardagen" },
+const connectionsTabs: Array<{ id: ConnectionsTab; label: string }> = [
+  { id: "connections", label: "Verbindingen" },
+  { id: "requests", label: "Verbindingsverzoeken" },
+  { id: "moments", label: "Momenten" },
   { id: "hometown", label: "Geboorteplaats" },
-  { id: "followers", label: "Volgers" },
-  { id: "following", label: "Volgend" }
+  { id: "find", label: "Vind mensen" }
 ];
 
 type CommunityProfileReply = CommunityReply & {
@@ -106,15 +116,21 @@ function isProfileTab(value: string | undefined): value is ProfileTab {
   return profileTabs.some((tab) => tab.id === value);
 }
 
-function isFriendsTab(value: string | undefined): value is FriendsTab {
-  return friendsTabs.some((tab) => tab.id === value);
+function normalizeConnectionsTab(value: string | undefined): ConnectionsTab {
+  if (value === "friends") return "connections";
+  if (value === "birthdays") return "moments";
+  return connectionsTabs.some((tab) => tab.id === value) ? value as ConnectionsTab : "connections";
 }
 
-function profileHref(tab: ProfileTab, extra?: string) {
+function profileHref(tab: ProfileTab, extra?: string | Record<string, string | undefined>) {
   const query = new URLSearchParams({ tab });
-  if (extra) {
+  if (typeof extra === "string") {
     const [key, value] = extra.split("=");
     if (key && value) query.set(key, value);
+  } else if (extra) {
+    Object.entries(extra).forEach(([key, value]) => {
+      if (value) query.set(key, value);
+    });
   }
   return `/community/profiel?${query.toString()}`;
 }
@@ -133,13 +149,13 @@ function ProfilePicture({ profile, displayName, size = "large" }: { profile: Com
   );
 }
 
-function PersonRow({ profile, action }: { profile: CommunityProfile; action?: React.ReactNode }) {
+function PersonRow({ profile, action, description }: { profile: CommunityProfile; action?: React.ReactNode; description?: string }) {
   return (
     <div className="community-profile-person">
       <ProfilePicture profile={profile} displayName={profile.display_name} size="small" />
       <div>
         <strong>{profile.display_name}</strong>
-        <span>{profile.profile_details?.hometown || profile.bio || "Lid van SNAAR"}</span>
+        <span>{description || profile.profile_details?.hometown || profile.bio || "Lid van SNAAR"}</span>
       </div>
       {action ?? <button className="community-icon-button" type="button" aria-label={`Meer opties voor ${profile.display_name}`}><MoreHorizontal size={20} /></button>}
     </div>
@@ -196,7 +212,11 @@ function ProfilePhotosSection({ photos, profile, displayName, compact = false }:
   );
 }
 
-function ProfileEventsSection({ events, filter, compact = false }: { events: CommunityProfileEvent[]; filter: "upcoming" | "past"; compact?: boolean }) {
+type ProfileMoment = CommunityProfileEvent & {
+  owner?: CommunityProfile | null;
+};
+
+function ProfileEventsSection({ events, filter, compact = false }: { events: ProfileMoment[]; filter: "upcoming" | "past"; compact?: boolean }) {
   // This dynamic Server Component intentionally evaluates event state at request time.
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -205,25 +225,31 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Com
     .slice(0, compact ? 2 : 12);
   const formatter = new Intl.DateTimeFormat("nl-NL", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   return (
-    <section className="community-profile-section" id="evenementen">
+    <section className="community-profile-section" id="momenten">
       <header className="community-profile-section-header">
-        <div><p className="eyebrow">Agenda</p><h2>Evenementen</h2></div>
+        <div>
+          <p className="eyebrow">Mijn momenten</p>
+          <h2>Momenten</h2>
+          <span>{events.length} {events.length === 1 ? "moment" : "momenten"}</span>
+          <span>Sommige dagen blijven bij je. Leg hier de momenten vast die je wilt herinneren, op jouw manier en om jouw reden.</span>
+        </div>
         <details className="community-profile-action-menu">
-          <summary><CalendarDays size={18} /> Evenement maken</summary>
+          <summary><CalendarDays size={18} /> Moment toevoegen</summary>
           <form action={createCommunityProfileEvent} encType="multipart/form-data">
             <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
-            <label>Titel<input name="title" maxLength={120} required /></label>
-            <label>Datum en tijd<input name="starts_at" type="datetime-local" required /></label>
-            <label>Locatie<input name="location" maxLength={140} /></label>
-            <label>Beschrijving<textarea name="description" maxLength={1000} rows={3} /></label>
+            <label>Moment<input name="title" maxLength={120} placeholder="Bijvoorbeeld: Eva's dag" required /></label>
+            <label>Welke datum wil je onthouden?<input name="starts_at" type="datetime-local" required /></label>
+            <label>Plek of context<input name="location" maxLength={140} /></label>
+            <label>Bewaar dagen die voor jou betekenis hebben<textarea name="description" maxLength={1000} rows={3} /></label>
             <label>Afbeelding<input name="event_image" type="file" accept="image/png,image/jpeg,image/webp" /></label>
-            <button className="community-panel-button" type="submit">Evenement opslaan</button>
+            <label className="community-checkbox-row"><input name="remind_me" type="checkbox" defaultChecked />Herinner mij aan dit moment</label>
+            <button className="community-panel-button" type="submit">Moment toevoegen</button>
           </form>
         </details>
       </header>
-      <nav className="community-profile-subnav" aria-label="Evenement filters">
+      <nav className="community-profile-subnav" aria-label="Moment filters">
         <Link className={filter === "upcoming" ? "active" : ""} href={profileHref("events", "events=upcoming")}>Aankomend</Link>
-        <Link className={filter === "past" ? "active" : ""} href={profileHref("events", "events=past")}>Afgelopen</Link>
+        <Link className={filter === "past" ? "active" : ""} href={profileHref("events", "events=past")}>Eerder</Link>
       </nav>
       {filtered.length ? (
         <div className="community-profile-event-grid">
@@ -233,46 +259,77 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Com
               <div>
                 <time dateTime={event.starts_at}>{formatter.format(new Date(event.starts_at))}</time>
                 <h3>{event.title}</h3>
+                {event.owner ? <p><Users size={15} /> {event.owner.display_name}</p> : null}
                 {event.location ? <p><MapPin size={15} /> {event.location}</p> : null}
               </div>
+              {!event.owner ? (
+                <form action={deleteCommunityProfileEvent}>
+                  <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
+                  <input type="hidden" name="event_id" value={event.id} readOnly />
+                  <button className="text-link" type="submit">Moment verwijderen</button>
+                </form>
+              ) : null}
             </article>
           ))}
         </div>
       ) : (
-        <div className="community-profile-empty"><CalendarDays size={26} /><strong>Geen {filter === "past" ? "afgelopen" : "aankomende"} evenementen</strong><span>Maak een evenement om samen iets betekenisvols te plannen.</span></div>
+        <div className="community-profile-empty"><CalendarDays size={26} /><strong>Je hebt nog geen momenten toegevoegd</strong><span>Er komt een bijzonder moment aan zodra jij of een verbinding een datum vastlegt.</span></div>
       )}
     </section>
   );
 }
 
-function ProfileFriendsSection({
+function ProfileConnectionsSection({
   activeTab,
-  friends,
+  connections,
   incoming,
+  acceptedConnections,
   outgoingIds,
   suggestions,
+  connectionMoments,
+  searchQuery,
   profilesById,
   compact = false
 }: {
-  activeTab: FriendsTab;
-  friends: CommunityProfile[];
+  activeTab: ConnectionsTab;
+  connections: CommunityProfile[];
   incoming: CommunityFriendship[];
+  acceptedConnections: CommunityFriendship[];
   outgoingIds: Set<string>;
   suggestions: CommunityProfile[];
+  connectionMoments: ProfileMoment[];
+  searchQuery: string;
   profilesById: Map<string, CommunityProfile>;
   compact?: boolean;
 }) {
-  const birthdayProfiles = friends.filter((friend) => friend.profile_details?.birthday);
-  const hometownProfiles = friends.filter((friend) => friend.profile_details?.hometown);
-  const list = activeTab === "birthdays" ? birthdayProfiles : activeTab === "hometown" ? hometownProfiles : friends;
+  const connectionByProfileId = new Map<string, CommunityFriendship>();
+  acceptedConnections.forEach((item) => {
+    connectionByProfileId.set(item.requester_id, item);
+    connectionByProfileId.set(item.addressee_id, item);
+  });
+  const hometownProfiles = connections.filter((connection) => connection.profile_details?.hometown);
+  const list = activeTab === "hometown" ? hometownProfiles : connections;
+  const query = searchQuery.trim();
+  const visibleSuggestions = query
+    ? suggestions.filter((person) => {
+        const haystack = [
+          person.display_name,
+          person.bio,
+          person.profile_details?.hometown,
+          person.profile_details?.current_city,
+          person.profile_details?.category
+        ].filter(Boolean).join(" ").toLowerCase();
+        return haystack.includes(query.toLowerCase());
+      })
+    : suggestions.slice(0, 6);
   return (
-    <section className="community-profile-section" id="vrienden">
+    <section className="community-profile-section" id="verbindingen">
       <header className="community-profile-section-header">
-        <div><p className="eyebrow">Jouw netwerk</p><h2>Vrienden</h2><span>{friends.length} {friends.length === 1 ? "vriend" : "vrienden"}</span></div>
-        <Link className="community-profile-header-link" href={profileHref("friends", "friends=requests")}>Vriendschapsverzoeken{incoming.length ? ` (${incoming.length})` : ""}</Link>
+        <div><p className="eyebrow">Jouw netwerk</p><h2>Verbindingen</h2><span>{connections.length} {connections.length === 1 ? "verbinding" : "verbindingen"}</span></div>
+        <Link className="community-profile-header-link" href={profileHref("friends", { connections: "requests" })}>Verbindingsverzoeken{incoming.length ? ` (${incoming.length})` : ""}</Link>
       </header>
-      <nav className="community-profile-subnav is-scrollable" aria-label="Vrienden onderdelen">
-        {friendsTabs.map((tab) => <Link key={tab.id} className={activeTab === tab.id ? "active" : ""} href={profileHref("friends", `friends=${tab.id}`)}>{tab.label}</Link>)}
+      <nav className="community-profile-subnav is-scrollable" aria-label="Verbindingen onderdelen">
+        {connectionsTabs.map((tab) => <Link key={tab.id} className={activeTab === tab.id ? "active" : ""} href={profileHref("friends", { connections: tab.id })}>{tab.label}</Link>)}
       </nav>
 
       {activeTab === "requests" ? (
@@ -280,29 +337,76 @@ function ProfileFriendsSection({
           {incoming.map((request) => {
             const person = profilesById.get(request.requester_id);
             if (!person) return null;
-            return <PersonRow key={request.id} profile={person} action={
+            return <PersonRow key={request.id} profile={person} description={`${person.display_name} wil verbinding met je maken`} action={
               <form className="community-friend-response" action={respondToCommunityFriendRequest}>
-                <input type="hidden" name="return_to" value={profileHref("friends", "friends=requests")} readOnly />
+                <input type="hidden" name="return_to" value={profileHref("friends", { connections: "requests" })} readOnly />
                 <input type="hidden" name="friendship_id" value={request.id} readOnly />
-                <button name="response" value="accepted" type="submit">Accepteren</button>
-                <button className="text-link" name="response" value="declined" type="submit">Verwijderen</button>
+                <button name="response" value="accepted" type="submit">Verbinding accepteren</button>
+                <button className="text-link" name="response" value="declined" type="submit">Verzoek verwijderen</button>
               </form>
             } />;
           })}
-          {!incoming.length ? <div className="community-profile-empty"><UserPlus size={26} /><strong>Geen openstaande verzoeken</strong><span>Nieuwe verzoeken verschijnen hier.</span></div> : null}
+          {!incoming.length ? <div className="community-profile-empty"><UserPlus size={26} /><strong>Geen openstaande verbindingsverzoeken</strong><span>Nieuwe verzoeken verschijnen hier.</span></div> : null}
         </div>
-      ) : activeTab === "followers" || activeTab === "following" ? (
-        <div className="community-profile-empty"><Users size={26} /><strong>{activeTab === "followers" ? "Nog geen volgers" : "Je volgt nog niemand"}</strong><span>Deze lijst groeit wanneer je meer mensen binnen SNAAR ontmoet.</span></div>
+      ) : activeTab === "find" ? (
+        <div className="community-profile-suggestions">
+          <form className="community-profile-search" action="/community/profiel">
+            <input type="hidden" name="tab" value="friends" readOnly />
+            <input type="hidden" name="connections" value="find" readOnly />
+            <label>Vind mensen<input name="q" defaultValue={query} placeholder="Zoek op naam, plaats of woorden in het profiel" /></label>
+            <button className="community-panel-button" type="submit">Zoeken</button>
+          </form>
+          <div className="community-profile-people-grid">
+            {visibleSuggestions.map((person) => (
+              <PersonRow key={person.user_id} profile={person} action={
+                <form action={sendCommunityFriendRequest}>
+                  <input type="hidden" name="return_to" value={profileHref("friends", { connections: "find", q: query })} readOnly />
+                  <input type="hidden" name="addressee_id" value={person.user_id} readOnly />
+                  <button className="community-friend-button" type="submit" disabled={outgoingIds.has(person.user_id)}>
+                    <UserPlus size={17} /> {outgoingIds.has(person.user_id) ? "Verbindingsverzoek verstuurd" : "Verbinding maken"}
+                  </button>
+                </form>
+              } />
+            ))}
+            {!visibleSuggestions.length ? <div className="community-profile-empty"><Users size={26} /><strong>Geen mensen gevonden</strong><span>Probeer een andere naam, plaats of profieltekst.</span></div> : null}
+          </div>
+        </div>
+      ) : activeTab === "moments" ? (
+        connectionMoments.length ? (
+          <div className="community-profile-event-grid">
+            {connectionMoments.slice(0, 24).map((moment) => (
+              <article key={moment.id}>
+                <span className="community-profile-event-date"><strong>{new Date(moment.starts_at).getDate()}</strong><small>{new Date(moment.starts_at).toLocaleDateString("nl-NL", { month: "short" })}</small></span>
+                <div>
+                  <time dateTime={moment.starts_at}>{new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(moment.starts_at))}</time>
+                  <h3>{moment.title}</h3>
+                  {moment.owner ? <p><Users size={15} /> {moment.owner.display_name}</p> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="community-profile-empty"><CalendarDays size={26} /><strong>Geen momenten van verbindingen</strong><span>Bijzondere dagen van je verbindingen verschijnen hier zodra zij die hebben vastgelegd.</span></div>
+        )
       ) : (
         <div className="community-profile-people-grid">
-          {list.slice(0, compact ? 6 : 24).map((friend) => <PersonRow key={friend.user_id} profile={friend} />)}
-          {!list.length ? <div className="community-profile-empty"><Users size={26} /><strong>Nog niets om te tonen</strong><span>Vrienden met deze informatie verschijnen hier.</span></div> : null}
+          {list.slice(0, compact ? 6 : 24).map((connection) => {
+            const friendship = connectionByProfileId.get(connection.user_id);
+            return <PersonRow key={connection.user_id} profile={connection} action={friendship && !compact ? (
+              <form action={deleteCommunityConnection}>
+                <input type="hidden" name="return_to" value={profileHref("friends")} readOnly />
+                <input type="hidden" name="friendship_id" value={friendship.id} readOnly />
+                <button className="text-link" type="submit">Verbinding verbreken</button>
+              </form>
+            ) : undefined} />;
+          })}
+          {!list.length ? <div className="community-profile-empty"><Users size={26} /><strong>Nog niets om te tonen</strong><span>Verbindingen met deze informatie verschijnen hier.</span></div> : null}
         </div>
       )}
 
-      {!compact && activeTab === "friends" && suggestions.length ? (
+      {!compact && activeTab === "connections" && suggestions.length ? (
         <div className="community-profile-suggestions">
-          <h3>Mensen die je kunt kennen</h3>
+          <h3>Vind mensen</h3>
           <div className="community-profile-people-grid">
             {suggestions.slice(0, 6).map((person) => (
               <PersonRow key={person.user_id} profile={person} action={
@@ -310,7 +414,7 @@ function ProfileFriendsSection({
                   <input type="hidden" name="return_to" value={profileHref("friends")} readOnly />
                   <input type="hidden" name="addressee_id" value={person.user_id} readOnly />
                   <button className="community-friend-button" type="submit" disabled={outgoingIds.has(person.user_id)}>
-                    <UserPlus size={17} /> {outgoingIds.has(person.user_id) ? "Verstuurd" : "Toevoegen"}
+                    <UserPlus size={17} /> {outgoingIds.has(person.user_id) ? "Verbindingsverzoek verstuurd" : "Verbinding maken"}
                   </button>
                 </form>
               } />
@@ -318,7 +422,7 @@ function ProfileFriendsSection({
           </div>
         </div>
       ) : null}
-      {compact && friends.length > 6 ? <Link className="community-profile-more" href={profileHref("friends")}>Alle vrienden bekijken</Link> : null}
+      {compact && connections.length > 6 ? <Link className="community-profile-more" href={profileHref("friends")}>Alle verbindingen bekijken</Link> : null}
     </section>
   );
 }
@@ -433,7 +537,6 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
         <fieldset id="info-persoonlijk">
           <legend>Persoonlijke gegevens</legend>
           <div className="community-profile-field-grid">
-            <label>Geboortedatum<input name="birthday" type="date" defaultValue={details.birthday ?? ""} /></label>
             <label>Geboorteplaats<input name="hometown" maxLength={100} defaultValue={details.hometown ?? ""} /></label>
             <label>Woonplaats<input name="current_city" maxLength={100} defaultValue={details.current_city ?? ""} /></label>
             <label>Relatiestatus<input name="relationship_status" maxLength={60} defaultValue={details.relationship_status ?? ""} /></label>
@@ -471,7 +574,7 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
             <label>Telefoon<input name="phone" type="tel" maxLength={40} defaultValue={details.phone ?? ""} /></label>
           </div>
         </fieldset>
-        <fieldset id="info-privacy"><legend>Privacy</legend><label className="community-checkbox-row"><input name="is_discoverable" type="checkbox" defaultChecked={profile?.is_discoverable ?? false} />Anderen binnen SNAAR mogen mijn profiel vinden en mij een bericht of vriendschapsverzoek sturen.</label></fieldset>
+        <fieldset id="info-privacy"><legend>Privacy</legend><label className="community-checkbox-row"><input name="is_discoverable" type="checkbox" defaultChecked={profile?.is_discoverable ?? false} />Anderen binnen SNAAR mogen mijn profiel vinden en mij een bericht of verbindingsverzoek sturen.</label></fieldset>
         <fieldset id="info-namen"><legend>Namen</legend><label>Weergavenaam<input name="display_name" maxLength={80} required defaultValue={displayName} /></label></fieldset>
         <div className="community-profile-savebar"><p>Je bepaalt zelf wat je invult. Lege velden worden niet op je profiel getoond.</p><button className="community-panel-button" type="submit">Informatie opslaan</button></div>
       </form>
@@ -482,7 +585,8 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
 export default async function CommunityProfilePage({ searchParams }: CommunityProfilePageProps) {
   const params = (await searchParams) ?? {};
   const activeTab: ProfileTab = isProfileTab(params.tab) ? params.tab : "all";
-  const friendsTab: FriendsTab = isFriendsTab(params.friends) ? params.friends : "friends";
+  const connectionsTab = normalizeConnectionsTab(params.connections ?? params.friends);
+  const searchQuery = String(params.q ?? "").trim().slice(0, 80);
   const eventFilter = params.events === "past" ? "past" : "upcoming";
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/login?next=%2Fcommunity%2Fprofiel");
@@ -503,7 +607,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     dataClient.from("community_profile_photos").select("*").eq("user_id", user.id).order("display_order").order("created_at", { ascending: false }).limit(30),
     dataClient.from("community_profile_events").select("*").eq("user_id", user.id).order("starts_at", { ascending: false }).limit(30),
     dataClient.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).order("updated_at", { ascending: false }),
-    dataClient.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(24),
+    dataClient.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(80),
     dataClient.from("community_posts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
     dataClient
       .from("community_replies")
@@ -515,7 +619,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
 
   const profile = profileResult.error ? null : profileResult.data as CommunityProfile | null;
   const photos = photosResult.error ? [] : (photosResult.data as CommunityProfilePhoto[] | null) ?? [];
-  const events = eventsResult.error ? [] : (eventsResult.data as CommunityProfileEvent[] | null) ?? [];
+  const ownEvents = eventsResult.error ? [] : (eventsResult.data as CommunityProfileEvent[] | null) ?? [];
   const friendships = friendshipsResult.error ? [] : (friendshipsResult.data as CommunityFriendship[] | null) ?? [];
   const discoverable = discoverableResult.error ? [] : (discoverableResult.data as CommunityProfile[] | null) ?? [];
   const ownPosts = ownPostsResult.error ? [] : (ownPostsResult.data as CommunityPost[] | null) ?? [];
@@ -524,9 +628,11 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   const displayName = profile?.display_name ?? fallbackName;
   if (profileResult.error) console.error("[community-profile] profile read failed", { code: profileResult.error.code });
 
-  const connectedIds = new Set(friendships.filter((item) => item.status === "accepted").map((item) => item.requester_id === user.id ? item.addressee_id : item.requester_id));
+  const acceptedConnections = friendships.filter((item) => item.status === "accepted");
+  const connectedIds = new Set(acceptedConnections.map((item) => item.requester_id === user.id ? item.addressee_id : item.requester_id));
   const incoming = friendships.filter((item) => item.status === "pending" && item.addressee_id === user.id);
   const outgoingIds = new Set(friendships.filter((item) => item.status === "pending" && item.requester_id === user.id).map((item) => item.addressee_id));
+  const pendingIds = new Set([...incoming.map((item) => item.requester_id), ...outgoingIds]);
   const profileIds = new Set([...connectedIds, ...incoming.map((item) => item.requester_id)]);
   const missingProfileIds = [...profileIds].filter((id) => !discoverable.some((person) => person.user_id === id));
   let extraProfiles: CommunityProfile[] = [];
@@ -535,8 +641,24 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     if (!result.error) extraProfiles = (result.data as CommunityProfile[] | null) ?? [];
   }
   const profilesById = new Map([...discoverable, ...extraProfiles].map((person) => [person.user_id, person]));
-  const friends = [...connectedIds].map((id) => profilesById.get(id)).filter((person): person is CommunityProfile => Boolean(person));
-  const suggestions = discoverable.filter((person) => !connectedIds.has(person.user_id) && !outgoingIds.has(person.user_id));
+  const connections = [...connectedIds].map((id) => profilesById.get(id)).filter((person): person is CommunityProfile => Boolean(person));
+  const suggestions = discoverable.filter((person) => !connectedIds.has(person.user_id) && !pendingIds.has(person.user_id));
+  let connectionEvents: ProfileMoment[] = [];
+  if (connectedIds.size) {
+    const result = await dataClient
+      .from("community_profile_events")
+      .select("*")
+      .in("user_id", [...connectedIds])
+      .order("starts_at", { ascending: true })
+      .limit(60);
+    if (!result.error) {
+      connectionEvents = ((result.data as CommunityProfileEvent[] | null) ?? []).map((event) => ({
+        ...event,
+        owner: profilesById.get(event.user_id) ?? null
+      }));
+    }
+  }
+  const events: ProfileMoment[] = [...ownEvents, ...connectionEvents];
 
   return (
     <main className="community-profile-page">
@@ -567,7 +689,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
           <div className="community-profile-name">
             <p className="eyebrow">Mijn profiel</p>
             <h1>{displayName}</h1>
-            <p>{friends.length} {friends.length === 1 ? "vriend" : "vrienden"} · {profile?.is_discoverable ? "Vindbaar binnen SNAAR" : "Niet vindbaar"}</p>
+            <p>{connections.length} {connections.length === 1 ? "verbinding" : "verbindingen"} · {profile?.is_discoverable ? "Vindbaar binnen SNAAR" : "Niet vindbaar"}</p>
           </div>
           <div className="community-profile-actions">
             <Link className="button" href="/community">Terug naar SNAAR</Link>
@@ -586,10 +708,10 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
       <div className="community-profile-content">
         {activeTab === "all" || activeTab === "photos" ? <ProfilePhotosSection photos={photos} profile={profile} displayName={displayName} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "events" ? <ProfileEventsSection events={events} filter={eventFilter} compact={activeTab === "all"} /> : null}
-        {activeTab === "all" || activeTab === "friends" ? <ProfileFriendsSection activeTab={activeTab === "all" ? "friends" : friendsTab} friends={friends} incoming={incoming} outgoingIds={outgoingIds} suggestions={suggestions} profilesById={profilesById} compact={activeTab === "all"} /> : null}
+        {activeTab === "all" || activeTab === "friends" ? <ProfileConnectionsSection activeTab={activeTab === "all" ? "connections" : connectionsTab} connections={connections} incoming={incoming} acceptedConnections={acceptedConnections} outgoingIds={outgoingIds} suggestions={suggestions} connectionMoments={connectionEvents} searchQuery={searchQuery} profilesById={profilesById} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "activity" ? <ProfileActivitySection posts={ownPosts} replies={ownReplies} compact={activeTab === "all"} /> : null}
         {activeTab === "info" ? <ProfileInfoSection profile={profile} displayName={displayName} /> : null}
-        {activeTab === "reels" ? <section className="community-profile-section"><div className="community-profile-empty"><Camera size={28} /><strong>Reels komen later</strong><span>Je foto&apos;s, evenementen en profielinformatie zijn nu al volledig te beheren.</span></div></section> : null}
+        {activeTab === "reels" ? <section className="community-profile-section"><div className="community-profile-empty"><Camera size={28} /><strong>Reels komen later</strong><span>Je foto&apos;s, momenten en profielinformatie zijn nu al volledig te beheren.</span></div></section> : null}
       </div>
     </main>
   );

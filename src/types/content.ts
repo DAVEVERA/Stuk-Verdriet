@@ -118,7 +118,6 @@ export type CommunityProfile = {
 export type CommunityProfileDetails = {
   category?: string;
   pronouns?: string;
-  birthday?: string;
   hometown?: string;
   current_city?: string;
   relationship_status?: string;
