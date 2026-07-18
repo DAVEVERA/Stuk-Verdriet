@@ -10,6 +10,7 @@ import {
   Captions,
   CheckCircle2,
   ClipboardCheck,
+  Database,
   FileAudio,
   Gauge,
   ImageIcon,
@@ -83,12 +84,28 @@ type AdminDashboardProps = {
   pendingPosts: AdminPost[];
   reports: AdminReport[];
   pendingInterviewComments: AdminInterviewComment[];
+  analyticsRows: AdminAnalyticsRow[];
+  analyticsSources: AdminAnalyticsSource[];
   sectionDesign: SiteDesignSettings;
   missingSupabase?: boolean;
   localPreview?: boolean;
   savedMessage?: string | null;
   errorMessage?: string | null;
   initialTab?: string | null;
+};
+
+export type AdminAnalyticsRow = {
+  metric: string;
+  value: string;
+  detail: string;
+  source: string;
+};
+
+export type AdminAnalyticsSource = {
+  platform: string;
+  state: string;
+  owner: string;
+  note: string;
 };
 
 const emptyEpisode: PodcastEpisode = {
@@ -187,27 +204,21 @@ const feedbackLabels: Record<string, string> = {
   "transcript-start": "Transcriptie kon niet starten. Controleer of audio aanwezig is en Google Speech is ingesteld."
 };
 
-const integrationCards = [
-  { platform: "Instagram", state: "Voorbereid", owner: "Meta Graph API", icon: Instagram, note: "Media planning, insights en captions." },
-  { platform: "Facebook", state: "Voorbereid", owner: "Meta Pages API", icon: Share2, note: "Pagina-posts en campaign publishing." },
-  { platform: "TikTok", state: "Voorbereid", owner: "TikTok Business API", icon: Video, note: "Short-form kalender en performance." },
-  { platform: "Google Analytics", state: "Meetplan", owner: "GA4 Data API", icon: BarChart3, note: "Verkeer, conversie en contentprestaties." },
-  { platform: "Make", state: "Webhook-ready", owner: "Make AI automation", icon: Workflow, note: "Goedkeuring naar geplande post-flow." },
-  { platform: "Canva", state: "Connector actief", owner: "Brand assets", icon: Paintbrush, note: "Brand kits en templates voor campagnes." }
-];
+const integrationIcons = {
+  Instagram,
+  Facebook: Share2,
+  TikTok: Video,
+  "Google Analytics": BarChart3,
+  Make: Workflow,
+  Canva: Paintbrush,
+  Supabase: Database
+};
 
 const marketingItems = [
   { date: "2026-07-12", channel: "Instagram", title: "Quote uit interview omzetten naar carousel", status: "Concept" },
   { date: "2026-07-15", channel: "TikTok", title: "Korte podcastclip met ondertiteling", status: "AI tekst nodig" },
   { date: "2026-07-18", channel: "Facebook", title: "Communityvraag rond herinneren", status: "Review" },
   { date: "2026-07-22", channel: "Nieuwsbrief", title: "Nieuwe aflevering + steunbronnen", status: "Gepland" }
-];
-
-const analyticsRows = [
-  { metric: "Website bezoekers", value: "12.4k", delta: "+18%", source: "Google Analytics" },
-  { metric: "Interview engagement", value: "8.7%", delta: "+3.1%", source: "Supabase" },
-  { metric: "Instagram bereik", value: "42.1k", delta: "+11%", source: "Instagram Insights" },
-  { metric: "TikTok kijktijd", value: "19.6u", delta: "+24%", source: "TikTok Analytics" }
 ];
 
 const roleRows = [
@@ -217,7 +228,7 @@ const roleRows = [
   { role: "Analist", access: "Alleen analytics", members: "1 gebruiker", risk: "Laag" }
 ];
 
-export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
+export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, analyticsRows, analyticsSources, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
@@ -538,9 +549,9 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
       {activeTab === "access" ? <AccessAndRoles /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
       {activeTab === "calendar" ? <MarketingCalendar /> : null}
-      {activeTab === "integrations" ? <IntegrationCenter /> : null}
+      {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
       {activeTab === "ai" ? <AIStudio /> : null}
-      {activeTab === "analytics" ? <AnalyticsCenter /> : null}
+      {activeTab === "analytics" ? <AnalyticsCenter rows={analyticsRows} sources={analyticsSources} /> : null}
       {activeTab === "brand" ? <BrandLibrary /> : null}
       {activeTab === "automation" ? <AutomationHub /> : null}
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
@@ -982,7 +993,7 @@ function MarketingCalendar() {
   );
 }
 
-function IntegrationCenter() {
+function IntegrationCenter({ analyticsSources }: { analyticsSources: AdminAnalyticsSource[] }) {
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
@@ -993,9 +1004,11 @@ function IntegrationCenter() {
         </div>
         <Network aria-hidden />
       </div>
-      <ModuleReadiness state="Configuratiecheck" detail="Koppelingen zijn hier als checklist zichtbaar. Publiceren naar externe platformen is nog niet live gekoppeld." />
+      <ModuleReadiness state="Configuratiecheck" detail="Koppelingen tonen nu de echte serverconfiguratie. Alleen bronnen met API-toegang leveren cijfers." />
       <div className="integration-grid">
-        {integrationCards.map(({ platform, state, owner, icon: Icon, note }) => (
+        {analyticsSources.map(({ platform, state, owner, note }) => {
+          const Icon = integrationIcons[platform as keyof typeof integrationIcons] ?? Network;
+          return (
           <article className="integration-card" key={platform}>
             <Icon size={20} aria-hidden />
             <strong>{platform}</strong>
@@ -1003,7 +1016,8 @@ function IntegrationCenter() {
             <small>{owner}</small>
             <p>{note}</p>
           </article>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1045,28 +1059,50 @@ function AIStudio() {
   );
 }
 
-function AnalyticsCenter() {
+function AnalyticsCenter({ rows, sources }: { rows: AdminAnalyticsRow[]; sources: AdminAnalyticsSource[] }) {
+  const liveSources = sources.filter((source) => source.state.toLowerCase().includes("live")).map((source) => source.platform);
+  const missingSources = sources.filter((source) => !source.state.toLowerCase().includes("live"));
+
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
         <div>
           <p className="eyebrow">Dashboard</p>
           <h2>Analytics hub</h2>
-          <p>Source-backed model voor Google, Instagram, TikTok en eigen engagement zodra API toegang actief is.</p>
+          <p>Live cijfers uit gekoppelde bronnen. Niet-gekoppelde API&apos;s worden apart gemarkeerd en tonen geen placeholders.</p>
         </div>
         <Gauge aria-hidden />
       </div>
-      <ModuleReadiness state="Voorbeelddata" detail="Deze cijfers zijn placeholders totdat GA4, social insights en Supabase analytics live worden opgehaald." />
+      <ModuleReadiness
+        state={liveSources.length ? "Live data" : "Geen live databron"}
+        detail={liveSources.length ? `Actieve bron: ${liveSources.join(", ")}.` : "Koppel eerst Supabase, GA4 of social API-toegang om cijfers te tonen."}
+      />
       <div className="admin-kpi-grid">
-        {analyticsRows.map((row) => (
+        {rows.map((row) => (
           <article className="admin-kpi-card static" key={row.metric}>
             <BarChart3 size={20} aria-hidden />
             <strong>{row.value}</strong>
             <span>{row.metric}</span>
-            <small>{row.delta} - {row.source}</small>
+            <small>{row.detail} - {row.source}</small>
           </article>
         ))}
       </div>
+      {missingSources.length ? (
+        <div className="integration-grid">
+          {missingSources.map((source) => {
+            const Icon = integrationIcons[source.platform as keyof typeof integrationIcons] ?? Network;
+            return (
+              <article className="integration-card" key={source.platform}>
+                <Icon size={20} aria-hidden />
+                <strong>{source.platform}</strong>
+                <span>{source.state}</span>
+                <small>{source.owner}</small>
+                <p>{source.note}</p>
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

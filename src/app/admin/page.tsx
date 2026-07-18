@@ -3,6 +3,7 @@ import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
 import { hasLocalAdminSession } from "@/lib/local-admin";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
+import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,28 @@ type PendingInterviewComment = {
 
 type RawPendingInterviewComment = Omit<PendingInterviewComment, "interviews"> & {
   interviews?: PendingInterviewComment["interviews"] | PendingInterviewComment["interviews"][];
+};
+
+type PendingCommunityPost = {
+  id: string;
+  title: string;
+  category: string;
+  created_at: string;
+  status: string;
+};
+
+type OpenCommunityReport = {
+  id: string;
+  reason: string;
+  created_at: string;
+  post_id: string | null;
+  reply_id?: string | null;
+  status?: string | null;
+  target_type?: string | null;
+  target_id?: string | null;
+  category?: string | null;
+  details?: string | null;
+  resolved_at?: string | null;
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -65,6 +88,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...comment,
     interviews: Array.isArray(comment.interviews) ? (comment.interviews[0] ?? null) : (comment.interviews ?? null)
   }));
+  const analyticsRows = admin
+    ? await getSupabaseAnalyticsRows(admin, {
+        episodes: ((episodes ?? []) as PodcastEpisode[]),
+        pendingPosts: pendingPosts ?? [],
+        reports: reports ?? [],
+        pendingInterviewComments: normalizedPendingInterviewComments
+      })
+    : [];
+  const analyticsSources = getAnalyticsSources(Boolean(admin));
 
   return (
     <AdminDashboard
@@ -73,6 +105,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       pendingPosts={pendingPosts ?? []}
       reports={reports ?? []}
       pendingInterviewComments={normalizedPendingInterviewComments}
+      analyticsRows={analyticsRows}
+      analyticsSources={analyticsSources}
       sectionDesign={sectionDesign}
       missingSupabase={!hasSupabaseEnv}
       localPreview={localAdminAllowed && !allowed}
@@ -81,6 +115,153 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       initialTab={tab ?? null}
     />
   );
+}
+
+type AdminDataClient = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
+
+async function getSupabaseCount(admin: AdminDataClient, table: string, label: string) {
+  const { count, error } = await admin.from(table).select("*", { count: "exact", head: true });
+  if (error) return { label, count: null, error: error.message };
+  return { label, count: count ?? 0, error: null };
+}
+
+async function getSupabaseAnalyticsRows(
+  admin: AdminDataClient,
+  context: {
+    episodes: PodcastEpisode[];
+    pendingPosts: PendingCommunityPost[];
+    reports: OpenCommunityReport[];
+    pendingInterviewComments: PendingInterviewComment[];
+  }
+): Promise<AdminAnalyticsRow[]> {
+  const counts = await Promise.all([
+    getSupabaseCount(admin, "episode_signups", "Aflevering seintjes"),
+    getSupabaseCount(admin, "community_posts", "Community posts"),
+    getSupabaseCount(admin, "community_replies", "Community reacties"),
+    getSupabaseCount(admin, "community_supports", "Steunbetuigingen"),
+    getSupabaseCount(admin, "community_messages", "Privéberichten"),
+    getSupabaseCount(admin, "community_pulse_moments", "Aan de pols momenten"),
+    getSupabaseCount(admin, "community_profile_photos", "Profiel foto's"),
+    getSupabaseCount(admin, "community_profile_events", "Profiel momenten")
+  ]);
+  const byLabel = new Map(counts.map((item) => [item.label, item]));
+  const failedSources = counts.filter((item) => item.error).map((item) => item.label);
+  const countValue = (label: string) => byLabel.get(label)?.count ?? 0;
+  const publishedEpisodes = context.episodes.filter((episode) => episode.status === "published").length;
+  const openModeration = context.pendingPosts.length + context.pendingInterviewComments.length + context.reports.length;
+
+  const rows: AdminAnalyticsRow[] = [
+    {
+      metric: "Gepubliceerde afleveringen",
+      value: formatAdminNumber(publishedEpisodes),
+      detail: `${context.episodes.length} totaal in beheer`,
+      source: "Supabase podcast_episodes"
+    },
+    {
+      metric: "Geef mij een seintje",
+      value: formatAdminNumber(countValue("Aflevering seintjes")),
+      detail: "Inschrijvingen voor nieuwe afleveringen",
+      source: "Supabase episode_signups"
+    },
+    {
+      metric: "Community posts",
+      value: formatAdminNumber(countValue("Community posts")),
+      detail: `${formatAdminNumber(openModeration)} open moderatie-items`,
+      source: "Supabase community_posts"
+    },
+    {
+      metric: "Reacties",
+      value: formatAdminNumber(countValue("Community reacties")),
+      detail: "Feed- en replyactiviteit",
+      source: "Supabase community_replies"
+    },
+    {
+      metric: "Steunbetuigingen",
+      value: formatAdminNumber(countValue("Steunbetuigingen")),
+      detail: "Aantal geplaatste hartreacties",
+      source: "Supabase community_supports"
+    },
+    {
+      metric: "Privéberichten",
+      value: formatAdminNumber(countValue("Privéberichten")),
+      detail: "Messenger berichten opgeslagen",
+      source: "Supabase community_messages"
+    },
+    {
+      metric: "Aan de pols",
+      value: formatAdminNumber(countValue("Aan de pols momenten")),
+      detail: "Aangemaakte momenten",
+      source: "Supabase community_pulse_moments"
+    },
+    {
+      metric: "Profielmedia",
+      value: formatAdminNumber(countValue("Profiel foto's")),
+      detail: `${formatAdminNumber(countValue("Profiel momenten"))} profielmomenten`,
+      source: "Supabase profielmodules"
+    }
+  ];
+
+  if (failedSources.length) {
+    rows.push({
+      metric: "Niet opgehaalde bronnen",
+      value: formatAdminNumber(failedSources.length),
+      detail: failedSources.join(", "),
+      source: "Supabase schema check"
+    });
+  }
+
+  return rows;
+}
+
+function getAnalyticsSources(hasAdminClient: boolean): AdminAnalyticsSource[] {
+  return [
+    {
+      platform: "Supabase",
+      state: hasAdminClient ? "Live" : "Niet gekoppeld",
+      owner: "Supabase service role",
+      note: hasAdminClient ? "Adminportaal haalt engagement-, community- en profielcijfers live op." : "Service role ontbreekt, daardoor kunnen server-side analytics niet worden gelezen."
+    },
+    {
+      platform: "Google Analytics",
+      state: process.env.GA4_PROPERTY_ID && process.env.GOOGLE_ANALYTICS_CLIENT_EMAIL && process.env.GOOGLE_ANALYTICS_PRIVATE_KEY ? "API klaar" : "Data API ontbreekt",
+      owner: "GA4 Data API",
+      note: process.env.NEXT_PUBLIC_GA_ID ? "Measurement-id staat aan, maar voor rapportage zijn GA4_PROPERTY_ID en service-account credentials nodig." : "GA4 measurement-id ontbreekt."
+    },
+    {
+      platform: "Instagram",
+      state: process.env.META_ACCESS_TOKEN && process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID ? "API klaar" : "Token ontbreekt",
+      owner: "Meta Graph API",
+      note: "Vereist META_ACCESS_TOKEN en INSTAGRAM_BUSINESS_ACCOUNT_ID voor bereik, profielweergaven en mediastatistieken."
+    },
+    {
+      platform: "Facebook",
+      state: process.env.META_ACCESS_TOKEN && process.env.FACEBOOK_PAGE_ID ? "API klaar" : "Token ontbreekt",
+      owner: "Meta Pages API",
+      note: "Vereist META_ACCESS_TOKEN en FACEBOOK_PAGE_ID voor pagina- en poststatistieken."
+    },
+    {
+      platform: "TikTok",
+      state: process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET ? "API klaar" : "Token ontbreekt",
+      owner: "TikTok Business API",
+      note: "Vereist TikTok API credentials voordat kijktijd en bereik live kunnen worden opgehaald."
+    },
+    {
+      platform: "Make",
+      state: process.env.MAKE_WEBHOOK_URL ? "Webhook klaar" : "Webhook ontbreekt",
+      owner: "Make automation",
+      note: "Alleen beschikbaar zodra MAKE_WEBHOOK_URL is gezet."
+    },
+    {
+      platform: "Canva",
+      state: process.env.CANVA_BRAND_KIT_ID ? "Brand kit gekoppeld" : "Brand kit ontbreekt",
+      owner: "Canva",
+      note: "Alleen zichtbaar als CANVA_BRAND_KIT_ID is geconfigureerd."
+    }
+  ];
+}
+
+function formatAdminNumber(value: number) {
+  return new Intl.NumberFormat("nl-NL").format(value);
 }
 
 function AdminAccessGate({
