@@ -34,10 +34,17 @@ function safeEmailOtpType(value: string | null): EmailOtpType {
 }
 
 function authErrorUrl(origin: string, next: string, error: string) {
+  if (next === "/admin") {
+    return new URL(`/admin?error=${encodeURIComponent(error)}`, origin);
+  }
+
   return new URL(`/login?next=${encodeURIComponent(next)}&error=${encodeURIComponent(error)}`, origin);
 }
 
-function fragmentSessionBridge() {
+function fragmentSessionBridge(next: string) {
+  const callbackErrorPath = next === "/admin"
+    ? `/admin?error=callback`
+    : `/login?next=${encodeURIComponent(next)}&error=callback`;
   const html = `<!doctype html>
 <html lang="nl">
   <head>
@@ -51,14 +58,14 @@ function fragmentSessionBridge() {
     <script>
       (async function () {
         var target = new URL(window.location.href);
-        var next = target.searchParams.get("next") || "/community";
+        var next = ${JSON.stringify(next)};
         var hash = new URLSearchParams(window.location.hash.slice(1));
         var accessToken = hash.get("access_token");
         var refreshToken = hash.get("refresh_token");
         window.history.replaceState(null, "", target.pathname + target.search);
 
         if (!accessToken || !refreshToken) {
-          window.location.replace("/login?next=" + encodeURIComponent(next) + "&error=callback");
+          window.location.replace(${JSON.stringify(callbackErrorPath)});
           return;
         }
 
@@ -77,7 +84,7 @@ function fragmentSessionBridge() {
           if (!response.ok || !result.next) throw new Error("session");
           window.location.replace(result.next);
         } catch {
-          window.location.replace("/login?next=" + encodeURIComponent(next) + "&error=callback");
+          window.location.replace(${JSON.stringify(callbackErrorPath)});
         }
       })();
     </script>
@@ -105,7 +112,7 @@ export async function handleAuthRedirect(request: Request) {
   const code = requestUrl.searchParams.get("code");
 
   if (!token_hash && !code) {
-    return fragmentSessionBridge();
+    return fragmentSessionBridge(next);
   }
 
   const supabase = await createSupabaseRouteClient(redirectResponse);
@@ -120,6 +127,7 @@ export async function handleAuthRedirect(request: Request) {
     });
 
     if (error) {
+      console.error("[auth-callback] otp verification failed", { next, type, code: error.code });
       return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "callback"), 303);
     }
   }
@@ -128,6 +136,7 @@ export async function handleAuthRedirect(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
+      console.error("[auth-callback] code exchange failed", { next, code: error.code });
       return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "callback"), 303);
     }
   }

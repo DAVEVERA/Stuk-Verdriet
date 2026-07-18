@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { encodeAuthNext, safeAuthNext } from "@/lib/auth-redirect";
-import { adminEmailList, createSupabasePublicClient, hasSupabaseEnv } from "@/lib/supabase";
+import { adminEmailList, createSupabaseRouteClient, hasSupabaseEnv } from "@/lib/supabase";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,7 +22,8 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/admin?error=missing-supabase", requestUrl.origin), 303);
   }
 
-  const supabase = createSupabasePublicClient();
+  const sentResponse = NextResponse.redirect(new URL("/admin?sent=1", requestUrl.origin), 303);
+  const supabase = await createSupabaseRouteClient(sentResponse);
   if (!supabase) {
     return NextResponse.redirect(new URL("/admin?error=missing-supabase", requestUrl.origin), 303);
   }
@@ -38,5 +39,5 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/admin?error=email-login", requestUrl.origin), 303);
   }
 
-  return NextResponse.redirect(new URL("/admin?sent=1", requestUrl.origin), 303);
+  return sentResponse;
 }
