@@ -39,7 +39,7 @@ import type {
 export const dynamic = "force-dynamic";
 
 type ProfileTab = "all" | "info" | "activity" | "pulse" | "photos" | "events" | "friends";
-type ConnectionsTab = "connections" | "requests" | "moments" | "hometown" | "find";
+type ConnectionsTab = "connections" | "requests" | "moments" | "find";
 
 type CommunityProfilePageProps = {
   searchParams?: Promise<{
@@ -106,7 +106,6 @@ const connectionsTabs: Array<{ id: ConnectionsTab; label: string }> = [
   { id: "connections", label: "Verbindingen" },
   { id: "requests", label: "Verbindingsverzoeken" },
   { id: "moments", label: "Momenten" },
-  { id: "hometown", label: "Geboorteplaats" },
   { id: "find", label: "Vind mensen" }
 ];
 
@@ -169,7 +168,7 @@ function PersonRow({ profile, action, description }: { profile: CommunityProfile
       <ProfilePicture profile={profile} displayName={profile.display_name} size="small" />
       <div>
         <strong>{profile.display_name}</strong>
-        <span>{description || profile.profile_details?.hometown || profile.bio || "Lid van SNAAR"}</span>
+        <span>{description || profile.bio || profile.profile_details?.category || "Lid van SNAAR"}</span>
       </div>
       {action ?? <button className="community-icon-button" type="button" aria-label={`Meer opties voor ${profile.display_name}`}><MoreHorizontal size={20} /></button>}
     </div>
@@ -321,15 +320,12 @@ function ProfileConnectionsSection({
     connectionByProfileId.set(item.requester_id, item);
     connectionByProfileId.set(item.addressee_id, item);
   });
-  const hometownProfiles = connections.filter((connection) => connection.profile_details?.hometown);
-  const list = activeTab === "hometown" ? hometownProfiles : connections;
   const query = searchQuery.trim();
   const visibleSuggestions = query
     ? suggestions.filter((person) => {
         const haystack = [
           person.display_name,
           person.bio,
-          person.profile_details?.hometown,
           person.profile_details?.current_city,
           person.profile_details?.category
         ].filter(Boolean).join(" ").toLowerCase();
@@ -404,7 +400,7 @@ function ProfileConnectionsSection({
         )
       ) : (
         <div className="community-profile-people-grid">
-          {list.slice(0, compact ? 6 : 24).map((connection) => {
+          {connections.slice(0, compact ? 6 : 24).map((connection) => {
             const friendship = connectionByProfileId.get(connection.user_id);
             return <PersonRow key={connection.user_id} profile={connection} action={friendship && !compact ? (
               <form action={deleteCommunityConnection}>
@@ -414,7 +410,7 @@ function ProfileConnectionsSection({
               </form>
             ) : undefined} />;
           })}
-          {!list.length ? <div className="community-profile-empty"><Users size={26} /><strong>Nog niets om te tonen</strong><span>Verbindingen met deze informatie verschijnen hier.</span></div> : null}
+          {!connections.length ? <div className="community-profile-empty"><Users size={26} /><strong>Nog niets om te tonen</strong><span>Verbindingen verschijnen hier.</span></div> : null}
         </div>
       )}
 
