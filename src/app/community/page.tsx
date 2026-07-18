@@ -48,12 +48,13 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     currentProfile = (profileResult.data as CommunityProfile | null) ?? null;
     discoverableProfiles = (profilesResult.data as CommunityProfile[] | null) ?? [];
     conversations = (conversationsResult.data as CommunityConversation[] | null) ?? [];
-    if (admin) {
+    const dataClient = admin ?? supabase;
+    if (dataClient) {
       const [friendshipsResult, pulseResult] = await Promise.all([
-        admin.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).eq("status", "accepted"),
-        admin
+        dataClient.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).eq("status", "accepted"),
+        dataClient
           .from("community_pulse_moments")
-          .select("*,community_profiles(user_id,display_name,avatar_url,is_discoverable)")
+          .select("*,community_profiles:community_profiles!community_pulse_moments_user_id_fkey(user_id,display_name,avatar_url,is_discoverable)")
           .eq("status", "published")
           .order("created_at", { ascending: false })
           .limit(30)
@@ -73,7 +74,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     if (admin) {
       const pulseResult = await admin
         .from("community_pulse_moments")
-        .select("*,community_profiles(user_id,display_name,avatar_url,is_discoverable)")
+        .select("*,community_profiles:community_profiles!community_pulse_moments_user_id_fkey(user_id,display_name,avatar_url,is_discoverable)")
         .eq("status", "published")
         .eq("visibility", "community")
         .order("created_at", { ascending: false })

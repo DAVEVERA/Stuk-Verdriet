@@ -27,6 +27,9 @@ export function Header(_props: HeaderProps) {
   const isCommunityPage = pathname === "/community";
   const headerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
   const headerLogoAlt = isCommunityPage ? "SNAAR logo" : "Stuk Verdriet logo";
+  const visibleNavLinks = isCommunityPage
+    ? navLinks.filter((link) => link.href !== "/podcast" && link.href !== "/community")
+    : navLinks;
 
   function openSidebar() {
     setOpen((current) => !current);
@@ -69,7 +72,7 @@ export function Header(_props: HeaderProps) {
       </div>
 
       <nav className="sidebar-nav" aria-label="Mobiele navigatie">
-        {navLinks.map((link) => (
+        {visibleNavLinks.map((link) => (
           <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={pathname === link.href ? "active" : undefined}>
             {link.label}
           </Link>
@@ -85,7 +88,7 @@ export function Header(_props: HeaderProps) {
           {logoTrigger}
 
           <nav className="desktop-nav" id="primary-navigation" aria-label="Hoofdnavigatie" data-open={open ? "true" : "false"}>
-            {navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link key={link.href} href={link.href} className={pathname === link.href ? "active" : undefined} onClick={() => setOpen(false)} tabIndex={navTabIndex}>
                 {link.label}
               </Link>

@@ -28,6 +28,7 @@ import {
   updateCommunityProfilePhoto,
   updateCommunityProfileEvent
 } from "@/lib/actions";
+import { CommunityInviteTools } from "@/components/CommunityInviteTools";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type {
@@ -468,6 +469,7 @@ function ProfileConnectionsSection({
         </div>
       ) : activeTab === "find" ? (
         <div className="community-profile-suggestions">
+          <CommunityInviteTools />
           <form className="community-profile-search" action="/community/profiel">
             <input type="hidden" name="tab" value="friends" readOnly />
             <input type="hidden" name="connections" value="find" readOnly />
@@ -525,6 +527,7 @@ function ProfileConnectionsSection({
       {!compact && activeTab === "connections" && suggestions.length ? (
         <div className="community-profile-suggestions">
           <h3>Vind mensen</h3>
+          <CommunityInviteTools />
           <div className="community-profile-people-grid">
             {suggestions.slice(0, 6).map((person) => (
               <PersonRow key={person.user_id} profile={person} action={

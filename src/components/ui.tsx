@@ -54,6 +54,9 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community";
   const footerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
+  const footerNavigation = isCommunityPage
+    ? navigation.filter((item) => item.href !== "/podcast" && item.href !== "/community")
+    : navigation;
   const footerFeatures = [
     {
       title: "Longeneeslijk",
@@ -85,7 +88,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
         <p className="slogan-text">{site.tagline}</p>
       </div>
       <nav className="footer-links" aria-label="Footer navigatie">
-        {navigation.map((item) => (
+        {footerNavigation.map((item) => (
           <Link key={item.href} href={item.href}>
             {item.label}
           </Link>
@@ -130,15 +133,17 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
             MNRV
           </a>
         </span>
-        <a
-          className="copyright-qr"
-          href={gofundmeCampaignUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open de GoFundMe van Stuk Verdriet"
-        >
-          <Image src="/img/QRCODE_GFM.png" alt="QR-code voor de GoFundMe van Stuk Verdriet" width={92} height={92} />
-        </a>
+        {isCommunityPage ? null : (
+          <a
+            className="copyright-qr"
+            href={gofundmeCampaignUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open de GoFundMe van Stuk Verdriet"
+          >
+            <Image src="/img/QRCODE_GFM.png" alt="QR-code voor de GoFundMe van Stuk Verdriet" width={92} height={92} />
+          </a>
+        )}
       </p>
     </footer>
   );
