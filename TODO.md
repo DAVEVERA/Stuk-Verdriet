@@ -252,3 +252,22 @@ Replace Reels with Aan de Pols and ship a mobile-first moment/story creator for 
 ## Completion Marker
 
 AAN_DE_POLS_COMPLETE: false
+
+---
+
+## Goal
+
+Fix pasted CSS compatibility diagnostics without changing community behavior.
+
+## Tasks
+
+- [x] Inspect pasted diagnostics
+- [x] Identify real CSS compatibility issues
+- [x] Leave component-level SEO false positives unchanged
+- [x] Patch Safari, Firefox, line-clamp, and scrollbar compatibility
+- [x] Run lint, typecheck, and build
+- [x] Final review
+
+## Completion Marker
+
+CSS_COMPAT_DIAGNOSTICS_COMPLETE: true

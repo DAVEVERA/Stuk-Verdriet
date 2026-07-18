@@ -4117,7 +4117,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
 .community-composer-card .story-form,
 .community-composer-card .login-required-panel {
   background: transparent;
-  min-height: auto;
+  min-height: 0;
   padding: 0;
 }
 
@@ -7696,6 +7696,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   display: -webkit-box;
   font-size: 14px;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   line-height: 1.4;
   margin: 0;
   overflow: hidden;
@@ -8700,8 +8701,18 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   gap: 4px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  scrollbar-width: thin;
   white-space: nowrap;
+}
+
+.community-profile-main-nav::-webkit-scrollbar,
+.community-profile-subnav::-webkit-scrollbar {
+  height: 6px;
+}
+
+.community-profile-main-nav::-webkit-scrollbar-thumb,
+.community-profile-subnav::-webkit-scrollbar-thumb {
+  background: rgba(66, 86, 69, 0.28);
+  border-radius: 999px;
 }
 
 .community-profile-main-nav {
@@ -8802,6 +8813,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   gap: 7px;
   min-height: 44px;
   padding: 8px 11px;
+  -webkit-user-select: none;
   user-select: none;
 }
 
