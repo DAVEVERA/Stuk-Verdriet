@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useRef, useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
@@ -151,7 +151,6 @@ type CommunityAccountDockProps = {
   currentProfile?: CommunityProfile | null;
   discoverableProfiles?: CommunityProfile[];
   conversations?: CommunityConversation[];
-  posts: CommunityPost[];
   hasSupabaseEnv: boolean;
   selectedConversationId?: string | null;
   chatError?: string | null;
@@ -174,14 +173,14 @@ export function CommunityAccountDock({
   currentProfile,
   discoverableProfiles = [],
   conversations = [],
-  posts,
   hasSupabaseEnv,
   selectedConversationId,
   chatError
 }: CommunityAccountDockProps) {
+  const router = useRouter();
   const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(selectedConversationId ? "chats" : null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(selectedConversationId ?? conversations[0]?.id ?? null);
-  const people = getCommunityPeople(posts, discoverableProfiles);
+  const [chatSearch, setChatSearch] = useState("");
   const displayName = currentProfile?.display_name ?? email?.split("@")[0] ?? "Gast";
   const initials = authorInitial(displayName);
   const avatarUrl = currentProfile?.avatar_url ?? null;
@@ -190,8 +189,33 @@ export function CommunityAccountDock({
     ? conversations.find((conversation) => conversation.id === activeConversationId) ?? null
     : null;
   const activeParticipant = activeConversation ? getConversationPeer(activeConversation, currentUserId) : null;
-  const activeMessages = [...(activeConversation?.community_messages ?? [])].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(-6);
+  const activeMessages = [...(activeConversation?.community_messages ?? [])]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(-50);
   const chatErrorMessage = chatError ? communityChatErrors[chatError] : null;
+  const normalizedChatSearch = chatSearch.trim().toLocaleLowerCase("nl-NL");
+  const conversationPeers = new Set(
+    conversations
+      .map((conversation) => getConversationPeer(conversation, currentUserId)?.user_id)
+      .filter((value): value is string => Boolean(value))
+  );
+  const visibleConversations = conversations.filter((conversation) => {
+    if (!normalizedChatSearch) return true;
+    const peer = getConversationPeer(conversation, currentUserId);
+    const lastMessage = conversation.community_messages?.at(-1)?.body ?? "";
+    return `${peer?.display_name ?? ""} ${lastMessage}`.toLocaleLowerCase("nl-NL").includes(normalizedChatSearch);
+  });
+  const visibleProfiles = discoverableProfiles.filter((profile) => {
+    if (conversationPeers.has(profile.user_id)) return false;
+    if (!normalizedChatSearch) return true;
+    return profile.display_name.toLocaleLowerCase("nl-NL").includes(normalizedChatSearch);
+  });
+
+  useEffect(() => {
+    if (!isLoggedIn || activePanel !== "chats") return;
+    const refreshTimer = window.setInterval(() => router.refresh(), 12000);
+    return () => window.clearInterval(refreshTimer);
+  }, [activePanel, isLoggedIn, router]);
 
   function openPanel(panel: CommunityDockPanel) {
     setActivePanel((current) => (current === panel ? null : panel));
@@ -249,10 +273,15 @@ export function CommunityAccountDock({
             <label className="community-chat-search">
               <span className="sr-only">Zoeken in SNAAR berichten</span>
               <Search size={18} aria-hidden />
-              <input type="search" placeholder="Zoeken in SNAAR" />
+              <input
+                type="search"
+                placeholder="Zoeken in SNAAR"
+                value={chatSearch}
+                onChange={(event) => setChatSearch(event.target.value)}
+              />
             </label>
             <div className="community-chat-list">
-              {isLoggedIn && conversations.map((conversation) => {
+              {isLoggedIn && visibleConversations.map((conversation) => {
                 const peer = getConversationPeer(conversation, currentUserId);
                 return (
                   <button className={activeConversation?.id === conversation.id ? "community-chat-person active" : "community-chat-person"} type="button" key={conversation.id} onClick={() => setActiveConversationId(conversation.id)}>
@@ -264,25 +293,29 @@ export function CommunityAccountDock({
                   </button>
                 );
               })}
-              {isLoggedIn && !conversations.length ? <p className="community-panel-empty">Nog geen berichten. Start een gesprek met iemand uit de community.</p> : null}
+              {isLoggedIn && !conversations.length ? <p className="community-panel-empty">Nog geen gesprekken. Kies hieronder iemand die openstaat voor contact.</p> : null}
               {isLoggedIn && !discoverableProfiles.length ? (
                 <p className="community-panel-empty">
                   Er zijn nog geen andere vindbare profielen. Zet je eigen profiel op vindbaar en nodig anderen uit om hetzelfde te doen.
                 </p>
               ) : null}
-              {people.map((person) => (
-                <form action={startCommunityConversation} key={person.userId ?? person.name}>
+              {isLoggedIn && visibleProfiles.length ? <p className="community-chat-list-label">Nieuw gesprek</p> : null}
+              {visibleProfiles.map((person) => (
+                <form action={startCommunityConversation} key={person.user_id}>
                   <input type="hidden" name="return_to" value="/community" readOnly />
-                  {person.userId ? <input type="hidden" name="participant_user_id" value={person.userId} readOnly /> : null}
-                  <button className="community-chat-person" type="submit" disabled={!isLoggedIn || !person.userId}>
-                    <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl ?? null} />
+                  <input type="hidden" name="participant_user_id" value={person.user_id} readOnly />
+                  <button className="community-chat-person" type="submit" disabled={!isLoggedIn}>
+                    <ProfileAvatar name={person.display_name} avatarUrl={person.avatar_url ?? null} />
                     <span>
-                      <strong>{person.name}</strong>
-                      <small>{isLoggedIn ? person.context : "Log in om prive te praten"}</small>
+                      <strong>{person.display_name}</strong>
+                      <small>Beschikbaar voor rustig contact</small>
                     </span>
                   </button>
                 </form>
               ))}
+              {isLoggedIn && normalizedChatSearch && !visibleConversations.length && !visibleProfiles.length ? (
+                <p className="community-panel-empty">Geen gesprekken of vindbare profielen gevonden.</p>
+              ) : null}
             </div>
             {isLoggedIn && activeConversation ? (
               <div className="community-message-thread" aria-label={`Gesprek met ${activeParticipant?.display_name ?? "communitylid"}`}>
@@ -291,17 +324,24 @@ export function CommunityAccountDock({
                 )) : <p>Nog geen berichten. Stuur de eerste rustige groet.</p>}
               </div>
             ) : null}
-            <form className="community-chat-compose" action={activeConversation ? sendCommunityMessage.bind(null, activeConversation.id) : undefined}>
-              <input type="hidden" name="return_to" value="/community" readOnly />
-              <input name="body" placeholder={isLoggedIn && activeConversation ? "Schrijf een privebericht..." : "Log in om prive te chatten"} disabled={!isLoggedIn || !activeConversation} />
-              {isLoggedIn && activeConversation ? (
+            {isLoggedIn && activeConversation ? (
+              <form className="community-chat-compose" action={sendCommunityMessage.bind(null, activeConversation.id)}>
+                <input type="hidden" name="return_to" value="/community" readOnly />
+                <input name="body" placeholder="Schrijf een privebericht..." maxLength={2000} required />
                 <button type="submit" aria-label="Verstuur bericht">
                   <Send size={17} aria-hidden />
                 </button>
-              ) : (
+              </form>
+            ) : isLoggedIn ? (
+              <div className="community-chat-compose is-empty">
+                <span>Kies een gesprek of start hierboven een nieuw gesprek.</span>
+              </div>
+            ) : (
+              <div className="community-chat-compose is-empty">
+                <span>Log in om prive te chatten.</span>
                 <Link href={loginHref}>Inloggen</Link>
-              )}
-            </form>
+              </div>
+            )}
           </div>
         ) : null}
 
@@ -386,34 +426,6 @@ function getConversationPeer(conversation: CommunityConversation, currentUserId?
     ?.find((participant) => participant.user_id !== currentUserId)
     ?.community_profiles ?? null;
   return Array.isArray(rawProfile) ? rawProfile[0] ?? null : rawProfile;
-}
-
-function getCommunityPeople(posts: CommunityPost[], profiles: CommunityProfile[]) {
-  const people = new Map<string, { userId?: string; name: string; context: string; avatarUrl?: string | null }>();
-  profiles.forEach((profile) => {
-    people.set(profile.user_id, {
-      userId: profile.user_id,
-      name: profile.display_name,
-      context: "Beschikbaar voor rustig contact",
-      avatarUrl: profile.avatar_url
-    });
-  });
-  posts.forEach((post) => {
-    const name = displayAuthor(post.author_name, post.author_display_type);
-    if (!people.has(name)) {
-      people.set(name, {
-        name,
-        context: `${postTypeLabels[post.post_type ?? "story"]} over ${post.category}`
-      });
-    }
-  });
-  const collected = Array.from(people.values()).slice(0, 6);
-  if (collected.length) return collected;
-  return [
-    { name: "SNAAR community", context: "Maak contact met lotgenoten" },
-    { name: "Stuk Verdriet", context: "Vragen over reageren en delen" },
-    { name: "Nieuwe gebruiker", context: "Log in om jezelf vindbaar te maken" }
-  ];
 }
 
 export function GoFundMeSupportSection() {
@@ -884,10 +896,22 @@ const snaarIcons = {
   share: "/img/icons_SNAAR/share_arrow/icons8-forward-arrow-48.png"
 };
 
-export function CommunityPostCard({ post, showActions = false }: { post: CommunityPost; showActions?: boolean }) {
+export function CommunityPostCard({
+  post,
+  showActions = false,
+  currentProfile = null,
+  defaultCommentsOpen = false
+}: {
+  post: CommunityPost;
+  showActions?: boolean;
+  currentProfile?: CommunityProfile | null;
+  defaultCommentsOpen?: boolean;
+}) {
+  const [commentsOpen, setCommentsOpen] = useState(defaultCommentsOpen);
   const postType = post.post_type ?? "story";
   const authorName = displayAuthor(post.author_name, post.author_display_type);
   const postUrl = `/community/${post.slug}`;
+  const commentsId = `community-comments-${post.id}`;
   return (
     <article className="post-card community-post-card">
       <header className="community-post-author">
@@ -932,36 +956,55 @@ export function CommunityPostCard({ post, showActions = false }: { post: Communi
             Steun
           </Link>
         )}
-        <Link className="community-post-action" href={postUrl}>
+        <button
+          className="community-post-action"
+          type="button"
+          onClick={() => setCommentsOpen((open) => !open)}
+          aria-expanded={commentsOpen}
+          aria-controls={commentsId}
+        >
           <Image src={snaarIcons.comment} alt="" width={21} height={21} />
           Reageer
-        </Link>
+        </button>
         <SharePostButton postUrl={postUrl} title={post.title} />
       </div>
       {showActions ? <CommunityReportMenu targetType="post" targetId={post.id} hasImage={Boolean(post.image_url)} /> : null}
-      {post.replies?.length ? (
-        <div className="community-comment-thread" aria-label={`Reacties op ${post.title}`}>
-          {post.replies.map((reply) => (
-            <CommunityInlineReply key={reply.id} postId={post.id} reply={reply} showActions={showActions} />
-          ))}
-          {post.reply_count > post.replies.length ? (
-            <Link className="community-comment-more" href={postUrl}>Bekijk alle {post.reply_count} reacties</Link>
-          ) : null}
+      {commentsOpen ? (
+        <div className="community-comments-panel" id={commentsId}>
+          {post.replies?.length ? (
+            <div className="community-comment-thread" aria-label={`Reacties op ${post.title}`}>
+              {post.replies.map((reply) => (
+                <CommunityInlineReply key={reply.id} postId={post.id} reply={reply} showActions={showActions} />
+              ))}
+              {post.reply_count > post.replies.length ? (
+                <Link className="community-comment-more" href={postUrl}>Bekijk alle {post.reply_count} reacties</Link>
+              ) : null}
+            </div>
+          ) : (
+            <p className="community-comments-empty">Nog geen gepubliceerde reacties. Jij kunt de eerste zijn.</p>
+          )}
+          <div className="community-inline-comment">
+            {showActions ? (
+              <ProfileAvatar
+                name={currentProfile?.display_name ?? "Jij"}
+                avatarUrl={currentProfile?.avatar_url ?? null}
+              />
+            ) : (
+              <span className="community-avatar community-avatar-small" aria-hidden>S</span>
+            )}
+            {showActions ? (
+              <form className="community-inline-reply-form" action={createCommunityReply.bind(null, post.id)}>
+                <input type="hidden" name="return_to" value="/community" readOnly />
+                <input type="hidden" name="author_display_type" value="first_name" readOnly />
+                <input name="body" placeholder="Schrijf een reactie..." maxLength={2000} required />
+                <button type="submit" aria-label="Reactie plaatsen"><Send size={16} aria-hidden /></button>
+              </form>
+            ) : (
+              <Link href={`/login?next=${encodeURIComponent(postUrl)}`}>Log in om te reageren...</Link>
+            )}
+          </div>
         </div>
       ) : null}
-      <div className="community-inline-comment">
-        <span className="community-avatar community-avatar-small" aria-hidden>{showActions ? "J" : "S"}</span>
-        {showActions ? (
-          <form className="community-inline-reply-form" action={createCommunityReply.bind(null, post.id)}>
-            <input type="hidden" name="return_to" value="/community" readOnly />
-            <input type="hidden" name="author_display_type" value="first_name" readOnly />
-            <input name="body" placeholder="Schrijf een reactie..." required />
-            <button type="submit" aria-label="Reactie plaatsen"><Send size={16} aria-hidden /></button>
-          </form>
-        ) : (
-          <Link href={`/login?next=${encodeURIComponent(postUrl)}`}>Log in om te reageren...</Link>
-        )}
-      </div>
     </article>
   );
 }
@@ -985,7 +1028,7 @@ function CommunityInlineReply({ postId, reply, showActions, depth = 0 }: { postI
                   <input type="hidden" name="return_to" value="/community" readOnly />
                   <input type="hidden" name="parent_reply_id" value={reply.id} readOnly />
                   <input type="hidden" name="author_display_type" value="first_name" readOnly />
-                  <input name="body" placeholder="Antwoord..." required />
+                  <input name="body" placeholder="Antwoord..." maxLength={2000} required />
                   <button type="submit" aria-label="Antwoord plaatsen"><Send size={14} aria-hidden /></button>
                 </form>
               </details>

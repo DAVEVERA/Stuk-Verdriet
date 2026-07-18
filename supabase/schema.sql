@@ -146,7 +146,7 @@ create table if not exists community_replies (
   user_id uuid references auth.users(id) on delete set null,
   author_name text,
   author_display_type author_display_type not null default 'first_name',
-  body text not null,
+  body text not null constraint community_replies_body_length check (char_length(trim(body)) between 1 and 2000),
   status community_status not null default 'pending',
   created_at timestamptz not null default now()
 );
@@ -298,6 +298,7 @@ grant select on community_replies to anon, authenticated;
 grant insert on community_replies to authenticated;
 grant select on community_supports to authenticated;
 grant insert on community_supports to authenticated;
+grant delete on community_supports to authenticated;
 grant insert on community_reports to authenticated;
 grant select, insert, update on community_profiles to authenticated;
 grant select, insert on community_conversations to authenticated;
@@ -326,17 +327,26 @@ create policy "approved posts are public" on community_posts for select to anon,
 drop policy if exists "authenticated users create pending posts" on community_posts;
 create policy "authenticated users create pending posts" on community_posts for insert to authenticated with check (status = 'pending' and (select auth.uid()) = user_id);
 
+drop policy if exists "users can read own posts" on community_posts;
+create policy "users can read own posts" on community_posts for select to authenticated using ((select auth.uid()) = user_id);
+
 drop policy if exists "approved replies are public" on community_replies;
 create policy "approved replies are public" on community_replies for select to anon, authenticated using (status = 'approved');
 
 drop policy if exists "authenticated users create pending replies" on community_replies;
 create policy "authenticated users create pending replies" on community_replies for insert to authenticated with check (status = 'pending' and (select auth.uid()) = user_id);
 
+drop policy if exists "users can read own replies" on community_replies;
+create policy "users can read own replies" on community_replies for select to authenticated using ((select auth.uid()) = user_id);
+
 drop policy if exists "authenticated users support once" on community_supports;
 create policy "authenticated users support once" on community_supports for insert to authenticated with check ((select auth.uid()) = user_id);
 
 drop policy if exists "authenticated users see own supports" on community_supports;
 create policy "authenticated users see own supports" on community_supports for select to authenticated using ((select auth.uid()) = user_id);
+
+drop policy if exists "authenticated users remove own support" on community_supports;
+create policy "authenticated users remove own support" on community_supports for delete to authenticated using ((select auth.uid()) = user_id);
 
 drop policy if exists "authenticated users report content" on community_reports;
 create policy "authenticated users report content" on community_reports for insert to authenticated with check ((select auth.uid()) = user_id);
@@ -410,6 +420,7 @@ revoke execute on function refresh_post_counts(uuid) from public, anon, authenti
 create or replace function refresh_reply_count_trigger()
 returns trigger
 language plpgsql
+security definer
 set search_path = public, pg_temp
 as $$
 begin
@@ -421,6 +432,7 @@ $$;
 create or replace function refresh_support_count_trigger()
 returns trigger
 language plpgsql
+security definer
 set search_path = public, pg_temp
 as $$
 begin

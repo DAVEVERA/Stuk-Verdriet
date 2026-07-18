@@ -6,7 +6,9 @@ import {
   Camera,
   ImagePlus,
   MapPin,
+  MessageCircle,
   MoreHorizontal,
+  Newspaper,
   UserPlus,
   Users
 } from "lucide-react";
@@ -22,14 +24,16 @@ import {
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type {
   CommunityFriendship,
+  CommunityPost,
   CommunityProfile,
   CommunityProfileEvent,
-  CommunityProfilePhoto
+  CommunityProfilePhoto,
+  CommunityReply
 } from "@/types/content";
 
 export const dynamic = "force-dynamic";
 
-type ProfileTab = "all" | "info" | "reels" | "photos" | "events" | "friends";
+type ProfileTab = "all" | "info" | "activity" | "reels" | "photos" | "events" | "friends";
 type FriendsTab = "friends" | "requests" | "birthdays" | "hometown" | "followers" | "following";
 
 type CommunityProfilePageProps = {
@@ -71,6 +75,7 @@ const successMessages: Record<string, string> = {
 const profileTabs: Array<{ id: ProfileTab; label: string }> = [
   { id: "all", label: "Alles" },
   { id: "info", label: "Info" },
+  { id: "activity", label: "Bijdragen" },
   { id: "reels", label: "Reels" },
   { id: "photos", label: "Foto's" },
   { id: "events", label: "Evenementen" },
@@ -85,6 +90,17 @@ const friendsTabs: Array<{ id: FriendsTab; label: string }> = [
   { id: "followers", label: "Volgers" },
   { id: "following", label: "Volgend" }
 ];
+
+type CommunityProfileReply = CommunityReply & {
+  community_posts?: { title: string; slug: string } | Array<{ title: string; slug: string }> | null;
+};
+
+const communityStatusLabels = {
+  pending: "Wordt op richtlijnen gecontroleerd",
+  rejected: "Niet gepubliceerd",
+  archived: "Niet gepubliceerd",
+  approved: "Goedgekeurd en geplaatst"
+} as const;
 
 function isProfileTab(value: string | undefined): value is ProfileTab {
   return profileTabs.some((tab) => tab.id === value);
@@ -307,6 +323,91 @@ function ProfileFriendsSection({
   );
 }
 
+function ProfileActivitySection({
+  posts,
+  replies,
+  compact = false
+}: {
+  posts: CommunityPost[];
+  replies: CommunityProfileReply[];
+  compact?: boolean;
+}) {
+  const normalizedReplies = replies.map((reply) => ({
+    ...reply,
+    community_posts: Array.isArray(reply.community_posts) ? (reply.community_posts[0] ?? null) : (reply.community_posts ?? null)
+  }));
+  const activity = [
+    ...posts.map((post) => ({
+      id: `post-${post.id}`,
+      type: "post" as const,
+      title: post.title,
+      body: post.body,
+      createdAt: post.created_at,
+      status: post.status,
+      href: post.status === "approved" ? `/community/${post.slug}` : null
+    })),
+    ...normalizedReplies.map((reply) => ({
+      id: `reply-${reply.id}`,
+      type: "reply" as const,
+      title: reply.community_posts?.title ? `Reactie op ${reply.community_posts.title}` : "Jouw reactie",
+      body: reply.body,
+      createdAt: reply.created_at,
+      status: reply.status,
+      href: reply.status === "approved" && reply.community_posts?.slug ? `/community/${reply.community_posts.slug}` : null
+    }))
+  ]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, compact ? 6 : 50);
+
+  return (
+    <section className="community-profile-section" id="bijdragen">
+      <header className="community-profile-section-header">
+        <div>
+          <p className="eyebrow">Jouw activiteit</p>
+          <h2>Berichten en reacties</h2>
+          <span>Hier zie je ook bijdragen die nog worden gecontroleerd of niet zijn gepubliceerd.</span>
+        </div>
+      </header>
+      {activity.length ? (
+        <div className="community-profile-activity-list">
+          {activity.map((item) => (
+            <article className="community-profile-activity-item" key={item.id}>
+              <span className="community-profile-activity-icon" aria-hidden>
+                {item.type === "post" ? <Newspaper size={20} /> : <MessageCircle size={20} />}
+              </span>
+              <div>
+                <p>{item.type === "post" ? "Bericht" : "Reactie"} · {formatProfileDate(item.createdAt)}</p>
+                <h3>{item.href ? <Link href={item.href}>{item.title}</Link> : item.title}</h3>
+                <span>{item.body}</span>
+              </div>
+              <strong className={`community-profile-status status-${item.status}`}>
+                {communityStatusLabels[item.status]}
+              </strong>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="community-profile-empty">
+          <Newspaper size={28} />
+          <strong>Nog geen bijdragen</strong>
+          <span>Berichten en reacties die je vanuit de feed plaatst, verschijnen hier met hun actuele status.</span>
+        </div>
+      )}
+      {compact && activity.length >= 6 ? (
+        <Link className="community-profile-more" href={profileHref("activity")}>Alle bijdragen bekijken</Link>
+      ) : null}
+    </section>
+  );
+}
+
+function formatProfileDate(value: string) {
+  return new Intl.DateTimeFormat("nl-NL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  }).format(new Date(value));
+}
+
 function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfile | null; displayName: string }) {
   const details = profile?.profile_details ?? {};
   return (
@@ -389,12 +490,27 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   if (!user) redirect("/login?next=%2Fcommunity%2Fprofiel");
 
   const dataClient = createSupabaseAdminClient() ?? supabase;
-  const [profileResult, photosResult, eventsResult, friendshipsResult, discoverableResult] = await Promise.all([
+  const [
+    profileResult,
+    photosResult,
+    eventsResult,
+    friendshipsResult,
+    discoverableResult,
+    ownPostsResult,
+    ownRepliesResult
+  ] = await Promise.all([
     dataClient.from("community_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     dataClient.from("community_profile_photos").select("*").eq("user_id", user.id).order("display_order").order("created_at", { ascending: false }).limit(30),
     dataClient.from("community_profile_events").select("*").eq("user_id", user.id).order("starts_at", { ascending: false }).limit(30),
     dataClient.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).order("updated_at", { ascending: false }),
-    dataClient.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(24)
+    dataClient.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(24),
+    dataClient.from("community_posts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+    dataClient
+      .from("community_replies")
+      .select("*,community_posts(title,slug)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
   ]);
 
   const profile = profileResult.error ? null : profileResult.data as CommunityProfile | null;
@@ -402,6 +518,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   const events = eventsResult.error ? [] : (eventsResult.data as CommunityProfileEvent[] | null) ?? [];
   const friendships = friendshipsResult.error ? [] : (friendshipsResult.data as CommunityFriendship[] | null) ?? [];
   const discoverable = discoverableResult.error ? [] : (discoverableResult.data as CommunityProfile[] | null) ?? [];
+  const ownPosts = ownPostsResult.error ? [] : (ownPostsResult.data as CommunityPost[] | null) ?? [];
+  const ownReplies = ownRepliesResult.error ? [] : (ownRepliesResult.data as CommunityProfileReply[] | null) ?? [];
   const fallbackName = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "SNAAR gebruiker";
   const displayName = profile?.display_name ?? fallbackName;
   if (profileResult.error) console.error("[community-profile] profile read failed", { code: profileResult.error.code });
@@ -469,6 +587,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
         {activeTab === "all" || activeTab === "photos" ? <ProfilePhotosSection photos={photos} profile={profile} displayName={displayName} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "events" ? <ProfileEventsSection events={events} filter={eventFilter} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "friends" ? <ProfileFriendsSection activeTab={activeTab === "all" ? "friends" : friendsTab} friends={friends} incoming={incoming} outgoingIds={outgoingIds} suggestions={suggestions} profilesById={profilesById} compact={activeTab === "all"} /> : null}
+        {activeTab === "all" || activeTab === "activity" ? <ProfileActivitySection posts={ownPosts} replies={ownReplies} compact={activeTab === "all"} /> : null}
         {activeTab === "info" ? <ProfileInfoSection profile={profile} displayName={displayName} /> : null}
         {activeTab === "reels" ? <section className="community-profile-section"><div className="community-profile-empty"><Camera size={28} /><strong>Reels komen later</strong><span>Je foto&apos;s, evenementen en profielinformatie zijn nu al volledig te beheren.</span></div></section> : null}
       </div>

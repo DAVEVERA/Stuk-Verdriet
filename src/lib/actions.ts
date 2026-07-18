@@ -467,6 +467,7 @@ async function ensureCommunityProfile(user: { id: string; email?: string | null;
 
 export async function updateCommunityProfile(formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
   const { user } = await requireCommunityUser(returnPath);
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
@@ -668,6 +669,7 @@ export async function respondToCommunityFriendRequest(formData: FormData) {
 
 export async function startCommunityConversation(formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=chat-create`);
   const participantUserId = String(formData.get("participant_user_id") ?? "").trim();
   const { user } = await requireCommunityUser(returnPath);
   if (!participantUserId || participantUserId === user.id) redirect(`${returnPath}?error=chat-target`);
@@ -726,6 +728,7 @@ export async function startCommunityConversation(formData: FormData) {
 
 export async function sendCommunityMessage(conversationId: string, formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=message-send`);
   const { supabase, user } = await requireCommunityUser(returnPath);
   const body = String(formData.get("body") ?? "").trim();
   if (!body || body.length > 2000) redirect(`${returnPath}?error=message`);
@@ -776,6 +779,7 @@ export async function subscribeEpisodeSignup(formData: FormData) {
 export async function createCommunityPost(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=invalid`);
   if (!supabase) redirect(`${returnPath}?missing=supabase`);
 
   const {
@@ -797,7 +801,9 @@ export async function createCommunityPost(formData: FormData) {
     .filter(Boolean)
     .slice(0, 6);
 
-  if (!title || !body || !category) redirect(`${returnPath}?error=missing-fields`);
+  if (!title || title.length > 140 || !body || body.length > 5000 || !category || category.length > 120) {
+    redirect(`${returnPath}?error=missing-fields`);
+  }
 
   const postSlug = `${slugify(title)}-${Date.now()}`;
   const image = getUploadFile(formData, "image_file");
@@ -811,7 +817,7 @@ export async function createCommunityPost(formData: FormData) {
     imageUrl = await uploadPublicFile(admin, "community-images", `community/${user.id}/${postSlug}`, image, "jpg", returnPath);
   }
 
-  await supabase.from("community_posts").insert({
+  const { error: postError } = await supabase.from("community_posts").insert({
     user_id: user.id,
     author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
     author_display_type: authorDisplayType,
@@ -828,21 +834,37 @@ export async function createCommunityPost(formData: FormData) {
     target_group: targetGroup,
     status: "pending"
   });
+  if (postError) redirect(`${returnPath}?error=post-create`);
 
   revalidatePath("/");
   revalidatePath("/community");
+  revalidatePath("/community/profiel");
   revalidatePath("/bijsluiter");
   redirect(`${returnPath}?submitted=pending`);
 }
 
 export async function createCommunityReply(postId: string, formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=reply-create`);
   const { supabase, user } = await requireCommunityUser(returnPath);
 
   const body = String(formData.get("body") ?? "").trim();
-  const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
+  const authorDisplayTypeInput = String(formData.get("author_display_type") ?? "first_name");
+  const authorDisplayType = ["real_name", "first_name", "anonymous"].includes(authorDisplayTypeInput)
+    ? authorDisplayTypeInput
+    : "first_name";
   const parentReplyId = String(formData.get("parent_reply_id") ?? "").trim() || null;
-  if (!body) return;
+  if (!body || body.length > 2000) redirect(`${returnPath}?error=reply`);
+
+  if (parentReplyId) {
+    const { data: parentReply } = await supabase
+      .from("community_replies")
+      .select("id")
+      .eq("id", parentReplyId)
+      .eq("post_id", postId)
+      .maybeSingle();
+    if (!parentReply) redirect(`${returnPath}?error=reply-create`);
+  }
 
   const payload = {
     post_id: postId,
@@ -855,25 +877,34 @@ export async function createCommunityReply(postId: string, formData: FormData) {
   };
 
   const { error } = await supabase.from("community_replies").insert(payload);
-  if (error && parentReplyId) {
-    await supabase.from("community_replies").insert({
-      post_id: postId,
-      user_id: user.id,
-      author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
-      author_display_type: authorDisplayType,
-      body,
-      status: "pending"
-    });
-  }
+  if (error) redirect(`${returnPath}?error=reply-create`);
 
   revalidatePath("/community");
+  revalidatePath("/community/profiel");
   revalidatePath(returnPath);
+  redirect(`${returnPath}?comments=${encodeURIComponent(postId)}&reply=submitted`);
 }
 
 export async function supportPost(postId: string, formData?: FormData) {
   const returnPath = safeReturnPath(formData?.get("return_to") ?? null, "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=support`);
   const { supabase, user } = await requireCommunityUser(returnPath);
-  await supabase.from("community_supports").upsert({ post_id: postId, user_id: user.id }, { onConflict: "post_id,user_id", ignoreDuplicates: true });
+  const { data: existing } = await supabase
+    .from("community_supports")
+    .select("post_id")
+    .eq("post_id", postId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let supportError = null;
+  if (existing) {
+    const { error } = await supabase.from("community_supports").delete().eq("post_id", postId).eq("user_id", user.id);
+    supportError = error;
+  } else {
+    const { error } = await supabase.from("community_supports").insert({ post_id: postId, user_id: user.id });
+    supportError = error;
+  }
+  if (supportError) redirect(`${returnPath}?error=support`);
 
   revalidatePath("/community");
   revalidatePath(returnPath);
@@ -881,6 +912,7 @@ export async function supportPost(postId: string, formData?: FormData) {
 
 export async function reportCommunityContent(targetType: string, targetId: string, formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(`${returnPath}?error=report`);
   const { supabase, user } = await requireCommunityUser(returnPath);
   const normalizedType = communityReportTypes.has(targetType) ? targetType : "post";
   const categoryInput = String(formData.get("report_category") ?? formData.get("reason") ?? "ongepast").trim().toLowerCase();

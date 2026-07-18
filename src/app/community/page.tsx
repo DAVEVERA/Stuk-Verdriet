@@ -4,7 +4,14 @@ import { CommunityAccountDock, CommunityPostCard, Icon } from "@/components/ui";
 import type { CommunityConversation, CommunityProfile } from "@/types/content";
 
 type CommunityPageProps = {
-  searchParams?: Promise<{ submitted?: string; error?: string; missing?: string; conversation?: string }>;
+  searchParams?: Promise<{
+    submitted?: string;
+    error?: string;
+    missing?: string;
+    conversation?: string;
+    comments?: string;
+    reply?: string;
+  }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -62,7 +69,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           currentProfile={currentProfile}
           discoverableProfiles={discoverableProfiles}
           conversations={conversations}
-          posts={posts}
           hasSupabaseEnv={hasSupabaseEnv}
           selectedConversationId={params.conversation ?? null}
           chatError={params.error ?? null}
@@ -79,10 +85,26 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
               </div>
               <span>{posts.length} bijdragen</span>
             </div>
+            {params.reply === "submitted" ? (
+              <p className="notice community-feed-notice" role="status">
+                Je reactie is ontvangen en wordt op de richtlijnen gecontroleerd. Je ziet de actuele status bij Mijn profiel onder Bijdragen.
+              </p>
+            ) : null}
+            {params.error === "reply" || params.error === "reply-create" ? (
+              <p className="notice community-feed-notice" role="alert">
+                Je reactie kon niet worden opgeslagen. Controleer de tekst en probeer het opnieuw.
+              </p>
+            ) : null}
             {featuredPosts.length ? (
               <div className="post-grid community-post-list">
                 {featuredPosts.map((post) => (
-                  <CommunityPostCard key={post.id} post={post} showActions={isLoggedIn} />
+                  <CommunityPostCard
+                    key={post.id}
+                    post={post}
+                    showActions={isLoggedIn}
+                    currentProfile={currentProfile}
+                    defaultCommentsOpen={params.comments === post.id}
+                  />
                 ))}
               </div>
             ) : (

@@ -207,3 +207,27 @@ Fix SNAAR profile media and build a complete mobile-first personal profile with 
 ## Completion Marker
 
 SNAAR_PROFILE_EXPERIENCE_COMPLETE: true
+
+---
+
+## Goal
+
+Make every authenticated SNAAR community function work consistently across messenger, feed replies, profile editing, and moderation status history.
+
+## Tasks
+
+- [x] Trace authenticated state through the community page and messenger
+- [x] Inventory existing chat, reply, profile, moderation, and RLS contracts
+- [x] Remove guest login states from the authenticated messenger
+- [x] Make contact search and conversation selection use real profiles
+- [x] Verify durable message history and message sending
+- [x] Add expandable feed comments with nested replies
+- [x] Show own posts and replies with moderation status on profile
+- [x] Re-verify all existing profile edit and media controls
+- [x] Apply and verify any required Supabase migration
+- [x] Run mobile, tablet, desktop, lint, typecheck, build, and end-to-end checks
+- [x] Final review
+
+## Completion Marker
+
+SNAAR_AUTHENTICATED_COMMUNITY_COMPLETE: true
