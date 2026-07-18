@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { site } from "@/lib/site";
 import { isCommunityStandaloneBuild } from "@/lib/community-visibility";
@@ -23,6 +23,8 @@ const navLinks = [
 export function Header(_props: HeaderProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const logoTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileSidebarRef = useRef<HTMLElement>(null);
   const navTabIndex = open ? undefined : -1;
   const isCommunityPage = pathname === "/community";
   const headerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
@@ -31,8 +33,17 @@ export function Header(_props: HeaderProps) {
     ? navLinks.filter((link) => link.href !== "/podcast" && link.href !== "/community")
     : navLinks;
 
+  function closeSidebar() {
+    setOpen(false);
+    window.requestAnimationFrame(() => logoTriggerRef.current?.focus());
+  }
+
   function openSidebar() {
-    setOpen((current) => !current);
+    if (open) {
+      closeSidebar();
+      return;
+    }
+    setOpen(true);
   }
 
   useEffect(() => {
@@ -40,10 +51,50 @@ export function Header(_props: HeaderProps) {
     document.body.style.overflow = open && isMobile ? "hidden" : "";
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        window.requestAnimationFrame(() => logoTriggerRef.current?.focus());
+        return;
+      }
+
+      if (event.key !== "Tab" || !open || !isMobile) return;
+
+      const selectors = [
+        ".site-header .header-logo-trigger",
+        ".sidebar-overlay",
+        ".mobile-sidebar.open a[href]",
+        ".mobile-sidebar.open button:not([disabled])",
+        ".community-account-dock a[href]",
+        ".community-account-dock button:not([disabled])",
+        ".community-account-dock input:not([disabled])",
+        ".community-account-dock textarea:not([disabled])"
+      ].join(",");
+      const focusable = Array.from(document.querySelectorAll<HTMLElement>(selectors)).filter((element) => {
+        const styles = window.getComputedStyle(element);
+        return styles.display !== "none" && styles.visibility !== "hidden" && element.getClientRects().length > 0;
+      });
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (!focusable.includes(document.activeElement as HTMLElement)) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
+    if (open && isMobile) {
+      window.requestAnimationFrame(() => {
+        mobileSidebarRef.current?.querySelector<HTMLElement>(".close-button")?.focus();
+      });
+    }
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
@@ -51,11 +102,11 @@ export function Header(_props: HeaderProps) {
   }, [open]);
 
   const logoTrigger = open ? (
-    <button className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu sluiten" aria-expanded="true" aria-controls="primary-navigation">
+    <button ref={logoTriggerRef} className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu sluiten" aria-expanded="true" aria-controls="primary-navigation">
       <Image src={headerLogo} alt={headerLogoAlt} width={300} height={380} priority />
     </button>
   ) : (
-    <button className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu openen" aria-expanded="false" aria-controls="primary-navigation">
+    <button ref={logoTriggerRef} className="header-logo-trigger" type="button" onClick={openSidebar} aria-label="Menu openen" aria-expanded="false" aria-controls="primary-navigation">
       <Image src={headerLogo} alt={headerLogoAlt} width={300} height={380} priority />
     </button>
   );
@@ -66,7 +117,7 @@ export function Header(_props: HeaderProps) {
         <Link href="/" className="sidebar-logo" aria-label="Stuk Verdriet home">
           <Image src={headerLogo} alt={headerLogoAlt} width={70} height={88} />
         </Link>
-        <button className="close-button" type="button" onClick={() => setOpen(false)} aria-label="Menu sluiten">
+        <button className="close-button" type="button" onClick={closeSidebar} aria-label="Menu sluiten">
           <X size={18} aria-hidden />
         </button>
       </div>
@@ -110,14 +161,14 @@ export function Header(_props: HeaderProps) {
         </div>
       </header>
 
-      {open ? <button className="sidebar-overlay" type="button" aria-label="Menu sluiten" onClick={() => setOpen(false)} /> : null}
+      {open ? <button className="sidebar-overlay" type="button" aria-label="Menu sluiten" onClick={closeSidebar} /> : null}
 
       {open ? (
-        <aside className="mobile-sidebar open" aria-hidden="false">
+        <aside ref={mobileSidebarRef} className="mobile-sidebar open" aria-hidden="false" aria-modal="true" role="dialog" aria-label="Mobiele navigatie">
           {sidebarContent}
         </aside>
       ) : (
-        <aside className="mobile-sidebar" aria-hidden="true" inert>
+        <aside ref={mobileSidebarRef} className="mobile-sidebar" aria-hidden="true" inert>
           {sidebarContent}
         </aside>
       )}
