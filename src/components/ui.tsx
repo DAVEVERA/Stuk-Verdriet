@@ -374,7 +374,7 @@ export function CommunityAccountDock({
               <ProfileAvatar name={displayName} avatarUrl={avatarUrl} large />
               <div>
                 <strong>{isLoggedIn ? displayName : "Log in als je wilt reageren of delen."}</strong>
-                <p>{isLoggedIn ? "Bepaal hoe je zichtbaar bent in de community. Je kunt je naam, profielfoto en vindbaarheid aanpassen." : "Je kunt rustig meelezen zonder account. Log in als je wilt reageren, steun geven of zelf iets delen."}</p>
+                {!isLoggedIn ? <p>Je kunt rustig meelezen zonder account. Log in als je wilt reageren, steun geven of zelf iets delen.</p> : null}
               </div>
             </div>
             {isLoggedIn ? (

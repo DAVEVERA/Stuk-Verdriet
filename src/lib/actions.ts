@@ -22,6 +22,8 @@ const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
 const communityReportTypes = new Set(["post", "reply", "image", "language"]);
 const communityReportCategories = new Set(["ongepast", "taalgebruik", "afbeelding", "spam", "veiligheid", "anders"]);
+const pulseAiStripePaymentLink = "https://buy.stripe.com/aFa6oId6R7kob0S54Ed3i00";
+const pulseAiStripeBuyButtonId = "buy_btn_1Tua2PK4ScKc9e3qb6YfbBfb";
 
 type EpisodeSignupPayload = {
   name: string;
@@ -195,6 +197,22 @@ function normalizedPulseVisibility(value: FormDataEntryValue | null) {
 function normalizedPulseStatus(value: FormDataEntryValue | null) {
   const status = String(value ?? "published").trim();
   return ["draft", "published", "archived"].includes(status) ? status : "published";
+}
+
+function normalizedCommunityVisibility(value: FormDataEntryValue | null) {
+  const visibility = String(value ?? "connections").trim();
+  return ["private", "connections", "community"].includes(visibility) ? visibility : "connections";
+}
+
+function normalizedActiveStatus(value: FormDataEntryValue | null) {
+  const status = String(value ?? "active").trim();
+  return ["active", "hidden", "archived"].includes(status) ? status : "active";
+}
+
+function optionalIsoDate(value: string) {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
 function normalizedHexColor(value: FormDataEntryValue | null, fallback = "#2f4b3a") {
@@ -688,14 +706,101 @@ export async function addCommunityProfilePhoto(formData: FormData) {
   const photo = getUploadFile(formData, "photo_file");
   if (!photo || !isAllowedCommunityImage(photo)) redirect(withReturnStatus(returnPath, "error", "photo"));
   const imageUrl = await uploadPublicFile(admin, "community-profile-media", `${user.id}/photos`, photo, "jpg", returnPath);
+  const albumId = profileText(formData, "album_id", 64) || null;
+  if (albumId) {
+    const { data: album } = await admin
+      .from("community_profile_albums")
+      .select("id")
+      .eq("id", albumId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!album) redirect(withReturnStatus(returnPath, "error", "album"));
+  }
   const { error } = await admin.from("community_profile_photos").insert({
     user_id: user.id,
+    album_id: albumId,
     image_url: imageUrl,
-    caption: profileText(formData, "caption", 180) || null
+    caption: profileText(formData, "caption", 180) || null,
+    alt_text: profileText(formData, "alt_text", 180) || null,
+    visibility: normalizedCommunityVisibility(formData.get("visibility")),
+    status: "active"
   });
   if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
   revalidatePath("/community/profiel");
   redirect(withReturnStatus(returnPath, "profile", "photo-saved"));
+}
+
+export async function createCommunityProfileAlbum(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const title = profileText(formData, "title", 80);
+  if (!title) redirect(withReturnStatus(returnPath, "error", "album"));
+  const { error } = await admin.from("community_profile_albums").insert({
+    user_id: user.id,
+    title,
+    description: profileText(formData, "description", 300) || null,
+    visibility: normalizedCommunityVisibility(formData.get("visibility"))
+  });
+  if (error) redirect(withReturnStatus(returnPath, "error", "album"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "album-saved"));
+}
+
+export async function updateCommunityProfilePhoto(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const photoId = profileText(formData, "photo_id", 64);
+  const albumId = profileText(formData, "album_id", 64) || null;
+  if (!photoId) redirect(withReturnStatus(returnPath, "error", "photo"));
+  if (albumId) {
+    const { data: album } = await admin
+      .from("community_profile_albums")
+      .select("id")
+      .eq("id", albumId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!album) redirect(withReturnStatus(returnPath, "error", "album"));
+  }
+  const { error } = await admin
+    .from("community_profile_photos")
+    .update({
+      album_id: albumId,
+      caption: profileText(formData, "caption", 180) || null,
+      alt_text: profileText(formData, "alt_text", 180) || null,
+      visibility: normalizedCommunityVisibility(formData.get("visibility")),
+      status: normalizedActiveStatus(formData.get("status")),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", photoId)
+    .eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "photo"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "photo-updated"));
+}
+
+export async function deleteCommunityProfilePhoto(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const photoId = profileText(formData, "photo_id", 64);
+  if (!photoId) redirect(withReturnStatus(returnPath, "error", "photo"));
+  const { error } = await admin
+    .from("community_profile_photos")
+    .delete()
+    .eq("id", photoId)
+    .eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "photo"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "photo-deleted"));
 }
 
 export async function createCommunityProfileEvent(formData: FormData) {
@@ -717,13 +822,56 @@ export async function createCommunityProfileEvent(formData: FormData) {
     user_id: user.id,
     title,
     starts_at: new Date(startsAt).toISOString(),
+    ends_at: optionalIsoDate(profileText(formData, "ends_at", 40)),
     location: profileText(formData, "location", 140) || null,
     description: profileText(formData, "description", 1000) || null,
-    image_url: imageUrl
+    image_url: imageUrl,
+    visibility: normalizedCommunityVisibility(formData.get("visibility")),
+    status: "active",
+    reminder_enabled: formData.get("remind_me") === "on",
+    reminder_note: profileText(formData, "reminder_note", 300) || null
   });
   if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
   revalidatePath("/community/profiel");
   redirect(withReturnStatus(returnPath, "profile", "moment-saved"));
+}
+
+export async function updateCommunityProfileEvent(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const eventId = profileText(formData, "event_id", 64);
+  const title = profileText(formData, "title", 120);
+  const startsAt = profileText(formData, "starts_at", 40);
+  if (!eventId || !title || !startsAt || Number.isNaN(Date.parse(startsAt))) redirect(withReturnStatus(returnPath, "error", "event"));
+  const image = getUploadFile(formData, "event_image");
+  if (image && !isAllowedCommunityImage(image)) redirect(withReturnStatus(returnPath, "error", "photo"));
+  const existingImageUrl = profileText(formData, "existing_image_url", 600);
+  const imageUrl = image
+    ? await uploadPublicFile(admin, "community-profile-media", `${user.id}/events`, image, "jpg", returnPath)
+    : existingImageUrl || null;
+  const { error } = await admin
+    .from("community_profile_events")
+    .update({
+      title,
+      starts_at: new Date(startsAt).toISOString(),
+      ends_at: optionalIsoDate(profileText(formData, "ends_at", 40)),
+      location: profileText(formData, "location", 140) || null,
+      description: profileText(formData, "description", 1000) || null,
+      image_url: imageUrl,
+      visibility: normalizedCommunityVisibility(formData.get("visibility")),
+      status: normalizedActiveStatus(formData.get("status")) === "archived" ? "archived" : "active",
+      reminder_enabled: formData.get("remind_me") === "on",
+      reminder_note: profileText(formData, "reminder_note", 300) || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", eventId)
+    .eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "event"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "moment-updated"));
 }
 
 export async function sendCommunityFriendRequest(formData: FormData) {
@@ -835,6 +983,9 @@ export async function saveCommunityPulseMoment(formData: FormData) {
     ai_generation_status: wantsAi ? "requested" : "not_requested",
     ai_estimated_price_cents: wantsAi ? 199 : 0,
     ai_payment_status: wantsAi ? "pending" : "not_required",
+    ai_render_orientation: wantsAi ? "vertical_reel" : null,
+    stripe_payment_link: wantsAi ? pulseAiStripePaymentLink : null,
+    stripe_buy_button_id: wantsAi ? pulseAiStripeBuyButtonId : null,
     updated_at: new Date().toISOString()
   };
 

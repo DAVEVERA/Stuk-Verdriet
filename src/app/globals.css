@@ -3089,7 +3089,7 @@ textarea {
   right: max(14px, calc(env(safe-area-inset-right) + 14px));
   top: max(18px, calc(env(safe-area-inset-top) + 18px));
   width: auto;
-  z-index: 55;
+  z-index: 120;
 }
 
 .community-dock-actions {
@@ -3645,7 +3645,7 @@ textarea {
 
 @media (max-width: 520px) {
   .community-account-dock {
-    top: max(82px, calc(env(safe-area-inset-top) + 82px));
+    top: max(12px, calc(env(safe-area-inset-top) + 12px));
   }
 }
 
@@ -7466,7 +7466,7 @@ textarea {
 .interview-card button,
 .interview-card input,
 .interview-card p,
-.interview-card span,
+.interview-card span
 .interview-card strong {
   font-family: Arial, sans-serif;
 }
@@ -8851,16 +8851,23 @@ textarea {
 
 .community-profile-photo-grid {
   display: grid;
-  gap: 5px;
+  gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .community-profile-photo-grid figure {
-  aspect-ratio: 1;
   background: #e7eae5;
+  border: 1px solid rgba(66, 86, 69, 0.14);
   border-radius: 6px;
+  display: grid;
   margin: 0;
   overflow: hidden;
+  position: relative;
+}
+
+.community-profile-photo-frame {
+  aspect-ratio: 1;
+  display: block;
   position: relative;
 }
 
@@ -8869,14 +8876,117 @@ textarea {
 }
 
 .community-profile-photo-grid figcaption {
-  background: linear-gradient(transparent, rgba(10, 20, 13, 0.78));
-  bottom: 0;
-  color: var(--white);
+  background: #f7f8f5;
+  color: var(--pine);
   font-size: 0.76rem;
-  left: 0;
-  padding: 22px 8px 7px;
-  position: absolute;
-  right: 0;
+  padding: 8px;
+}
+
+.community-profile-photo-grid figcaption strong,
+.community-profile-photo-grid figcaption span {
+  display: block;
+}
+
+.community-profile-photo-grid figcaption span {
+  color: var(--eucalyptus);
+  font-size: 0.72rem;
+  margin-top: 2px;
+}
+
+.community-profile-album-create {
+  align-items: start;
+  background: #f7f8f5;
+  border: 1px solid rgba(66, 86, 69, 0.13);
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.community-profile-album-create h3,
+.community-profile-album-create span,
+.community-profile-album-grid strong,
+.community-profile-album-grid span,
+.community-profile-album-grid p {
+  margin: 0;
+}
+
+.community-profile-album-create h3,
+.community-profile-album-grid strong {
+  color: var(--pine);
+}
+
+.community-profile-album-create span,
+.community-profile-album-grid span,
+.community-profile-album-grid p {
+  color: var(--eucalyptus);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.community-profile-album-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.community-profile-album-grid article {
+  border: 1px solid rgba(66, 86, 69, 0.14);
+  border-radius: 7px;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.community-profile-photo-edit,
+.community-profile-event-edit {
+  border-top: 1px solid rgba(66, 86, 69, 0.12);
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+
+.community-profile-photo-edit summary,
+.community-profile-event-edit summary {
+  color: var(--pine);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+  min-height: 38px;
+}
+
+.community-profile-photo-edit form,
+.community-profile-event-edit form {
+  display: grid;
+  gap: 8px;
+}
+
+.community-profile-photo-edit label,
+.community-profile-event-edit label,
+.community-profile-album-create label {
+  color: var(--pine);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 750;
+  gap: 5px;
+}
+
+.community-profile-photo-edit input,
+.community-profile-photo-edit select,
+.community-profile-event-edit input,
+.community-profile-event-edit select,
+.community-profile-event-edit textarea,
+.community-profile-album-create input,
+.community-profile-album-create select,
+.community-profile-album-create textarea {
+  background: #fff;
+  border: 1px solid rgba(66, 86, 69, 0.24);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 42px;
+  padding: 8px 9px;
+  width: 100%;
 }
 
 .community-profile-event-grid,
@@ -9189,6 +9299,57 @@ textarea {
   font-size: 0.9rem;
   line-height: 1.45;
   margin: 0;
+}
+
+.pulse-payment-card {
+  background: #fff;
+  border: 1px solid rgba(66, 86, 69, 0.16);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.pulse-payment-card > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.pulse-payment-card strong {
+  color: var(--pine);
+}
+
+.pulse-payment-card span {
+  color: var(--eucalyptus);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.pulse-payment-card button {
+  background: var(--pine);
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 850;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.pulse-payment-popout {
+  border-top: 1px solid rgba(66, 86, 69, 0.12);
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.pulse-stripe-button {
+  min-height: 98px;
+}
+
+.pulse-payment-popout a {
+  color: var(--pine);
+  font-size: 0.86rem;
+  font-weight: 850;
 }
 
 .pulse-profile-overview,
@@ -9648,6 +9809,14 @@ textarea {
 }
 
 @media (min-width: 620px) {
+  .community-profile-album-create {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .community-profile-album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .community-profile-activity-item {
     align-items: center;
     grid-template-columns: 40px minmax(0, 1fr) minmax(170px, auto);

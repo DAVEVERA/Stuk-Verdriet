@@ -14,15 +14,19 @@ import {
 } from "lucide-react";
 import {
   addCommunityProfilePhoto,
+  createCommunityProfileAlbum,
   createCommunityProfileEvent,
   deleteCommunityConnection,
+  deleteCommunityProfilePhoto,
   deleteCommunityProfileEvent,
   deleteCommunityPulseMoment,
   respondToCommunityFriendRequest,
   sendCommunityFriendRequest,
   signOut,
   updateCommunityProfileInfo,
-  updateCommunityProfileMedia
+  updateCommunityProfileMedia,
+  updateCommunityProfilePhoto,
+  updateCommunityProfileEvent
 } from "@/lib/actions";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
@@ -30,6 +34,7 @@ import type {
   CommunityFriendship,
   CommunityPost,
   CommunityProfile,
+  CommunityProfileAlbum,
   CommunityProfileEvent,
   CommunityProfilePhoto,
   CommunityPulseMoment,
@@ -57,6 +62,7 @@ const profileMessages: Record<string, string> = {
   avatar: "Kies een jpg, png of webp van maximaal 3 MB.",
   cover: "Kies een jpg, png of webp van maximaal 5 MB.",
   photo: "Kies een geldige foto van maximaal 4 MB.",
+  album: "Dit album kon niet worden opgeslagen of gevonden.",
   event: "Vul voor het moment minimaal een titel en datum in.",
   friend: "Dit verbindingsverzoek kon niet worden verwerkt.",
   connection: "Dit verbindingsverzoek kon niet worden verwerkt.",
@@ -75,8 +81,12 @@ const successMessages: Record<string, string> = {
   "media-saved": "Je profielafbeelding is bijgewerkt.",
   "info-saved": "Je profielinformatie is opgeslagen.",
   "photo-saved": "De foto staat nu in je profiel.",
+  "photo-updated": "De foto is bijgewerkt.",
+  "photo-deleted": "De foto is verwijderd.",
+  "album-saved": "Het album is aangemaakt.",
   "event-saved": "Het moment is toegevoegd.",
   "moment-saved": "Het moment is toegevoegd.",
+  "moment-updated": "Het moment is bijgewerkt.",
   "moment-deleted": "Moment verwijderd.",
   "friend-requested": "Verbindingsverzoek verstuurd.",
   "friend-accepted": "Jullie hebben elkaar gevonden.",
@@ -175,15 +185,18 @@ function PersonRow({ profile, action, description }: { profile: CommunityProfile
   );
 }
 
-function ProfilePhotosSection({ photos, profile, displayName, compact = false }: {
+function ProfilePhotosSection({ photos, albums, profile, displayName, compact = false }: {
   photos: CommunityProfilePhoto[];
+  albums: CommunityProfileAlbum[];
   profile: CommunityProfile | null;
   displayName: string;
   compact?: boolean;
 }) {
-  const media = [
-    ...(profile?.avatar_url ? [{ id: "avatar", image_url: profile.avatar_url, caption: "Profielfoto" }] : []),
-    ...(profile?.cover_url ? [{ id: "cover", image_url: profile.cover_url, caption: "Omslagfoto" }] : []),
+  const albumById = new Map(albums.map((album) => [album.id, album]));
+  type ProfileMediaItem = CommunityProfilePhoto & { system?: boolean };
+  const media: ProfileMediaItem[] = [
+    ...(profile?.avatar_url ? [{ id: "avatar", user_id: profile.user_id, image_url: profile.avatar_url, caption: "Profielfoto", alt_text: `Profielfoto van ${displayName}`, album_id: null, visibility: "community" as const, status: "active" as const, display_order: -2, created_at: profile.updated_at ?? new Date(0).toISOString(), system: true }] : []),
+    ...(profile?.cover_url ? [{ id: "cover", user_id: profile.user_id, image_url: profile.cover_url, caption: "Omslagfoto", alt_text: `Omslagfoto van ${displayName}`, album_id: null, visibility: "community" as const, status: "active" as const, display_order: -1, created_at: profile.updated_at ?? new Date(0).toISOString(), system: true }] : []),
     ...photos
   ];
   const visibleMedia = compact ? media.slice(0, 6) : media;
@@ -200,20 +213,79 @@ function ProfilePhotosSection({ photos, profile, displayName, compact = false }:
             <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
             <label>Foto<input name="photo_file" type="file" accept="image/png,image/jpeg,image/webp" required /></label>
             <label>Bijschrift<input name="caption" maxLength={180} placeholder={`Vertel iets over deze foto van ${displayName}`} /></label>
+            <label>Alt-tekst<input name="alt_text" maxLength={180} placeholder="Beschrijf wat op de foto staat" /></label>
+            <label>Album<select name="album_id" defaultValue=""><option value="">Geen album</option>{albums.map((album) => <option key={album.id} value={album.id}>{album.title}</option>)}</select></label>
+            <label>Zichtbaarheid<select name="visibility" defaultValue="connections"><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
             <button className="community-panel-button" type="submit">Foto plaatsen</button>
           </form>
         </details>
       </header>
       <nav className="community-profile-subnav" aria-label="Foto onderdelen">
         <Link className="active" href={profileHref("photos")}>Jouw foto&apos;s</Link>
-        <span>Albums</span>
+        <a href="#foto-albums">Albums</a>
+        <a href="#foto-beheer">Beheer</a>
       </nav>
+      <div className="community-profile-album-create" id="foto-albums">
+        <div>
+          <h3>Albums</h3>
+          <span>Bundel foto&apos;s per herinnering, periode of onderwerp.</span>
+        </div>
+        <details className="community-profile-action-menu">
+          <summary>Album aanmaken</summary>
+          <form action={createCommunityProfileAlbum}>
+            <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
+            <label>Albumnaam<input name="title" maxLength={80} required placeholder="Bijvoorbeeld herinneringen thuis" /></label>
+            <label>Omschrijving<textarea name="description" maxLength={300} rows={3} /></label>
+            <label>Zichtbaarheid<select name="visibility" defaultValue="connections"><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
+            <button className="community-panel-button" type="submit">Album opslaan</button>
+          </form>
+        </details>
+      </div>
+      {albums.length ? (
+        <div className="community-profile-album-grid">
+          {albums.map((album) => {
+            const count = photos.filter((photo) => photo.album_id === album.id).length;
+            return (
+              <article key={album.id}>
+                <strong>{album.title}</strong>
+                <span>{count} {count === 1 ? "foto" : "foto's"} · {visibilityLabel(album.visibility)}</span>
+                {album.description ? <p>{album.description}</p> : null}
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
       {visibleMedia.length ? (
-        <div className="community-profile-photo-grid">
+        <div className="community-profile-photo-grid" id="foto-beheer">
           {visibleMedia.map((photo) => (
             <figure key={photo.id}>
-              <Image src={photo.image_url} alt={photo.caption || `Foto van ${displayName}`} fill sizes="(max-width: 520px) 50vw, (max-width: 900px) 33vw, 220px" />
-              {photo.caption ? <figcaption>{photo.caption}</figcaption> : null}
+              <span className="community-profile-photo-frame">
+                <Image src={photo.image_url} alt={photo.alt_text || photo.caption || `Foto van ${displayName}`} fill sizes="(max-width: 520px) 50vw, (max-width: 900px) 33vw, 220px" />
+              </span>
+              <figcaption>
+                <strong>{photo.caption || "Foto zonder bijschrift"}</strong>
+                <span>{albumById.get(photo.album_id ?? "")?.title ?? "Geen album"} · {visibilityLabel(photo.visibility ?? "connections")}</span>
+              </figcaption>
+              {"system" in photo && photo.system ? null : (
+                <details className="community-profile-photo-edit">
+                  <summary>Bewerken</summary>
+                  <form action={updateCommunityProfilePhoto}>
+                    <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
+                    <input type="hidden" name="photo_id" value={photo.id} readOnly />
+                    <label>Bijschrift<input name="caption" maxLength={180} defaultValue={photo.caption ?? ""} /></label>
+                    <label>Alt-tekst<input name="alt_text" maxLength={180} defaultValue={photo.alt_text ?? ""} /></label>
+                    <label>Album<select name="album_id" defaultValue={photo.album_id ?? ""}><option value="">Geen album</option>{albums.map((album) => <option key={album.id} value={album.id}>{album.title}</option>)}</select></label>
+                    <label>Zichtbaarheid<select name="visibility" defaultValue={photo.visibility ?? "connections"}><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
+                    <label>Status<select name="status" defaultValue={photo.status ?? "active"}><option value="active">Zichtbaar</option><option value="hidden">Verborgen</option><option value="archived">Gearchiveerd</option></select></label>
+                    <button className="community-panel-button" type="submit">Foto opslaan</button>
+                  </form>
+                  <form action={deleteCommunityProfilePhoto}>
+                    <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
+                    <input type="hidden" name="photo_id" value={photo.id} readOnly />
+                    <button className="text-link" type="submit">Foto verwijderen</button>
+                  </form>
+                </details>
+              )}
             </figure>
           ))}
         </div>
@@ -223,6 +295,12 @@ function ProfilePhotosSection({ photos, profile, displayName, compact = false }:
       {compact && media.length > visibleMedia.length ? <Link className="community-profile-more" href={profileHref("photos")}>Alle foto&apos;s bekijken</Link> : null}
     </section>
   );
+}
+
+function visibilityLabel(value: string) {
+  if (value === "private") return "Alleen ik";
+  if (value === "community") return "Community";
+  return "Verbindingen";
 }
 
 type ProfileMoment = CommunityProfileEvent & {
@@ -252,10 +330,13 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Pro
             <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
             <label>Moment<input name="title" maxLength={120} placeholder="Bijvoorbeeld: Eva's dag" required /></label>
             <label>Welke datum wil je onthouden?<input name="starts_at" type="datetime-local" required /></label>
+            <label>Eindmoment, als dat relevant is<input name="ends_at" type="datetime-local" /></label>
             <label>Plek of context<input name="location" maxLength={140} /></label>
             <label>Bewaar dagen die voor jou betekenis hebben<textarea name="description" maxLength={1000} rows={3} /></label>
             <label>Afbeelding<input name="event_image" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+            <label>Zichtbaarheid<select name="visibility" defaultValue="connections"><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
             <label className="community-checkbox-row"><input name="remind_me" type="checkbox" defaultChecked />Herinner mij aan dit moment</label>
+            <label>Herinneringsnotitie<textarea name="reminder_note" maxLength={300} rows={2} placeholder="Wat wil je op die dag niet vergeten?" /></label>
             <button className="community-panel-button" type="submit">Moment toevoegen</button>
           </form>
         </details>
@@ -274,13 +355,34 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Pro
                 <h3>{event.title}</h3>
                 {event.owner ? <p><Users size={15} /> {event.owner.display_name}</p> : null}
                 {event.location ? <p><MapPin size={15} /> {event.location}</p> : null}
+                <p>{visibilityLabel(event.visibility ?? "connections")}{event.reminder_enabled ? " · herinnering aan" : ""}</p>
+                {event.reminder_note ? <p>{event.reminder_note}</p> : null}
               </div>
               {!event.owner ? (
-                <form action={deleteCommunityProfileEvent}>
-                  <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
-                  <input type="hidden" name="event_id" value={event.id} readOnly />
-                  <button className="text-link" type="submit">Moment verwijderen</button>
-                </form>
+                <details className="community-profile-event-edit">
+                  <summary>Moment bewerken</summary>
+                  <form action={updateCommunityProfileEvent} encType="multipart/form-data">
+                    <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
+                    <input type="hidden" name="event_id" value={event.id} readOnly />
+                    <input type="hidden" name="existing_image_url" value={event.image_url ?? ""} readOnly />
+                    <label>Moment<input name="title" maxLength={120} defaultValue={event.title} required /></label>
+                    <label>Start<input name="starts_at" type="datetime-local" defaultValue={toDateTimeLocal(event.starts_at)} required /></label>
+                    <label>Einde<input name="ends_at" type="datetime-local" defaultValue={event.ends_at ? toDateTimeLocal(event.ends_at) : ""} /></label>
+                    <label>Plek of context<input name="location" maxLength={140} defaultValue={event.location ?? ""} /></label>
+                    <label>Betekenis<textarea name="description" maxLength={1000} rows={3} defaultValue={event.description ?? ""} /></label>
+                    <label>Nieuwe afbeelding<input name="event_image" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+                    <label>Zichtbaarheid<select name="visibility" defaultValue={event.visibility ?? "connections"}><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
+                    <label>Status<select name="status" defaultValue={event.status ?? "active"}><option value="active">Actief</option><option value="archived">Archiveren</option></select></label>
+                    <label className="community-checkbox-row"><input name="remind_me" type="checkbox" defaultChecked={event.reminder_enabled ?? false} />Herinner mij aan dit moment</label>
+                    <label>Herinneringsnotitie<textarea name="reminder_note" maxLength={300} rows={2} defaultValue={event.reminder_note ?? ""} /></label>
+                    <button className="community-panel-button" type="submit">Moment opslaan</button>
+                  </form>
+                  <form action={deleteCommunityProfileEvent}>
+                    <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
+                    <input type="hidden" name="event_id" value={event.id} readOnly />
+                    <button className="text-link" type="submit">Moment verwijderen</button>
+                  </form>
+                </details>
               ) : null}
             </article>
           ))}
@@ -290,6 +392,12 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Pro
       )}
     </section>
   );
+}
+
+function toDateTimeLocal(value: string) {
+  const date = new Date(value);
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
 function ProfileConnectionsSection({
@@ -647,6 +755,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   const dataClient = createSupabaseAdminClient() ?? supabase;
   const [
     profileResult,
+    albumsResult,
     photosResult,
     eventsResult,
     pulseMomentsResult,
@@ -656,7 +765,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     ownRepliesResult
   ] = await Promise.all([
     dataClient.from("community_profiles").select("*").eq("user_id", user.id).maybeSingle(),
-    dataClient.from("community_profile_photos").select("*").eq("user_id", user.id).order("display_order").order("created_at", { ascending: false }).limit(30),
+    dataClient.from("community_profile_albums").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(40),
+    dataClient.from("community_profile_photos").select("*,community_profile_albums(*)").eq("user_id", user.id).neq("status", "archived").order("display_order").order("created_at", { ascending: false }).limit(60),
     dataClient.from("community_profile_events").select("*").eq("user_id", user.id).order("starts_at", { ascending: false }).limit(30),
     dataClient.from("community_pulse_moments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
     dataClient.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).order("updated_at", { ascending: false }),
@@ -671,6 +781,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   ]);
 
   const profile = profileResult.error ? null : profileResult.data as CommunityProfile | null;
+  const albums = albumsResult.error ? [] : (albumsResult.data as CommunityProfileAlbum[] | null) ?? [];
   const photos = photosResult.error ? [] : (photosResult.data as CommunityProfilePhoto[] | null) ?? [];
   const ownEvents = eventsResult.error ? [] : (eventsResult.data as CommunityProfileEvent[] | null) ?? [];
   const pulseReady = !pulseMomentsResult.error;
@@ -761,7 +872,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
       {params.profile ? <p className="notice community-profile-notice" role="status">{successMessages[params.profile] ?? "Je wijziging is opgeslagen."}</p> : null}
 
       <div className="community-profile-content">
-        {activeTab === "all" || activeTab === "photos" ? <ProfilePhotosSection photos={photos} profile={profile} displayName={displayName} compact={activeTab === "all"} /> : null}
+        {activeTab === "all" || activeTab === "photos" ? <ProfilePhotosSection photos={photos} albums={albums} profile={profile} displayName={displayName} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "events" ? <ProfileEventsSection events={events} filter={eventFilter} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "friends" ? <ProfileConnectionsSection activeTab={activeTab === "all" ? "connections" : connectionsTab} connections={connections} incoming={incoming} acceptedConnections={acceptedConnections} outgoingIds={outgoingIds} suggestions={suggestions} connectionMoments={connectionEvents} searchQuery={searchQuery} profilesById={profilesById} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "activity" ? <ProfileActivitySection posts={ownPosts} replies={ownReplies} compact={activeTab === "all"} /> : null}

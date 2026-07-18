@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Script from "next/script";
 import { ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { saveCommunityPulseMoment } from "@/lib/actions";
 import type { CommunityPulseLayer, CommunityPulseMoment } from "@/types/content";
@@ -18,6 +19,9 @@ const animationOptions: Array<{ value: CommunityPulseLayer["animation"]; label: 
   { value: "rise", label: "Omhoog komen" },
   { value: "still", label: "Stil" }
 ];
+const stripePublishableKey = "pk_live_51T0omDK4ScKc9e3quwBYqevRcgQjxt2yw3mp5ALSRuSxXklyC006bwm8n9qM9W1AdWKqa9uMgiEScxH8pSmU5NCz00TmFc6OFI";
+const stripeBuyButtonId = "buy_btn_1Tua2PK4ScKc9e3qb6YfbBfb";
+const stripePaymentLink = "https://buy.stripe.com/aFa6oId6R7kob0S54Ed3i00";
 
 function newLayer(text = "Wat raakt je vandaag?"): CommunityPulseLayer {
   const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `layer-${Date.now()}`;
@@ -44,6 +48,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
   const [visibility, setVisibility] = useState(selectedMoment?.visibility ?? "connections");
   const [status, setStatus] = useState(selectedMoment?.status ?? "published");
   const [aiAssist, setAiAssist] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const [layers, setLayers] = useState<CommunityPulseLayer[]>(selectedMoment?.layers?.length ? selectedMoment.layers : [newLayer()]);
 
   function loadMoment(momentId: string) {
@@ -142,8 +147,31 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
 
         <section className="pulse-ai-box">
           <label className="community-checkbox-row"><input name="ai_assist" type="checkbox" checked={aiAssist} onChange={(event) => setAiAssist(event.target.checked)} />Laat AI dit moment vormgeven voor EUR 1,99</label>
-          <p>AI kan tekst, beeldrichting en compositie voorstellen. De aanvraag wordt eerst bewaard, zodat betaling en generatie later veilig gekoppeld blijven.</p>
+          <p>Voor EUR 1,99 kan dit moment als verticale Facebook Reel-render worden uitgewerkt. Bewaar eerst de aanvraag, rond daarna de microbetaling af in Stripe.</p>
           <textarea name="ai_prompt" rows={3} disabled={!aiAssist} placeholder="Beschrijf de sfeer, kleuren en wat dit moment mag dragen." />
+          {aiAssist ? (
+            <div className="pulse-payment-card">
+              <div>
+                <strong>AI-render verticaal</strong>
+                <span>Formaat voor stories/reels, voorbereid voor Gemini Flash-rendering op basis van jouw prompt.</span>
+              </div>
+              <button type="button" onClick={() => setPaymentOpen((open) => !open)}>
+                {paymentOpen ? "Betaling sluiten" : "Koop render EUR 1,99"}
+              </button>
+              {paymentOpen ? (
+                <div className="pulse-payment-popout" role="dialog" aria-label="Stripe betaling voor AI-render">
+                  <Script src="https://js.stripe.com/v3/buy-button.js" strategy="lazyOnload" />
+                  <div
+                    className="pulse-stripe-button"
+                    dangerouslySetInnerHTML={{
+                      __html: `<stripe-buy-button buy-button-id="${stripeBuyButtonId}" publishable-key="${stripePublishableKey}"></stripe-buy-button>`
+                    }}
+                  />
+                  <a href={stripePaymentLink} target="_blank" rel="noreferrer">Open Stripe betaling in nieuw venster</a>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
         <button className="community-panel-button" type="submit"><Sparkles size={17} /> {aiAssist ? "AI-aanvraag bewaren" : "Nieuw moment plaatsen"}</button>

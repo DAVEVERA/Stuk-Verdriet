@@ -138,10 +138,27 @@ export type CommunityProfileDetails = {
 export type CommunityProfilePhoto = {
   id: string;
   user_id: string;
+  album_id?: string | null;
   image_url: string;
   caption: string | null;
+  alt_text?: string | null;
+  visibility?: "private" | "connections" | "community";
+  status?: "active" | "hidden" | "archived";
   display_order: number;
   created_at: string;
+  updated_at?: string;
+  community_profile_albums?: CommunityProfileAlbum | CommunityProfileAlbum[] | null;
+};
+
+export type CommunityProfileAlbum = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  visibility: "private" | "connections" | "community";
+  cover_image_url: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type CommunityProfileEvent = {
@@ -151,8 +168,14 @@ export type CommunityProfileEvent = {
   description: string | null;
   location: string | null;
   starts_at: string;
+  ends_at?: string | null;
   image_url: string | null;
+  visibility?: "private" | "connections" | "community";
+  status?: "active" | "archived";
+  reminder_enabled?: boolean;
+  reminder_note?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export type CommunityPulseLayer = {
@@ -184,6 +207,9 @@ export type CommunityPulseMoment = {
   ai_generation_status: "not_requested" | "requested" | "draft_ready" | "complete" | "failed";
   ai_estimated_price_cents: number;
   ai_payment_status: "not_required" | "pending" | "paid" | "failed";
+  ai_render_orientation?: "vertical_reel";
+  stripe_payment_link?: string | null;
+  stripe_buy_button_id?: string | null;
   created_at: string;
   updated_at: string;
   community_profiles?: CommunityProfile | CommunityProfile[] | null;
