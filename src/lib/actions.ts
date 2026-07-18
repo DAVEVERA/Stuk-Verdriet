@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash, createSign } from "crypto";
+import { createHash, createSign, randomUUID } from "crypto";
 import { readFileSync } from "fs";
 import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
@@ -9,7 +9,7 @@ import { encodeAuthNext } from "@/lib/auth-redirect";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { adminEmailList, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
-import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
+import type { CommunityPulseLayer, PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
 const communityImageMaxSize = 4 * 1024 * 1024;
@@ -180,6 +180,101 @@ function isAllowedCommunityCover(file: File) {
 
 function profileText(formData: FormData, name: string, maxLength = 160) {
   return String(formData.get(name) ?? "").trim().slice(0, maxLength);
+}
+
+function normalizedPulseAnimation(value: FormDataEntryValue | null): CommunityPulseLayer["animation"] {
+  const animation = String(value ?? "fade").trim();
+  return ["fade", "float", "pulse", "rise", "still"].includes(animation) ? animation as CommunityPulseLayer["animation"] : "fade";
+}
+
+function normalizedPulseVisibility(value: FormDataEntryValue | null) {
+  const visibility = String(value ?? "connections").trim();
+  return ["private", "connections", "community"].includes(visibility) ? visibility : "connections";
+}
+
+function normalizedPulseStatus(value: FormDataEntryValue | null) {
+  const status = String(value ?? "published").trim();
+  return ["draft", "published", "archived"].includes(status) ? status : "published";
+}
+
+function normalizedHexColor(value: FormDataEntryValue | null, fallback = "#2f4b3a") {
+  const color = String(value ?? "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
+}
+
+function clampNumber(value: unknown, fallback: number, min: number, max: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+}
+
+function parsePulseLayers(formData: FormData, fallbackText: string, animation: CommunityPulseLayer["animation"]) {
+  const raw = String(formData.get("layers_json") ?? "").trim();
+  let parsed: unknown = [];
+  if (raw) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = [];
+    }
+  }
+  const source = Array.isArray(parsed) ? parsed : [];
+  const layers: CommunityPulseLayer[] = source.slice(0, 8).map((layer, index) => {
+    const item = layer && typeof layer === "object" ? layer as Record<string, unknown> : {};
+    const kind = item.kind === "image" ? "image" : "text";
+    return {
+      id: String(item.id ?? `layer-${index + 1}`).slice(0, 48),
+      kind,
+      text: String(item.text ?? "").trim().slice(0, 160),
+      image_url: typeof item.image_url === "string" ? item.image_url.slice(0, 600) : undefined,
+      x: clampNumber(item.x, 50, 0, 100),
+      y: clampNumber(item.y, 58, 0, 100),
+      size: clampNumber(item.size, 24, 12, 56),
+      color: normalizedHexColor(typeof item.color === "string" ? item.color : null, "#ffffff"),
+      rotation: clampNumber(item.rotation, 0, -18, 18),
+      animation: normalizedPulseAnimation(typeof item.animation === "string" ? item.animation : animation)
+    } satisfies CommunityPulseLayer;
+  }).filter((layer) => layer.kind === "image" ? layer.image_url : layer.text);
+
+  if (!layers.length && fallbackText) {
+    layers.push({
+      id: "layer-default",
+      kind: "text",
+      text: fallbackText.slice(0, 160),
+      image_url: undefined,
+      x: 50,
+      y: 58,
+      size: 24,
+      color: "#ffffff",
+      rotation: 0,
+      animation
+    });
+  }
+  return layers;
+}
+
+async function canUsePulseMoment(
+  admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
+  userId: string,
+  momentId: string
+) {
+  const { data: moment } = await admin
+    .from("community_pulse_moments")
+    .select("user_id,status,visibility,community_profiles(is_discoverable)")
+    .eq("id", momentId)
+    .maybeSingle();
+  if (!moment) return false;
+  if (moment.user_id === userId) return true;
+  if (moment.status !== "published") return false;
+  const profile = Array.isArray(moment.community_profiles) ? moment.community_profiles[0] : moment.community_profiles;
+  if (moment.visibility === "community") return Boolean(profile?.is_discoverable);
+  if (moment.visibility !== "connections") return false;
+  const { data: friendship } = await admin
+    .from("community_friendships")
+    .select("id")
+    .eq("status", "accepted")
+    .or(`and(requester_id.eq.${userId},addressee_id.eq.${moment.user_id}),and(addressee_id.eq.${userId},requester_id.eq.${moment.user_id})`)
+    .maybeSingle();
+  return Boolean(friendship);
 }
 
 async function uploadPublicFile(
@@ -696,6 +791,109 @@ export async function deleteCommunityConnection(formData: FormData) {
   if (error) redirect(withReturnStatus(returnPath, "error", "connection"));
   revalidatePath("/community/profiel");
   redirect(withReturnStatus(returnPath, "profile", "connection-removed"));
+}
+
+export async function saveCommunityPulseMoment(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+
+  const title = profileText(formData, "title", 120);
+  const body = profileText(formData, "body", 1000);
+  if (!title) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const animation = normalizedPulseAnimation(formData.get("animation"));
+  const visibility = normalizedPulseVisibility(formData.get("visibility"));
+  const status = normalizedPulseStatus(formData.get("status"));
+  const backgroundColor = normalizedHexColor(formData.get("background_color"));
+  const image = getUploadFile(formData, "pulse_image");
+  if (image && !isAllowedCommunityImage(image)) redirect(withReturnStatus(returnPath, "error", "photo"));
+  const existingImageUrl = profileText(formData, "existing_image_url", 600);
+  const imageUrl = image
+    ? await uploadPublicFile(admin, "community-profile-media", `${user.id}/aan-de-pols`, image, "jpg", returnPath)
+    : existingImageUrl || null;
+  const layers = parsePulseLayers(formData, body || title, animation);
+  const wantsAi = formData.get("ai_assist") === "on";
+  const aiPrompt = profileText(formData, "ai_prompt", 1000);
+  const momentId = profileText(formData, "moment_id", 64);
+  const aiGenerationId = wantsAi ? (profileText(formData, "ai_generation_id", 80) || randomUUID()) : null;
+
+  const payload = {
+    user_id: user.id,
+    title,
+    body: body || null,
+    image_url: imageUrl,
+    background_color: backgroundColor,
+    animation,
+    visibility,
+    status,
+    layers,
+    ai_prompt: wantsAi ? aiPrompt || body || title : null,
+    ai_generation_id: aiGenerationId,
+    ai_generation_status: wantsAi ? "requested" : "not_requested",
+    ai_estimated_price_cents: wantsAi ? 199 : 0,
+    ai_payment_status: wantsAi ? "pending" : "not_required",
+    updated_at: new Date().toISOString()
+  };
+
+  const result = momentId
+    ? await admin.from("community_pulse_moments").update(payload).eq("id", momentId).eq("user_id", user.id)
+    : await admin.from("community_pulse_moments").insert(payload);
+  if (result.error) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", wantsAi ? "pulse-ai-requested" : "pulse-saved"));
+}
+
+export async function deleteCommunityPulseMoment(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const momentId = profileText(formData, "moment_id", 64);
+  if (!momentId) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const { error } = await admin.from("community_pulse_moments").delete().eq("id", momentId).eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "pulse-deleted"));
+}
+
+export async function reactToCommunityPulseMoment(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const momentId = profileText(formData, "moment_id", 64);
+  if (!momentId) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  if (!(await canUsePulseMoment(admin, user.id, momentId))) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const { error } = await admin.from("community_pulse_reactions").upsert({ moment_id: momentId, user_id: user.id }, { onConflict: "moment_id,user_id" });
+  if (error) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "pulse-reacted"));
+}
+
+export async function saveCommunityPulseMomentBookmark(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  await ensureCommunityProfile(user);
+  const momentId = profileText(formData, "moment_id", 64);
+  if (!momentId) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  if (!(await canUsePulseMoment(admin, user.id, momentId))) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  const { error } = await admin.from("community_pulse_saves").upsert({ moment_id: momentId, user_id: user.id }, { onConflict: "moment_id,user_id" });
+  if (error) redirect(withReturnStatus(returnPath, "error", "pulse"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "pulse-saved-bookmark"));
 }
 
 export async function startCommunityConversation(formData: FormData) {

@@ -17,12 +17,14 @@ import {
   createCommunityProfileEvent,
   deleteCommunityConnection,
   deleteCommunityProfileEvent,
+  deleteCommunityPulseMoment,
   respondToCommunityFriendRequest,
   sendCommunityFriendRequest,
   signOut,
   updateCommunityProfileInfo,
   updateCommunityProfileMedia
 } from "@/lib/actions";
+import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type {
   CommunityFriendship,
@@ -30,12 +32,13 @@ import type {
   CommunityProfile,
   CommunityProfileEvent,
   CommunityProfilePhoto,
+  CommunityPulseMoment,
   CommunityReply
 } from "@/types/content";
 
 export const dynamic = "force-dynamic";
 
-type ProfileTab = "all" | "info" | "activity" | "reels" | "photos" | "events" | "friends";
+type ProfileTab = "all" | "info" | "activity" | "pulse" | "photos" | "events" | "friends";
 type ConnectionsTab = "connections" | "requests" | "moments" | "hometown" | "find";
 
 type CommunityProfilePageProps = {
@@ -57,6 +60,7 @@ const profileMessages: Record<string, string> = {
   event: "Vul voor het moment minimaal een titel en datum in.",
   friend: "Dit verbindingsverzoek kon niet worden verwerkt.",
   connection: "Dit verbindingsverzoek kon niet worden verwerkt.",
+  pulse: "Dit Aan de Pols moment kon niet worden opgeslagen.",
   invalid: "Je sessie kon niet veilig worden gecontroleerd. Vernieuw de pagina en probeer opnieuw.",
   "profile-email": "Vul een geldig e-mailadres in.",
   "profile-media-empty": "Kies eerst een foto om te uploaden.",
@@ -80,14 +84,19 @@ const successMessages: Record<string, string> = {
   "connection-requested": "Verbindingsverzoek verstuurd.",
   "connection-accepted": "Jullie hebben elkaar gevonden.",
   "connection-declined": "Het verzoek is verwijderd.",
-  "connection-removed": "Verbinding verbroken."
+  "connection-removed": "Verbinding verbroken.",
+  "pulse-saved": "Er is een nieuw moment gedeeld.",
+  "pulse-ai-requested": "Je AI-aanvraag is bewaard.",
+  "pulse-deleted": "Moment verwijderd.",
+  "pulse-reacted": "Dit raakte mij is opgeslagen.",
+  "pulse-saved-bookmark": "Moment bewaard."
 };
 
 const profileTabs: Array<{ id: ProfileTab; label: string }> = [
   { id: "all", label: "Alles" },
   { id: "info", label: "Info" },
   { id: "activity", label: "Bijdragen" },
-  { id: "reels", label: "Reels" },
+  { id: "pulse", label: "Aan de Pols" },
   { id: "photos", label: "Foto's" },
   { id: "events", label: "Momenten" },
   { id: "friends", label: "Verbindingen" }
@@ -114,6 +123,11 @@ const communityStatusLabels = {
 
 function isProfileTab(value: string | undefined): value is ProfileTab {
   return profileTabs.some((tab) => tab.id === value);
+}
+
+function normalizeProfileTab(value: string | undefined): ProfileTab {
+  if (value === "reels") return "pulse";
+  return isProfileTab(value) ? value : "all";
 }
 
 function normalizeConnectionsTab(value: string | undefined): ConnectionsTab {
@@ -512,6 +526,47 @@ function formatProfileDate(value: string) {
   }).format(new Date(value));
 }
 
+function ProfilePulseSection({ moments, displayName }: { moments: CommunityPulseMoment[]; displayName: string }) {
+  return (
+    <section className="community-profile-section" id="aan-de-pols">
+      <header className="community-profile-section-header">
+        <div>
+          <p className="eyebrow">Aan de Pols</p>
+          <h2>Aan de Pols</h2>
+          <span>Even stilstaan bij wat er vanbinnen speelt. Deel een kort moment, een gedachte of iets dat je niet alleen wilt dragen.</span>
+        </div>
+      </header>
+      <PulseMomentDesigner moments={moments} displayName={displayName} />
+      <div className="pulse-profile-overview">
+        <h3>Momenten van {displayName}</h3>
+        {moments.length ? (
+          <div className="pulse-profile-list">
+            {moments.map((moment) => (
+              <article key={moment.id}>
+                <span className={`pulse-profile-thumb animation-${moment.animation}`} style={{ backgroundColor: moment.background_color }}>
+                  {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="88px" /> : null}
+                </span>
+                <div>
+                  <strong>{moment.title}</strong>
+                  <span>{moment.status === "draft" ? "Concept" : "Gedeeld"} · {moment.visibility === "community" ? "Community" : moment.visibility === "connections" ? "Verbindingen" : "Alleen ik"}</span>
+                  {moment.ai_generation_status === "requested" ? <span>AI-aanvraag staat klaar · EUR {(moment.ai_estimated_price_cents / 100).toFixed(2).replace(".", ",")}</span> : null}
+                </div>
+                <form action={deleteCommunityPulseMoment}>
+                  <input type="hidden" name="return_to" value={profileHref("pulse")} readOnly />
+                  <input type="hidden" name="moment_id" value={moment.id} readOnly />
+                  <button className="text-link" type="submit">Moment verwijderen</button>
+                </form>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="community-profile-empty"><Camera size={28} /><strong>Hier zijn nog geen momenten gedeeld</strong><span>Nieuw moment plaatsen kan hierboven.</span></div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfile | null; displayName: string }) {
   const details = profile?.profile_details ?? {};
   return (
@@ -584,7 +639,7 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
 
 export default async function CommunityProfilePage({ searchParams }: CommunityProfilePageProps) {
   const params = (await searchParams) ?? {};
-  const activeTab: ProfileTab = isProfileTab(params.tab) ? params.tab : "all";
+  const activeTab = normalizeProfileTab(params.tab);
   const connectionsTab = normalizeConnectionsTab(params.connections ?? params.friends);
   const searchQuery = String(params.q ?? "").trim().slice(0, 80);
   const eventFilter = params.events === "past" ? "past" : "upcoming";
@@ -598,6 +653,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     profileResult,
     photosResult,
     eventsResult,
+    pulseMomentsResult,
     friendshipsResult,
     discoverableResult,
     ownPostsResult,
@@ -606,6 +662,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     dataClient.from("community_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     dataClient.from("community_profile_photos").select("*").eq("user_id", user.id).order("display_order").order("created_at", { ascending: false }).limit(30),
     dataClient.from("community_profile_events").select("*").eq("user_id", user.id).order("starts_at", { ascending: false }).limit(30),
+    dataClient.from("community_pulse_moments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
     dataClient.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).order("updated_at", { ascending: false }),
     dataClient.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(80),
     dataClient.from("community_posts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
@@ -620,6 +677,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   const profile = profileResult.error ? null : profileResult.data as CommunityProfile | null;
   const photos = photosResult.error ? [] : (photosResult.data as CommunityProfilePhoto[] | null) ?? [];
   const ownEvents = eventsResult.error ? [] : (eventsResult.data as CommunityProfileEvent[] | null) ?? [];
+  const pulseReady = !pulseMomentsResult.error;
+  const pulseMoments = pulseMomentsResult.error ? [] : (pulseMomentsResult.data as CommunityPulseMoment[] | null) ?? [];
   const friendships = friendshipsResult.error ? [] : (friendshipsResult.data as CommunityFriendship[] | null) ?? [];
   const discoverable = discoverableResult.error ? [] : (discoverableResult.data as CommunityProfile[] | null) ?? [];
   const ownPosts = ownPostsResult.error ? [] : (ownPostsResult.data as CommunityPost[] | null) ?? [];
@@ -711,7 +770,15 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
         {activeTab === "all" || activeTab === "friends" ? <ProfileConnectionsSection activeTab={activeTab === "all" ? "connections" : connectionsTab} connections={connections} incoming={incoming} acceptedConnections={acceptedConnections} outgoingIds={outgoingIds} suggestions={suggestions} connectionMoments={connectionEvents} searchQuery={searchQuery} profilesById={profilesById} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "activity" ? <ProfileActivitySection posts={ownPosts} replies={ownReplies} compact={activeTab === "all"} /> : null}
         {activeTab === "info" ? <ProfileInfoSection profile={profile} displayName={displayName} /> : null}
-        {activeTab === "reels" ? <section className="community-profile-section"><div className="community-profile-empty"><Camera size={28} /><strong>Reels komen later</strong><span>Je foto&apos;s, momenten en profielinformatie zijn nu al volledig te beheren.</span></div></section> : null}
+        {activeTab === "pulse" ? (
+          pulseReady ? (
+            <ProfilePulseSection moments={pulseMoments} displayName={displayName} />
+          ) : (
+            <section className="community-profile-section">
+              <div className="community-profile-empty"><Camera size={28} /><strong>Aan de Pols wordt klaargezet</strong><span>De ontwerpmodule is gebouwd; de database-migratie moet nog met Supabase database-rechten worden toegepast.</span></div>
+            </section>
+          )
+        ) : null}
       </div>
     </main>
   );

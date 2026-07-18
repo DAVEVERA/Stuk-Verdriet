@@ -155,6 +155,44 @@ export type CommunityProfileEvent = {
   created_at: string;
 };
 
+export type CommunityPulseLayer = {
+  id: string;
+  kind: "text" | "image";
+  text?: string;
+  image_url?: string;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  rotation: number;
+  animation: "fade" | "float" | "pulse" | "rise" | "still";
+};
+
+export type CommunityPulseMoment = {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string | null;
+  image_url: string | null;
+  background_color: string;
+  animation: "fade" | "float" | "pulse" | "rise" | "still";
+  visibility: "private" | "connections" | "community";
+  status: "draft" | "published" | "archived";
+  layers: CommunityPulseLayer[];
+  ai_prompt: string | null;
+  ai_generation_id: string | null;
+  ai_generation_status: "not_requested" | "requested" | "draft_ready" | "complete" | "failed";
+  ai_estimated_price_cents: number;
+  ai_payment_status: "not_required" | "pending" | "paid" | "failed";
+  created_at: string;
+  updated_at: string;
+  community_profiles?: CommunityProfile | CommunityProfile[] | null;
+  reaction_count?: number;
+  save_count?: number;
+  has_reacted?: boolean;
+  has_saved?: boolean;
+};
+
 export type CommunityFriendship = {
   id: string;
   requester_id: string;

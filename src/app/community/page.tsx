@@ -1,7 +1,8 @@
 import { getApprovedCommunityPosts, getCommunityCategories } from "@/lib/content";
-import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
+import { createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
+import { CommunityPulseStrip } from "@/components/CommunityPulseStrip";
 import { CommunityAccountDock, CommunityPostCard, Icon } from "@/components/ui";
-import type { CommunityConversation, CommunityProfile } from "@/types/content";
+import type { CommunityConversation, CommunityFriendship, CommunityProfile, CommunityPulseMoment } from "@/types/content";
 
 type CommunityPageProps = {
   searchParams?: Promise<{
@@ -30,7 +31,9 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
   let currentProfile: CommunityProfile | null = null;
   let discoverableProfiles: CommunityProfile[] = [];
   let conversations: CommunityConversation[] = [];
+  let pulseMoments: CommunityPulseMoment[] = [];
   if (supabase && user) {
+    const admin = createSupabaseAdminClient();
     const [profileResult, profilesResult, conversationsResult] = await Promise.all([
       supabase.from("community_profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("community_profiles").select("*").eq("is_discoverable", true).neq("user_id", user.id).limit(12),
@@ -45,6 +48,41 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     currentProfile = (profileResult.data as CommunityProfile | null) ?? null;
     discoverableProfiles = (profilesResult.data as CommunityProfile[] | null) ?? [];
     conversations = (conversationsResult.data as CommunityConversation[] | null) ?? [];
+    if (admin) {
+      const [friendshipsResult, pulseResult] = await Promise.all([
+        admin.from("community_friendships").select("*").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).eq("status", "accepted"),
+        admin
+          .from("community_pulse_moments")
+          .select("*,community_profiles(user_id,display_name,avatar_url,is_discoverable)")
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .limit(30)
+      ]);
+      const friendships = (friendshipsResult.data as CommunityFriendship[] | null) ?? [];
+      const connectedIds = new Set(friendships.map((item) => item.requester_id === user.id ? item.addressee_id : item.requester_id));
+      pulseMoments = ((pulseResult.data as CommunityPulseMoment[] | null) ?? []).filter((moment) => {
+        const profile = Array.isArray(moment.community_profiles) ? moment.community_profiles[0] : moment.community_profiles;
+        if (moment.user_id === user.id) return true;
+        if (moment.visibility === "community") return Boolean(profile?.is_discoverable);
+        if (moment.visibility === "connections") return connectedIds.has(moment.user_id);
+        return false;
+      }).slice(0, 12);
+    }
+  } else {
+    const admin = createSupabaseAdminClient();
+    if (admin) {
+      const pulseResult = await admin
+        .from("community_pulse_moments")
+        .select("*,community_profiles(user_id,display_name,avatar_url,is_discoverable)")
+        .eq("status", "published")
+        .eq("visibility", "community")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      pulseMoments = ((pulseResult.data as CommunityPulseMoment[] | null) ?? []).filter((moment) => {
+        const profile = Array.isArray(moment.community_profiles) ? moment.community_profiles[0] : moment.community_profiles;
+        return Boolean(profile?.is_discoverable);
+      });
+    }
   }
   const featuredPosts = posts.slice(0, 9);
   const linkPosts = posts.filter((post) => post.post_type === "link" || post.resource_url).slice(0, 4);
@@ -95,6 +133,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                 Je reactie kon niet worden opgeslagen. Controleer de tekst en probeer het opnieuw.
               </p>
             ) : null}
+            <CommunityPulseStrip moments={pulseMoments} isLoggedIn={isLoggedIn} returnTo="/community" />
             {featuredPosts.length ? (
               <div className="post-grid community-post-list">
                 {featuredPosts.map((post) => (

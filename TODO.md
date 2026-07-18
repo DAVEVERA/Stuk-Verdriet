@@ -231,3 +231,24 @@ Make every authenticated SNAAR community function work consistently across messe
 ## Completion Marker
 
 SNAAR_AUTHENTICATED_COMMUNITY_COMPLETE: true
+
+---
+
+## Goal
+
+Replace Reels with Aan de Pols and ship a mobile-first moment/story creator for SNAAR.
+
+## Tasks
+
+- [x] Inspect current profile and feed implementation
+- [x] Add Supabase migration and TypeScript data contracts
+- [x] Build profile creator/editor for Aan de Pols
+- [x] Add mobile-first Aan de Pols strip to the feed
+- [x] Wire create, edit, delete, image upload, layer metadata, animation, and AI request state
+- [x] Run lint, typecheck, build, and route smoke checks
+- [ ] Apply Supabase migration with database-owner privileges
+- [x] Final review
+
+## Completion Marker
+
+AAN_DE_POLS_COMPLETE: false
