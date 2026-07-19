@@ -5,8 +5,8 @@ import { formatShopPrice, getPublishedShopProducts, getShopSettings } from "@/li
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Shop",
-  description: "Een kleine Stuk Verdriet shop met zachte, betekenisvolle producten rond herinneren, rouw en nabijheid.",
+  title: "Shop met aandacht",
+  description: "Kleine cadeaus en rituelen voor rouw, herinnering en steun. Met hart gekozen door Stuk Verdriet.",
   alternates: {
     canonical: "/shop"
   }
@@ -46,9 +46,9 @@ export default async function ShopPage() {
           <p>{settings.intro}</p>
           <div className="shop-hero-actions">
             <a className="button" href="#shop-producten">
-              <ShoppingBag size={18} aria-hidden /> Bekijk producten
+              <ShoppingBag size={18} aria-hidden /> Kies een gebaar
             </a>
-            <span><PackageCheck size={17} aria-hidden /> Kleine oplages, zorgvuldig gekozen</span>
+            <span><PackageCheck size={17} aria-hidden /> Met hart gekozen, klaar om te geven</span>
           </div>
         </div>
         {featured ? (
@@ -57,7 +57,7 @@ export default async function ShopPage() {
               {featured.image_url ? <Image src={featured.image_url} alt={`Productbeeld van ${featured.title}`} fill sizes="(max-width: 820px) 100vw, 420px" priority /> : <span>Stuk Verdriet</span>}
             </div>
             <div className="shop-featured-copy">
-              <span>Uitgelicht in de shop</span>
+              <span>Vaak gekozen als zacht gebaar</span>
               <strong>{featured.title}</strong>
               <p>{featured.short_description ?? featured.description}</p>
               <small>{formatShopPrice(featured.price_cents, featured.currency)}</small>
@@ -75,8 +75,8 @@ export default async function ShopPage() {
       {settings.checkout_note ? <p className="shop-checkout-note">{settings.checkout_note}</p> : null}
 
       <div className="shop-section-heading" id="shop-producten">
-        <p className="eyebrow">Producten</p>
-        <h2>Voor woorden, herinneringen en kleine rituelen</h2>
+        <p className="eyebrow">Collectie</p>
+        <h2>Kies iets dat past bij het moment</h2>
       </div>
 
       <div className="shop-product-grid" aria-label="Shop producten">
@@ -89,7 +89,7 @@ export default async function ShopPage() {
               </div>
               <div className="shop-product-body">
                 <div>
-                  <span>{product.inventory_count === null ? "Op aanvraag" : `${product.inventory_count} beschikbaar`}</span>
+                  <span>{product.inventory_count === null ? "Op aanvraag" : `Nog ${product.inventory_count} beschikbaar`}</span>
                   <h2>{product.title}</h2>
                   <p>{product.short_description ?? product.description}</p>
                 </div>
@@ -99,7 +99,7 @@ export default async function ShopPage() {
                     <input type="hidden" name="product_id" value={product.id} readOnly />
                     <input type="hidden" name="quantity" value="1" readOnly />
                     <button className="button" type="submit" disabled={soldOut}>
-                      {soldOut ? "Uitverkocht" : "Bestel"}
+                      {soldOut ? "Uitverkocht" : "Bestel dit gebaar"}
                     </button>
                   </form>
                 </div>
