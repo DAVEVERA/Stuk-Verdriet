@@ -21,16 +21,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const next = params.next ?? "/community";
   const error = params.error ?? params.missing;
   const isAdminLogin = next === "/admin";
+  const isShopLogin = next === "/shop";
   const googleLoginHref = `/auth/google?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="login-under-construction">
       <div className="login-uc-content">
-        <p className="eyebrow">{isAdminLogin ? "Beheer" : "SNAAR"}</p>
-        <h1>{isAdminLogin ? "Beheer login" : "Log in op SNAAR"}</h1>
+        <p className="eyebrow">{isAdminLogin ? "Beheer" : isShopLogin ? "Shop" : "SNAAR"}</p>
+        <h1>{isAdminLogin ? "Beheer login" : isShopLogin ? "Log in voor de shop" : "Log in op SNAAR"}</h1>
         <p>
           {isAdminLogin
             ? "Log lokaal in om het adminportaal te bekijken en de beheerflow te controleren."
+            : isShopLogin
+              ? "De shop staat nog afgeschermd. Log in om deze pagina te bekijken."
             : "Lees verhalen zonder account. Log in als je wilt reageren, steun geven of zelf iets wilt delen."}
         </p>
 
@@ -104,8 +107,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </a>
         </div>
 
-        <Link href={next === "/admin" ? "/" : "/community"} className="login-uc-back">
-          Terug naar {next === "/admin" ? "Stuk Verdriet" : "SNAAR"}
+        <Link href={next === "/admin" ? "/" : next} className="login-uc-back">
+          Terug naar {next === "/admin" ? "Stuk Verdriet" : isShopLogin ? "Shop" : "SNAAR"}
         </Link>
       </div>
     </div>

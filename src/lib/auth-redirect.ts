@@ -18,7 +18,7 @@ export function safeAuthNext(value: string | null) {
   if (!value) return "/community";
   const decoded = value.startsWith("b64:") ? decodeBase64Url(value.slice(4)) : value;
   const normalized = decoded.startsWith("/") ? decoded : `/${decoded}`;
-  if (normalized === "/admin" || normalized === "/community" || normalized.startsWith("/community/")) {
+  if (normalized === "/admin" || normalized === "/shop" || normalized === "/community" || normalized.startsWith("/community/")) {
     return normalized;
   }
   return "/community";

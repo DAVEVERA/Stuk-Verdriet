@@ -12,12 +12,12 @@ Generate and integrate a second batch of branded Stuk Verdriet shop products whi
 - [x] Save and optimize new product assets under `public/shop`
 - [x] Extend fallback shop data with the new products
 - [x] Add idempotent Supabase seed migration for the expanded collection
-- [ ] Run verification
-- [ ] Final review
+- [x] Run verification
+- [x] Final review
 
 ## Completion Marker
 
-STUKVERDRIET_EXPANDED_PRODUCT_DESIGNS_COMPLETE: false
+STUKVERDRIET_EXPANDED_PRODUCT_DESIGNS_COMPLETE: true
 
 ---
 

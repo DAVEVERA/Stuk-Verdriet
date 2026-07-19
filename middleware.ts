@@ -1,17 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { shouldExposeCommunity } from "@/lib/community-visibility";
+import { hasRouteAccess, isProtectedRoute, routeAccessCookie } from "@/lib/route-password";
 
-export function middleware(request: NextRequest) {
-  if (shouldExposeCommunity(request.nextUrl.hostname)) return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  if (!isProtectedRoute(request.nextUrl.pathname)) return NextResponse.next();
 
-  return new NextResponse(null, {
-    status: 404,
-    headers: {
-      "X-Robots-Tag": "noindex, nofollow"
-    }
-  });
+  if (await hasRouteAccess(request.cookies.get(routeAccessCookie)?.value)) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
+  const loginUrl = new URL("/toegang", request.url);
+  loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  const response = NextResponse.redirect(loginUrl);
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 }
 
 export const config = {
-  matcher: ["/community", "/community/:path*"]
+  matcher: ["/shop", "/shop/:path*", "/community", "/community/:path*"]
 };

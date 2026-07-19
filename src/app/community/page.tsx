@@ -19,13 +19,12 @@ export const dynamic = "force-dynamic";
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
   const params = (await searchParams) ?? {};
-  const [categories, supabase] = await Promise.all([
-    getCommunityCategories(),
-    createSupabaseServerClient()
-  ]);
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+
+  const categories = await getCommunityCategories();
   const isLoggedIn = Boolean(user);
   const posts = await getApprovedCommunityPosts(user?.id ?? null);
   let currentProfile: CommunityProfile | null = null;
