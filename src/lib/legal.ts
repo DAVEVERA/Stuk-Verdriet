@@ -9,7 +9,7 @@ export function readLegalDocument(filename: string) {
 
 export const cookiePolicyText = `Cookieverklaring Stuk Verdriet
 
-Laatst bijgewerkt: 08-06-2026
+Laatst bijgewerkt: 19-07-2026
 
 Stuk Verdriet gebruikt cookies en vergelijkbare technieken om de website goed, veilig en prettig te laten werken. In deze verklaring leggen we uit welke soorten cookies kunnen worden gebruikt, waarom dat gebeurt, op welke juridische grondslag dat gebeurt en hoe je jouw keuze kunt wijzigen.
 
@@ -73,4 +73,14 @@ Als cookies persoonsgegevens verwerken, gebeurt dat volgens de privacyverklaring
 
 Voor vragen over cookies of privacy kun je contact opnemen via:
 
-info@stukverdriet.nl`;
+info@stukverdriet.nl
+
+9. Webshop en checkout
+
+Voor het bewaren van een cookievoorkeur en voor technisch noodzakelijke beveiligings- of sessiecookies in de webshop is geen toestemming nodig als deze cookies strikt nodig zijn voor de gevraagde dienst.
+
+Voor trackingcookies, marketingcookies en niet-noodzakelijke analytische cookies vragen wij toestemming voordat deze worden geplaatst. De webshop blijft bruikbaar als je deze cookies weigert.
+
+10. Bewaartermijnen per cookie
+
+De concrete cookienamen, aanbieders, doelen en bewaartermijnen moeten definitief worden ingevuld zodra de webshop en alle meet- en betaaltools definitief zijn ingericht.`;

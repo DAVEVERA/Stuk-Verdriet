@@ -1,0 +1,37 @@
+Verwerkers en persoonsgegevens Stuk Verdriet
+
+Laatst bijgewerkt: 19-07-2026
+
+1. Doel van dit overzicht
+
+Dit overzicht beschrijft welke soorten dienstverleners persoonsgegevens kunnen verwerken voor de Stuk Verdriet webshop en welke afspraken daarvoor nodig zijn.
+
+2. Verwerkingsverantwoordelijke
+
+Stuk Verdriet bepaalt voor de webshop waarom en hoe persoonsgegevens worden verwerkt. Stuk Verdriet is daarom in beginsel verwerkingsverantwoordelijke voor webshopgegevens.
+
+3. Verwerkers en dienstverleners
+
+Voor de webshop kunnen de volgende partijen of categorieen persoonsgegevens verwerken:
+
+Hosting en deployment: Vercel of vergelijkbare hostingpartij.
+Database en authenticatie: Supabase of vergelijkbare backenddienst.
+Betaling: Stripe of vergelijkbare betaalprovider.
+E-mail en support: de gebruikte e-mailprovider en mailboxbeheerder.
+Analytics: Google Analytics of vergelijkbare analysetool, alleen waar toegestaan en na toestemming als die vereist is.
+Technisch beheer: MNRV of andere ingeschakelde ontwikkel-/beheerpartij.
+Bezorging/fulfilment: vervoerder of fulfilmentpartner, zodra fysieke verzending actief is.
+
+4. Verwerkersovereenkomst
+
+Met partijen die namens Stuk Verdriet persoonsgegevens verwerken en deze niet voor eigen doelen gebruiken, moet een verwerkersovereenkomst of vergelijkbare AVG-afspraak aanwezig zijn.
+
+Die afspraak moet in ieder geval gaan over: onderwerp en duur van de verwerking, soort persoonsgegevens, categorieen betrokkenen, beveiliging, geheimhouding, subverwerkers, hulp bij privacyrechten, datalekken, teruggeven of verwijderen van gegevens en audits of informatieverzoeken.
+
+5. Betaalprovider en zelfstandige verantwoordelijkheden
+
+Sommige partijen, zoals betaalproviders, kunnen voor bepaalde verwerkingen ook zelfstandig verwerkingsverantwoordelijke zijn. Controleer per dienst of zij verwerker, zelfstandig verantwoordelijke of gezamenlijke verantwoordelijke zijn.
+
+6. Actielijst
+
+Voor publicatie van de webshop moeten de concrete leveranciers, privacyrollen, verwerkersovereenkomsten, internationale doorgiften en bewaartermijnen definitief worden ingevuld en gecontroleerd.

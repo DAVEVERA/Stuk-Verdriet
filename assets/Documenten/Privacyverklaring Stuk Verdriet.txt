@@ -194,3 +194,29 @@ Je hebt daarnaast het recht om een klacht in te dienen bij de Autoriteit Persoon
 12. Wijzigingen in deze privacyverklaring
 
 Deze privacyverklaring kan worden aangepast als de website, community, podcastomgeving of wetgeving verandert. De meest recente versie staat altijd op de website.
+
+13. Webshopbestellingen
+
+Als je iets koopt via de Stuk Verdriet webshop, verwerken wij gegevens die nodig zijn om de bestelling, betaling, levering, retour, herroeping, garantie of klacht af te handelen.
+
+Het kan gaan om naam, e-mailadres, afleveradres, factuurgegevens, ordergegevens, betaalstatus, gekozen product, correspondentie over de bestelling en technische gegevens die nodig zijn voor beveiliging en misbruikpreventie.
+
+De grondslag is meestal uitvoering van de overeenkomst, wettelijke verplichting of gerechtvaardigd belang. Voor marketing gebruiken wij toestemming of een andere wettelijk toegestane grondslag.
+
+14. Betaling en levering
+
+Voor betalingen kunnen gegevens worden verwerkt door een betaalprovider zoals Stripe. Voor verzending kunnen gegevens worden gedeeld met een vervoerder of fulfilmentpartij zodra fysieke verzending actief is.
+
+Deze partijen verwerken gegevens alleen voor zover dat nodig is voor betaling, fraudepreventie, levering, administratie of wettelijke verplichtingen.
+
+15. Bewaartermijnen voor webshopgegevens
+
+Order- en factuurgegevens bewaren wij zolang dat nodig is voor uitvoering, service, garantie, klachten en wettelijke administratie. Fiscale administratie wordt in beginsel 7 jaar bewaard.
+
+Retour-, herroepings-, garantie- en klachtgegevens bewaren wij zolang nodig is om het verzoek af te handelen en onze rechten en verplichtingen te onderbouwen.
+
+16. Verwerkers
+
+Voor de webshop kunnen hosting, database, betaling, e-mail, analytics, technisch beheer en bezorging persoonsgegevens verwerken.
+
+Met partijen die namens ons persoonsgegevens verwerken, maken wij passende AVG-afspraken. Een overzicht staat op de pagina Verwerkers en persoonsgegevens.

@@ -99,7 +99,7 @@ export default async function ShopPage() {
                     <input type="hidden" name="product_id" value={product.id} readOnly />
                     <input type="hidden" name="quantity" value="1" readOnly />
                     <button className="button" type="submit" disabled={soldOut}>
-                      {soldOut ? "Uitverkocht" : "Bestel dit gebaar"}
+                      {soldOut ? "Uitverkocht" : "Bestel en betaal"}
                     </button>
                   </form>
                 </div>

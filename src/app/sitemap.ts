@@ -17,6 +17,16 @@ const staticRoutes = [
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/cookies", priority: 0.3, changeFrequency: "yearly" },
   { path: "/algemene-voorwaarden", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/bedrijfsgegevens", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/retourbeleid", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/herroepingsformulier", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/herroepen", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/levering-betaling", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/garantie-klachten", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/verwerkers", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/bewaartermijnen", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/webshop-faq", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/juridisch-memorandum-webshop", priority: 0.1, changeFrequency: "yearly" },
   { path: "/communityrichtlijnen", priority: 0.4, changeFrequency: "yearly" }
 ] satisfies Array<{
   path: string;

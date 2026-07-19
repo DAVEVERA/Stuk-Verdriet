@@ -1,0 +1,37 @@
+Levering en betaling Stuk Verdriet
+
+Laatst bijgewerkt: 19-07-2026
+
+1. Betaalmethoden
+
+Betalingen in de Stuk Verdriet webshop verlopen via Stripe of een andere duidelijk vermelde betaalprovider.
+
+Voor de aankoop zie je welke betaalmogelijkheden beschikbaar zijn, wat je bestelt, wat de totaalprijs is en of er verzend- of betaalkosten gelden.
+
+2. Bestelknop
+
+De laatste bestelknop moet duidelijk maken dat je een betalingsverplichting aangaat. Daarom gebruiken wij in de webshop tekst zoals "Bestel en betaal" of "Bestellen met betalingsverplichting".
+
+3. Prijzen
+
+Alle prijzen op de webshop worden getoond inclusief btw, tenzij duidelijk anders vermeld. Eventuele bijkomende kosten, zoals verzendkosten of betaalkosten, worden voor betaling vermeld.
+
+4. Levering
+
+Levering vindt plaats op het adres dat je tijdens het bestellen opgeeft.
+
+Verwachte levertijd: [nog invullen]
+Verzendmethode 1: [nog invullen]
+Verzendmethode 2: [nog invullen indien aangeboden]
+Verzendgebied: [nog invullen]
+Verzendkosten: [nog invullen of tonen in checkout]
+
+Als een andere levertijd is afgesproken, geldt die afgesproken termijn. Zonder andere afspraak wordt uiterlijk binnen 30 dagen geleverd.
+
+5. Risico tijdens verzending
+
+Stuk Verdriet draagt het risico van verlies of beschadiging totdat jij het product hebt ontvangen, tenzij je zelf een vervoerder kiest die niet door ons is aangeboden.
+
+6. Bevestiging
+
+Na je bestelling ontvang je zo snel mogelijk een schriftelijke bevestiging per e-mail, met de belangrijkste informatie over je bestelling.

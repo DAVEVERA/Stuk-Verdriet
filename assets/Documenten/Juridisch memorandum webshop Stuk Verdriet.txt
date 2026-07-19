@@ -1,0 +1,35 @@
+Juridisch memorandum webshop Stuk Verdriet
+
+Laatst bijgewerkt: 19-07-2026
+
+1. Vraag
+
+Welke juridische documenten en webshoppagina's zijn nodig voordat de Stuk Verdriet webshop publiek checkoutverkeer verwerkt?
+
+2. Korte conclusie
+
+De webshop heeft minimaal duidelijke bedrijfsgegevens, algemene voorwaarden of verkoopvoorwaarden, retour- en herroepingsbeleid, model herroepingsformulier, levering- en betalinginformatie, garantie- en klachteninformatie, privacyverklaring, cookieverklaring, verwerkersoverzicht, bewaartermijnen en juridische FAQ nodig.
+
+Daarnaast moet het bestelproces zelf juridisch kloppen: totaalprijs voor betaling, duidelijke leveringsinformatie, wettelijke garantie, bedenktijd, retourkosten, privacyinformatie en een bestelknop die de betalingsverplichting duidelijk maakt.
+
+3. Relevante feiten
+
+Stuk Verdriet verkoopt kleine fysieke producten rond rouw, herinnering en steun. De webshop is gericht op Nederlandse consumenten. Betaling verloopt via Stripe. De shop is op dit moment afgeschermd achter een wachtwoord.
+
+4. Analyse
+
+Bij koop op afstand moeten consumenten voor aankoop duidelijke informatie krijgen over aanbieder, product, prijs, betaling, levering, wettelijke garantie, bedenktijd, retouren en klachten. Ook moet de consument na aankoop schriftelijke bevestiging krijgen.
+
+Voor persoonsgegevens moet Stuk Verdriet uitleggen welke gegevens worden verwerkt, waarom, met wie ze worden gedeeld, hoe lang ze worden bewaard en welke rechten klanten hebben. Voor verwerkers moeten passende AVG-afspraken aanwezig zijn.
+
+Voor cookies geldt dat noodzakelijke cookies zonder toestemming kunnen, maar trackingcookies en sommige analytische cookies toestemming vereisen. De site moet bruikbaar blijven als niet-noodzakelijke cookies worden geweigerd.
+
+Vanaf 19 juni 2026 moet een webshop een duidelijke herroepingsknop of digitale ontbindingsfunctie aanbieden gedurende de bedenktijd.
+
+5. Openstaande feiten
+
+Voor publicatie moeten KVK-nummer, btw-id, rechtsvorm, bezoekadres, retouradres, telefoonnummer, verzendmethodes, levertijden, verzendkosten, concrete verwerkers en eventuele geschillenregeling definitief worden ingevuld.
+
+6. Aanbevolen vervolgstap
+
+Vul de openstaande bedrijfs- en logistieke gegevens in, controleer de Stripe-checkout en orderbevestiging, voeg een werkende herroepingsfunctie toe en laat de definitieve juridische documenten controleren als de webshop publiek live gaat.
