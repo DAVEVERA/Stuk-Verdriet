@@ -2,6 +2,27 @@
 
 ## Goal
 
+Generate and integrate a second batch of branded Stuk Verdriet shop products while preserving the existing shop design.
+
+## Tasks
+
+- [x] Keep the existing shop layout, styling, and first product batch intact
+- [x] Generate 10 additional relevant branded product mockups
+- [x] Add one related tote colorway and one different bag type
+- [x] Save and optimize new product assets under `public/shop`
+- [x] Extend fallback shop data with the new products
+- [x] Add idempotent Supabase seed migration for the expanded collection
+- [ ] Run verification
+- [ ] Final review
+
+## Completion Marker
+
+STUKVERDRIET_EXPANDED_PRODUCT_DESIGNS_COMPLETE: false
+
+---
+
+## Goal
+
 Generate and integrate branded Stuk Verdriet shop product designs for candles, tote bag, photo frames, and support keychain.
 
 ## Tasks
