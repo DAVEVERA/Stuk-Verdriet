@@ -2,6 +2,7 @@ import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
 import { hasLocalAdminSession } from "@/lib/local-admin";
+import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
 import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
@@ -71,7 +72,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const admin = createSupabaseAdminClient();
   const sectionDesign = await getSiteDesignSettings();
-  const [{ data: pendingPosts }, { data: reports }, { data: seasons }, { data: episodes }, { data: pendingInterviewComments }] = admin
+  const [
+    pendingPostsResult,
+    reportsResult,
+    seasonsResult,
+    episodesResult,
+    pendingInterviewCommentsResult,
+    shopProducts,
+    shopOrders,
+    shopSettings
+  ] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
         admin.from("community_reports").select("*").is("resolved_at", null).order("created_at", { ascending: false }),
@@ -81,9 +91,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .from("interview_comments")
           .select("id,interview_id,author_name,author_display_type,body,created_at,status,interviews(title,slug)")
           .eq("status", "pending")
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false }),
+        getAdminShopProducts(),
+        getAdminShopOrders(),
+        getAdminShopSettings()
       ])
-    : [{ data: [] }, { data: [] }, { data: fallbackSeasons }, { data: fallbackEpisodes }, { data: [] }];
+    : [
+        { data: [] },
+        { data: [] },
+        { data: fallbackSeasons },
+        { data: fallbackEpisodes },
+        { data: [] },
+        await getAdminShopProducts(),
+        [],
+        await getAdminShopSettings()
+      ];
+  const pendingPosts = pendingPostsResult.data;
+  const reports = reportsResult.data;
+  const seasons = seasonsResult.data;
+  const episodes = episodesResult.data;
+  const pendingInterviewComments = pendingInterviewCommentsResult.data;
   const normalizedPendingInterviewComments = ((pendingInterviewComments ?? []) as RawPendingInterviewComment[]).map((comment) => ({
     ...comment,
     interviews: Array.isArray(comment.interviews) ? (comment.interviews[0] ?? null) : (comment.interviews ?? null)
@@ -107,6 +134,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       pendingInterviewComments={normalizedPendingInterviewComments}
       analyticsRows={analyticsRows}
       analyticsSources={analyticsSources}
+      shopProducts={shopProducts}
+      shopOrders={shopOrders}
+      shopSettings={shopSettings}
+      stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
       sectionDesign={sectionDesign}
       missingSupabase={!hasSupabaseEnv}
       localPreview={localAdminAllowed && !allowed}

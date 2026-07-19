@@ -2,6 +2,49 @@
 
 ## Goal
 
+Generate and integrate branded Stuk Verdriet shop product designs for candles, tote bag, photo frames, and support keychain.
+
+## Tasks
+
+- [x] Inspect current shop implementation and brand assets
+- [x] Generate branded product mockups from the Stuk Verdriet logo and palette
+- [x] Save stable storefront assets under `public/shop`
+- [x] Replace fallback shop products with the new branded product set
+- [x] Add idempotent Supabase seed refresh for the branded products
+- [x] Add product structured data and accessible product image alt text
+- [x] Run verification
+- [x] Final review
+
+## Completion Marker
+
+STUKVERDRIET_PRODUCT_DESIGNS_COMPLETE: true
+
+---
+
+## Goal
+
+Build a simple, modern, minimalistic, StukVerdriet branded ecommerce webshop with Supabase-backed product/order management, Stripe checkout preparation, and full admin editing.
+
+## Tasks
+
+- [x] Inspect current implementation
+- [x] Identify ecommerce integration boundaries
+- [x] Add Supabase ecommerce schema
+- [x] Add storefront product data helpers
+- [x] Build mobile-first `/shop` route
+- [x] Add ecommerce admin tab and product/order controls
+- [x] Prepare Stripe checkout contract without leaking secrets
+- [x] Run typecheck, lint, and build
+- [x] Final review
+
+## Completion Marker
+
+STUKVERDRIET_ECOMMERCE_SLICE_COMPLETE: true
+
+---
+
+## Goal
+
 Build a complete mobile-first admin portal for Stuk Verdriet with moderation, content building, access management, marketing planning, integrations, AI tooling, analytics, automation, moodboard, and branding modules.
 
 ## Tasks

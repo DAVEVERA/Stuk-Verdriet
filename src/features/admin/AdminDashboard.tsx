@@ -20,6 +20,8 @@ import {
   LayoutTemplate,
   LockKeyhole,
   Network,
+  Package,
+  ReceiptText,
   Palette,
   Paintbrush,
   Plus,
@@ -36,9 +38,9 @@ import {
   XCircle
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
+import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
-import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, SiteDesignSettings } from "@/types/content";
+import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, ShopOrder, ShopProduct, ShopSettings, SiteDesignSettings } from "@/types/content";
 
 type AdminPost = {
   id: string;
@@ -86,6 +88,10 @@ type AdminDashboardProps = {
   pendingInterviewComments: AdminInterviewComment[];
   analyticsRows: AdminAnalyticsRow[];
   analyticsSources: AdminAnalyticsSource[];
+  shopProducts: ShopProduct[];
+  shopOrders: ShopOrder[];
+  shopSettings: ShopSettings;
+  stripeConfigured: boolean;
   sectionDesign: SiteDesignSettings;
   missingSupabase?: boolean;
   localPreview?: boolean;
@@ -146,6 +152,7 @@ const tabs = [
   ["integrations", "Koppelingen"],
   ["ai", "AI hulp"],
   ["analytics", "Analytics"],
+  ["shop", "Shop"],
   ["brand", "Branding"],
   ["automation", "Automations"],
   ["seasons", "Seizoenen"],
@@ -176,7 +183,7 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Marketing",
     helper: "Planning en groei",
-    ids: ["calendar", "ai", "analytics", "automation"]
+    ids: ["calendar", "ai", "analytics", "automation", "shop"]
   },
   {
     title: "Instellingen",
@@ -195,6 +202,7 @@ const feedbackLabels: Record<string, string> = {
   season: "seizoen",
   "section-design": "sectie ontwerp",
   "section-design-save": "sectie ontwerp",
+  "shop-product": "shop product",
   site: "site instellingen",
   "transcript-started": "transcriptie gestart",
   "transcript-ready": "transcriptie klaar",
@@ -228,7 +236,7 @@ const roleRows = [
   { role: "Analist", access: "Alleen analytics", members: "1 gebruiker", risk: "Laag" }
 ];
 
-export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, analyticsRows, analyticsSources, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
+export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, analyticsRows, analyticsSources, shopProducts, shopOrders, shopSettings, stripeConfigured, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
@@ -246,7 +254,8 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
     reviews: pendingInterviewComments.length,
     community: pendingPosts.length + reports.length,
     calendar: scheduledEpisodes,
-    analytics: analyticsRows.length
+    analytics: analyticsRows.length,
+    shop: shopOrders.filter((order) => order.status === "pending").length
   };
   const tabMap = new Map<AdminTabId, (typeof tabs)[number]>(tabs.map((tab) => [tab[0], tab]));
 
@@ -552,6 +561,7 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
       {activeTab === "ai" ? <AIStudio /> : null}
       {activeTab === "analytics" ? <AnalyticsCenter rows={analyticsRows} sources={analyticsSources} /> : null}
+      {activeTab === "shop" ? <ShopCommerceCenter products={shopProducts} orders={shopOrders} settings={shopSettings} stripeConfigured={stripeConfigured} /> : null}
       {activeTab === "brand" ? <BrandLibrary /> : null}
       {activeTab === "automation" ? <AutomationHub /> : null}
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
@@ -1104,6 +1114,165 @@ function AnalyticsCenter({ rows, sources }: { rows: AdminAnalyticsRow[]; sources
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ShopCommerceCenter({ products, orders, settings, stripeConfigured }: { products: ShopProduct[]; orders: ShopOrder[]; settings: ShopSettings; stripeConfigured: boolean }) {
+  const publishedProducts = products.filter((product) => product.status === "published").length;
+  const pendingOrders = orders.filter((order) => order.status === "pending").length;
+  const paidOrders = orders.filter((order) => order.status === "paid" || order.status === "fulfilled").length;
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Ecommerce</p>
+          <h2>Shop beheer</h2>
+          <p>Producten, voorraad, Stripe-koppeling en orders voor de Stuk Verdriet shop.</p>
+        </div>
+        <Package aria-hidden />
+      </div>
+      <ModuleReadiness
+        state={stripeConfigured ? "Stripe secret aanwezig" : "Stripe setup nodig"}
+        detail="Checkout gebruikt server-side STRIPE_SECRET_KEY. Webhook-afhandeling voor betaalstatussen is de volgende productieslice."
+      />
+
+      <div className="admin-kpi-grid">
+        <article className="admin-kpi-card static">
+          <Package size={20} aria-hidden />
+          <strong>{products.length}</strong>
+          <span>Producten</span>
+          <small>{publishedProducts} gepubliceerd</small>
+        </article>
+        <article className="admin-kpi-card static">
+          <ReceiptText size={20} aria-hidden />
+          <strong>{orders.length}</strong>
+          <span>Orders</span>
+          <small>{pendingOrders} pending, {paidOrders} betaald/afgerond</small>
+        </article>
+      </div>
+
+      <div className="admin-grid wide">
+        <AdminForm title="Shoptekst en servicepunten" action={saveShopSettings}>
+          <input type="hidden" name="return_tab" value="shop" readOnly />
+          <label>Eyebrow<input name="eyebrow" defaultValue={settings.eyebrow} /></label>
+          <label>Titel<input name="title" required defaultValue={settings.title} /></label>
+          <label>Intro<textarea name="intro" required defaultValue={settings.intro} /></label>
+          <label>Servicepunten<textarea name="service_points" defaultValue={settings.service_points.join("\n")} /></label>
+          <label>Checkout-notitie<textarea name="checkout_note" defaultValue={settings.checkout_note ?? ""} /></label>
+          <button className="button" type="submit"><Save size={17} aria-hidden /> Shoptekst opslaan</button>
+        </AdminForm>
+
+        <AdminForm title="Nieuw product" action={saveShopProduct}>
+          <input type="hidden" name="return_tab" value="shop" readOnly />
+          <label>Titel<input name="title" required /></label>
+          <label>Slug<input name="slug" placeholder="wordt automatisch gemaakt als leeg" /></label>
+          <label>Korte omschrijving<input name="short_description" /></label>
+          <label>Omschrijving<textarea name="description" /></label>
+          <div className="field-row">
+            <label>Prijs<input name="price" inputMode="decimal" required placeholder="14,95" /></label>
+            <label>Valuta<input name="currency" defaultValue="eur" maxLength={3} /></label>
+          </div>
+          <div className="field-row">
+            <label>Voorraad<input name="inventory_count" type="number" min="0" /></label>
+            <label>Volgorde<input name="sort_order" type="number" defaultValue="100" /></label>
+          </div>
+          <label>Afbeelding URL<input name="image_url" /></label>
+          <label className="upload-field">
+            <ImagePlus aria-hidden />
+            <span>Productafbeelding uploaden</span>
+            <input name="image_file" type="file" accept="image/*" />
+          </label>
+          <label>Stripe Price ID<input name="stripe_price_id" placeholder="price_..." /></label>
+          <label>Stripe Product ID<input name="stripe_product_id" placeholder="prod_..." /></label>
+          <div className="field-row">
+            <label>Status<ShopStatusSelect defaultValue="draft" /></label>
+            <label className="check-row"><input name="featured" type="checkbox" /> Uitgelicht</label>
+          </div>
+          <button className="button" type="submit"><Save size={17} aria-hidden /> Product opslaan</button>
+        </AdminForm>
+      </div>
+
+      <article className="admin-panel">
+        <h2>Producten bewerken</h2>
+        <div className="shop-admin-product-list">
+          {products.map((product) => <ShopProductAdminForm product={product} key={product.id} />)}
+          {!products.length ? <p className="empty-state">Nog geen shopproducten.</p> : null}
+        </div>
+      </article>
+
+      <article className="admin-panel">
+        <h2>Recente orders</h2>
+        <div className="admin-table-card">
+          {orders.map((order) => (
+            <div className="admin-table-row" key={order.id}>
+              <strong>{formatAdminPrice(order.total_cents, order.currency)}</strong>
+              <span>{order.status}</span>
+              <span>{order.customer_email ?? "Geen e-mail"}</span>
+              <small>{new Date(order.created_at).toLocaleString("nl-NL")}</small>
+            </div>
+          ))}
+          {!orders.length ? <p className="empty-state">Nog geen orders. Zodra checkout actief is verschijnen ze hier.</p> : null}
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function ShopProductAdminForm({ product }: { product: ShopProduct }) {
+  return (
+    <form className="shop-admin-product-form" action={saveShopProduct}>
+      <input type="hidden" name="id" defaultValue={product.id} />
+      <input type="hidden" name="return_tab" value="shop" readOnly />
+      <div className="shop-admin-product-form-head">
+        <div>
+          <strong>{product.title}</strong>
+          <small>{formatAdminPrice(product.price_cents, product.currency)} - {product.status}</small>
+        </div>
+        {product.status !== "archived" ? (
+          <button className="text-link danger" type="submit" formAction={archiveShopProduct.bind(null, product.id)}>Archiveer</button>
+        ) : null}
+      </div>
+      <div className="form-grid">
+        <label>Titel<input name="title" required defaultValue={product.title} /></label>
+        <label>Slug<input name="slug" defaultValue={product.slug} /></label>
+        <label>Korte omschrijving<input name="short_description" defaultValue={product.short_description ?? ""} /></label>
+        <label>Omschrijving<textarea name="description" defaultValue={product.description ?? ""} /></label>
+        <div className="field-row">
+          <label>Prijs<input name="price" inputMode="decimal" required defaultValue={String(product.price_cents / 100).replace(".", ",")} /></label>
+          <label>Valuta<input name="currency" defaultValue={product.currency} maxLength={3} /></label>
+        </div>
+        <div className="field-row">
+          <label>Voorraad<input name="inventory_count" type="number" min="0" defaultValue={product.inventory_count ?? ""} /></label>
+          <label>Volgorde<input name="sort_order" type="number" defaultValue={product.sort_order} /></label>
+        </div>
+        <label>Afbeelding URL<input name="image_url" defaultValue={product.image_url ?? ""} /></label>
+        <label>Stripe Price ID<input name="stripe_price_id" defaultValue={product.stripe_price_id ?? ""} /></label>
+        <label>Stripe Product ID<input name="stripe_product_id" defaultValue={product.stripe_product_id ?? ""} /></label>
+        <div className="field-row">
+          <label>Status<ShopStatusSelect defaultValue={product.status} /></label>
+          <label className="check-row"><input name="featured" type="checkbox" defaultChecked={product.featured} /> Uitgelicht</label>
+        </div>
+        <button className="button" type="submit"><Save size={17} aria-hidden /> Wijzigingen opslaan</button>
+      </div>
+    </form>
+  );
+}
+
+function formatAdminPrice(priceCents: number, currency = "eur") {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: currency.toUpperCase()
+  }).format(priceCents / 100);
+}
+
+function ShopStatusSelect({ defaultValue = "draft" }: { defaultValue?: string }) {
+  return (
+    <select name="status" defaultValue={defaultValue} aria-label="Shop productstatus" title="Shop productstatus">
+      <option value="draft">Concept</option>
+      <option value="published">Gepubliceerd</option>
+      <option value="archived">Gearchiveerd</option>
+    </select>
   );
 }
 

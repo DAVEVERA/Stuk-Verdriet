@@ -17,6 +17,7 @@ type HeaderProps = {
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast" },
+  { href: "/shop", label: "Shop" },
   ...(isCommunityStandaloneBuild() ? [{ href: "/community", label: "Community" }] : [])
 ];
 

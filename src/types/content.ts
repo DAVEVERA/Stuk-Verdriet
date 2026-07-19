@@ -1,6 +1,8 @@
 export type ContentStatus = "draft" | "scheduled" | "published" | "archived";
 export type CommunityStatus = "pending" | "approved" | "rejected" | "archived";
 export type AuthorDisplayType = "real_name" | "first_name" | "anonymous";
+export type ShopProductStatus = "draft" | "published" | "archived";
+export type ShopOrderStatus = "pending" | "paid" | "failed" | "cancelled" | "fulfilled" | "refunded";
 
 export type PodcastSeason = {
   id: string;
@@ -313,6 +315,56 @@ export type SponsorLogo = {
   website_url: string | null;
   display_order: number;
   status: ContentStatus;
+};
+
+export type ShopProduct = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  short_description: string | null;
+  image_url: string | null;
+  price_cents: number;
+  currency: string;
+  inventory_count: number | null;
+  stripe_price_id: string | null;
+  stripe_product_id: string | null;
+  status: ShopProductStatus;
+  featured: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ShopOrderItem = {
+  product_id: string;
+  title: string;
+  quantity: number;
+  unit_amount_cents: number;
+  currency: string;
+};
+
+export type ShopOrder = {
+  id: string;
+  customer_email: string | null;
+  status: ShopOrderStatus;
+  total_cents: number;
+  currency: string;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  items: ShopOrderItem[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ShopSettings = {
+  id: "main";
+  eyebrow: string;
+  title: string;
+  intro: string;
+  service_points: string[];
+  checkout_note: string | null;
+  updated_at?: string;
 };
 
 export type ThemeArticleBlock =

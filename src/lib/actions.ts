@@ -1646,6 +1646,91 @@ export async function saveFaq(formData: FormData) {
   redirect(adminReturnTarget(formData, "saved", "faq", "hosts"));
 }
 
+export async function saveShopProduct(formData: FormData) {
+  const supabase = await requireAdminClient();
+  const id = String(formData.get("id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) redirect(adminReturnTarget(formData, "error", "shop-product", "shop"));
+
+  const slug = String(formData.get("slug") ?? "").trim() || slugify(title);
+  const priceInput = String(formData.get("price") ?? "").replace(",", ".").trim();
+  const priceCents = Math.round(Number(priceInput) * 100);
+  if (!slug || !Number.isFinite(priceCents) || priceCents < 0) {
+    redirect(adminReturnTarget(formData, "error", "shop-product", "shop"));
+  }
+
+  const imageUpload = getUploadFile(formData, "image_file");
+  const imageUrl = imageUpload
+    ? await uploadPublicFile(supabase, "shop-products", `products/${safePathPart(slug)}`, imageUpload, "jpg", "/admin?tab=shop")
+    : String(formData.get("image_url") ?? "").trim() || null;
+  const inventoryRaw = String(formData.get("inventory_count") ?? "").trim();
+  const inventoryCount = inventoryRaw === "" ? null : Math.max(0, Number(inventoryRaw));
+  const payload = {
+    title,
+    slug,
+    description: String(formData.get("description") ?? "").trim() || null,
+    short_description: String(formData.get("short_description") ?? "").trim() || null,
+    image_url: imageUrl,
+    price_cents: priceCents,
+    currency: String(formData.get("currency") ?? "eur").trim().toLowerCase().slice(0, 3) || "eur",
+    inventory_count: Number.isFinite(inventoryCount) ? inventoryCount : null,
+    stripe_price_id: String(formData.get("stripe_price_id") ?? "").trim() || null,
+    stripe_product_id: String(formData.get("stripe_product_id") ?? "").trim() || null,
+    status: String(formData.get("status") ?? "draft"),
+    featured: formData.get("featured") === "on",
+    sort_order: Number(formData.get("sort_order") ?? 100),
+    updated_at: new Date().toISOString()
+  };
+
+  const result = id
+    ? await supabase.from("shop_products").update(payload).eq("id", id)
+    : await supabase.from("shop_products").upsert(payload, { onConflict: "slug" });
+  if (result.error) redirect(adminReturnTarget(formData, "error", "shop-product", "shop"));
+
+  revalidatePath("/shop");
+  revalidatePath("/admin");
+  redirect(adminReturnTarget(formData, "saved", "shop-product", "shop"));
+}
+
+export async function archiveShopProduct(productId: string) {
+  const supabase = await requireAdminClient();
+  await supabase.from("shop_products").update({ status: "archived", updated_at: new Date().toISOString() }).eq("id", productId);
+  revalidatePath("/shop");
+  revalidatePath("/admin");
+  redirect("/admin?tab=shop&saved=shop-product");
+}
+
+export async function saveShopSettings(formData: FormData) {
+  const supabase = await requireAdminClient();
+  const title = String(formData.get("title") ?? "").trim();
+  const intro = String(formData.get("intro") ?? "").trim();
+  if (!title || !intro) redirect(adminReturnTarget(formData, "error", "shop-settings", "shop"));
+
+  const servicePoints = String(formData.get("service_points") ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
+  const result = await supabase.from("shop_settings").upsert(
+    {
+      id: "main",
+      eyebrow: String(formData.get("eyebrow") ?? "").trim() || "Stuk Verdriet shop",
+      title,
+      intro,
+      service_points: servicePoints.length ? servicePoints : ["zorgvuldig en ingetogen"],
+      checkout_note: String(formData.get("checkout_note") ?? "").trim() || null,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "id" }
+  );
+  if (result.error) redirect(adminReturnTarget(formData, "error", "shop-settings", "shop"));
+
+  revalidatePath("/shop");
+  revalidatePath("/admin");
+  redirect(adminReturnTarget(formData, "saved", "shop-settings", "shop"));
+}
+
 export async function saveSiteSettings(formData: FormData) {
   const supabase = await requireAdminClient();
   const { data } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
