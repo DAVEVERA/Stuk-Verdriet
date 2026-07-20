@@ -1,9 +1,10 @@
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
+import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts } from "@/lib/admin-operations";
 import { hasLocalAdminSession } from "@/lib/local-admin";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
-import { adminEmailList, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
+import { isEmailAdmin, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
@@ -63,7 +64,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const {
     data: { user }
   } = server ? await server.auth.getUser() : { data: { user: null } };
-  const allowed = user?.email && adminEmailList().includes(user.email.toLowerCase());
+  const allowed = user?.email ? await isEmailAdmin(user.email) : false;
   const localAdminAllowed = await hasLocalAdminSession();
 
   if (hasSupabaseEnv && !allowed && !localAdminAllowed) {
@@ -80,7 +81,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     pendingInterviewCommentsResult,
     shopProducts,
     shopOrders,
-    shopSettings
+    shopSettings,
+    customers,
+    orders,
+    returns,
+    reviews,
+    logisticsEvents,
+    serviceQuestions
   ] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
@@ -94,7 +101,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .order("created_at", { ascending: false }),
         getAdminShopProducts(),
         getAdminShopOrders(),
-        getAdminShopSettings()
+        getAdminShopSettings(),
+        getAdminCustomers(),
+        getAdminOrders(),
+        getAdminReturns(),
+        getAdminReviews(),
+        getAdminLogisticsEvents(),
+        getAdminServiceQuestions()
       ])
     : [
         { data: [] },
@@ -104,7 +117,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         { data: [] },
         await getAdminShopProducts(),
         [],
-        await getAdminShopSettings()
+        await getAdminShopSettings(),
+        await getAdminCustomers(),
+        await getAdminOrders(),
+        await getAdminReturns(),
+        await getAdminReviews(),
+        await getAdminLogisticsEvents(),
+        await getAdminServiceQuestions()
       ];
   const pendingPosts = pendingPostsResult.data;
   const reports = reportsResult.data;
@@ -125,6 +144,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     : [];
   const analyticsSources = getAnalyticsSources(Boolean(admin));
 
+  const adminUsers = admin ? await getAdminUsers() : [];
+  const legalDocuments = admin ? await getLegalDocuments() : [];
+  const faqs = admin ? await getAdminFaqs() : [];
+  const hosts = admin ? await getAdminHosts() : [];
+
   return (
     <AdminDashboard
       episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
@@ -137,6 +161,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       shopProducts={shopProducts}
       shopOrders={shopOrders}
       shopSettings={shopSettings}
+      customers={customers}
+      orders={orders}
+      returns={returns}
+      reviews={reviews}
+      logisticsEvents={logisticsEvents}
+      serviceQuestions={serviceQuestions}
       stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
       sectionDesign={sectionDesign}
       missingSupabase={!hasSupabaseEnv}
@@ -144,6 +174,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       savedMessage={saved ?? null}
       errorMessage={error ?? null}
       initialTab={tab ?? null}
+      adminUsers={adminUsers}
+      legalDocuments={legalDocuments}
+      faqs={faqs}
+      hosts={hosts}
     />
   );
 }

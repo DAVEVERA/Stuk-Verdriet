@@ -20,11 +20,11 @@ Alle prijzen op de webshop worden getoond inclusief btw, tenzij duidelijk anders
 
 Levering vindt plaats op het adres dat je tijdens het bestellen opgeeft.
 
-Verwachte levertijd: [nog invullen]
-Verzendmethode 1: [nog invullen]
-Verzendmethode 2: [nog invullen indien aangeboden]
-Verzendgebied: [nog invullen]
-Verzendkosten: [nog invullen of tonen in checkout]
+Verwachte levertijd: maximaal 5 werkdagen
+Verzendmethode 1: PostNL
+Verzendmethode 2: Afhalen Pakketpunt
+Verzendgebied: Nederland en Belgie
+Verzendkosten: 10,95 
 
 Als een andere levertijd is afgesproken, geldt die afgesproken termijn. Zonder andere afspraak wordt uiterlijk binnen 30 dagen geleverd.
 

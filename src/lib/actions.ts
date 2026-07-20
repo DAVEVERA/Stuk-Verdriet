@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { encodeAuthNext } from "@/lib/auth-redirect";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
-import { adminEmailList, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
+import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import type { CommunityPulseLayer, PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
@@ -324,7 +324,7 @@ async function requireAdminClient() {
     data: { user }
   } = await server.auth.getUser();
   const email = user?.email?.toLowerCase();
-  if (!email || !adminEmailList().includes(email)) redirect("/admin?error=unauthorized");
+  if (!email || !(await isEmailAdmin(email))) redirect("/admin?error=unauthorized");
 
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/admin?missing=service-role");

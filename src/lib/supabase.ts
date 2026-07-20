@@ -73,3 +73,24 @@ export function adminEmailList() {
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
 }
+
+export async function isEmailAdmin(email: string): Promise<boolean> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) {
+    // Fallback to environment variable if database is not ready/configured
+    return adminEmailList().includes(email.trim().toLowerCase());
+  }
+
+  const { data, error } = await admin
+    .from("admin_users")
+    .select("id")
+    .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (error || !data) {
+    // Second fallback to env var for bootstrap safety
+    return adminEmailList().includes(email.trim().toLowerCase());
+  }
+
+  return true;
+}

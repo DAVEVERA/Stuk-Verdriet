@@ -122,9 +122,29 @@ export async function getPublishedSeasons(): Promise<PodcastSeason[]> {
 }
 
 export async function getPublishedEpisodes(): Promise<PodcastEpisode[]> {
-  const episodes = await fromTable<PodcastEpisode>("podcast_episodes", fallbackEpisodes);
-  const source = episodes.length ? episodes : fallbackEpisodes;
-  return source.map(normalizeEpisode).sort(newestFirst);
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return fallbackEpisodes.map(normalizeEpisode).sort(newestFirst);
+
+  const { data, error } = await supabase
+    .from("podcast_episodes")
+    .select("*")
+    .in("status", ["published", "scheduled"]);
+
+  if (error || !data) {
+    return fallbackEpisodes.map(normalizeEpisode).sort(newestFirst);
+  }
+
+  const now = new Date();
+  const filtered = (data as PodcastEpisode[]).filter((episode) => {
+    if (episode.status === "published") return true;
+    if (episode.status === "scheduled") {
+      if (!episode.publication_date) return false;
+      return new Date(episode.publication_date) <= now;
+    }
+    return false;
+  });
+
+  return filtered.map(normalizeEpisode).sort(newestFirst);
 }
 
 export async function getLatestEpisode() {

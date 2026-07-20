@@ -355,6 +355,74 @@ export type ShopOrder = {
   items: ShopOrderItem[];
   created_at: string;
   updated_at: string;
+  customer_id?: string | null;
+  shipping_status?: string | null;
+  tracking_code?: string | null;
+  fulfillment_notes?: string | null;
+  return_requested_at?: string | null;
+};
+
+export type AdminOrder = ShopOrder;
+
+export type AdminCustomer = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  status: "active" | "needs_follow_up" | "vip";
+  created_at: string;
+  updated_at: string;
+  last_order_at: string | null;
+  order_count: number;
+  total_spent_cents: number;
+  note: string | null;
+  source: string | null;
+};
+
+export type AdminReturn = {
+  id: string;
+  order_id: string;
+  customer_email: string | null;
+  customer_name: string | null;
+  reason: string | null;
+  status: "requested" | "approved" | "rejected" | "completed";
+  created_at: string;
+  updated_at: string;
+  notes: string | null;
+};
+
+export type AdminReview = {
+  id: string;
+  order_id: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminLogisticsEvent = {
+  id: string;
+  order_id: string;
+  event_type: string;
+  message: string | null;
+  carrier: string | null;
+  tracking_code: string | null;
+  created_at: string;
+};
+
+export type AdminServiceQuestion = {
+  id: string;
+  customer_email: string | null;
+  customer_name: string | null;
+  subject: string | null;
+  message: string | null;
+  status: "new" | "in_progress" | "resolved";
+  created_at: string;
+  updated_at: string;
 };
 
 export type ShopSettings = {
@@ -395,6 +463,27 @@ export type ThemeArticle = {
   intro: string[];
   sections: ThemeArticleSection[];
   seo: ThemeArticleSeo;
+};
+
+export type AdminUserRole = "super_admin" | "admin" | "editor" | "moderator";
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: AdminUserRole;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LegalDocument = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type { Interview, InterviewComment, InterviewEngagement } from "./interview";

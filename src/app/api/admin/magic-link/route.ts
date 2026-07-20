@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { encodeAuthNext, safeAuthNext } from "@/lib/auth-redirect";
-import { adminEmailList, createSupabaseRouteClient, hasSupabaseEnv } from "@/lib/supabase";
+import { isEmailAdmin, createSupabaseRouteClient, hasSupabaseEnv } from "@/lib/supabase";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/admin?error=email", requestUrl.origin), 303);
   }
 
-  if (!adminEmailList().includes(email)) {
+  if (!(await isEmailAdmin(email))) {
     return NextResponse.redirect(new URL("/admin?sent=1", requestUrl.origin), 303);
   }
 

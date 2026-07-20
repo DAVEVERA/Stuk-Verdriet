@@ -37,10 +37,34 @@ import {
   Workflow,
   XCircle
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveFaq, saveHost, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
+import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb } from "@/lib/admin-operations";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
-import type { PodcastEpisode, PodcastLinkCard, PodcastSeason, SectionDesignKey, SectionDesignSettings, ShopOrder, ShopProduct, ShopSettings, SiteDesignSettings } from "@/types/content";
+import type {
+  AdminCustomer,
+  AdminLogisticsEvent,
+  AdminOrder,
+  AdminReturn,
+  AdminReview,
+  AdminServiceQuestion,
+  PodcastEpisode,
+  PodcastLinkCard,
+  PodcastSeason,
+  SectionDesignKey,
+  SectionDesignSettings,
+  ShopOrder,
+  ShopProduct,
+  ShopSettings,
+  SiteDesignSettings,
+  AdminUser,
+  LegalDocument,
+  FAQ,
+  HostProfile,
+  AdminUserRole,
+  ContentStatus
+} from "@/types/content";
 
 type AdminPost = {
   id: string;
@@ -91,6 +115,12 @@ type AdminDashboardProps = {
   shopProducts: ShopProduct[];
   shopOrders: ShopOrder[];
   shopSettings: ShopSettings;
+  customers: AdminCustomer[];
+  orders: AdminOrder[];
+  returns: AdminReturn[];
+  reviews: AdminReview[];
+  logisticsEvents: AdminLogisticsEvent[];
+  serviceQuestions: AdminServiceQuestion[];
   stripeConfigured: boolean;
   sectionDesign: SiteDesignSettings;
   missingSupabase?: boolean;
@@ -98,6 +128,10 @@ type AdminDashboardProps = {
   savedMessage?: string | null;
   errorMessage?: string | null;
   initialTab?: string | null;
+  adminUsers?: AdminUser[];
+  legalDocuments?: LegalDocument[];
+  faqs?: FAQ[];
+  hosts?: HostProfile[];
 };
 
 export type AdminAnalyticsRow = {
@@ -143,6 +177,11 @@ const emptyEpisode: PodcastEpisode = {
 
 const tabs = [
   ["today", "Vandaag"],
+  ["customers", "Klanten"],
+  ["orders", "Orders"],
+  ["returns", "Retouren"],
+  ["logistics", "Logistiek"],
+  ["service", "Service"],
   ["podcast", "Podcast"],
   ["reviews", "Inbox"],
   ["builder", "Sitebuilder"],
@@ -159,7 +198,8 @@ const tabs = [
   ["community", "Community"],
   ["site", "Site"],
   ["sections", "Secties"],
-  ["hosts", "Hosts"]
+  ["hosts", "Hosts"],
+  ["documents", "Documentatie"]
 ] as const;
 
 type AdminTabId = (typeof tabs)[number][0];
@@ -171,6 +211,11 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
     ids: ["today", "reviews", "community"]
   },
   {
+    title: "Operaties",
+    helper: "Klanten, orders, retouren en service",
+    ids: ["customers", "orders", "returns", "reviews", "logistics", "service"]
+  },
+  {
     title: "Podcast",
     helper: "Afleveringen en redactie",
     ids: ["podcast", "seasons", "hosts"]
@@ -178,7 +223,7 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Site",
     helper: "Pagina's en uitstraling",
-    ids: ["builder", "sections", "site", "brand"]
+    ids: ["builder", "sections", "site", "brand", "documents"]
   },
   {
     title: "Marketing",
@@ -236,7 +281,35 @@ const roleRows = [
   { role: "Analist", access: "Alleen analytics", members: "1 gebruiker", risk: "Laag" }
 ];
 
-export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendingInterviewComments, analyticsRows, analyticsSources, shopProducts, shopOrders, shopSettings, stripeConfigured, sectionDesign, missingSupabase, localPreview, savedMessage, errorMessage, initialTab }: AdminDashboardProps) {
+export function AdminDashboard({
+  episodes,
+  seasons,
+  pendingPosts,
+  reports,
+  pendingInterviewComments,
+  analyticsRows,
+  analyticsSources,
+  shopProducts,
+  shopOrders,
+  shopSettings,
+  customers,
+  orders,
+  returns,
+  reviews,
+  logisticsEvents,
+  serviceQuestions,
+  stripeConfigured,
+  sectionDesign,
+  missingSupabase,
+  localPreview,
+  savedMessage,
+  errorMessage,
+  initialTab,
+  adminUsers = [],
+  legalDocuments = [],
+  faqs = [],
+  hosts = []
+}: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
@@ -553,9 +626,14 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
         </div>
       ) : null}
 
-      {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingPosts={pendingPosts} reports={reports} /> : null}
+      {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingPosts={pendingPosts} reports={reports} operationsReviews={reviews} /> : null}
+      {activeTab === "customers" ? <OperationsCenter title="Klanten" subtitle="Beheer klantprofielen, contactgegevens en volgorde van bestellingen" items={customers} type="customers" /> : null}
+      {activeTab === "orders" ? <OperationsCenter title="Orders" subtitle="Volg open bestellingen, statuswijzigingen en betalingsfase" items={orders} type="orders" /> : null}
+      {activeTab === "returns" ? <OperationsCenter title="Retouren" subtitle="Bekijk retourverzoeken en volg de afhandeling" items={returns} type="returns" /> : null}
+      {activeTab === "logistics" ? <OperationsCenter title="Logistiek" subtitle="Beheer verzending, tracking en fulfilmentnotities" items={logisticsEvents} type="logistics" /> : null}
+      {activeTab === "service" ? <OperationsCenter title="Service en klantvragen" subtitle="Volg vragen, meldingen en klantcontact" items={serviceQuestions} type="service" /> : null}
       {activeTab === "builder" ? <ElementorBuilder settings={sectionDesign} onOpenSections={() => setActiveTab("sections")} /> : null}
-      {activeTab === "access" ? <AccessAndRoles /> : null}
+      {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
       {activeTab === "calendar" ? <MarketingCalendar /> : null}
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
@@ -567,7 +645,8 @@ export function AdminDashboard({ episodes, seasons, pendingPosts, reports, pendi
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
       {activeTab === "site" ? <SiteSettingsForm /> : null}
       {activeTab === "sections" ? <SectionDesignEditor initialSettings={sectionDesign} /> : null}
-      {activeTab === "hosts" ? <HostAndFaqForms /> : null}
+      {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
+      {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
     </section>
   );
 }
@@ -600,7 +679,7 @@ function AdminOperationsHeader({
     <header className="admin-ops-header">
       <div className="admin-ops-copy">
         <p className="eyebrow">Beheercentrum</p>
-        <h2>Wat moet er nu gebeuren?</h2>
+        <h1>Wat moet er nu gebeuren?</h1>
         <p>
           Werk vanuit taken: publiceer podcastcontent, keur reacties goed en controleer of de live site klaarstaat.
           Setup-modules tonen voortaan duidelijk wat nog koppeling nodig heeft.
@@ -721,6 +800,135 @@ function ModuleReadiness({ state, detail }: { state: string; detail: string }) {
   );
 }
 
+function OperationsCenter({
+  title,
+  subtitle,
+  items,
+  type
+}: {
+  title: string;
+  subtitle: string;
+  items: unknown[];
+  type: "customers" | "orders" | "returns" | "reviews" | "logistics" | "service";
+}) {
+  const rows = items.slice(0, 8);
+
+  const renderItem = (item: unknown, index: number) => {
+    if (type === "customers") {
+      const customer = item as AdminCustomer;
+      return (
+        <div className="review-card" key={customer.id ?? index}>
+          <div className="review-card-top">
+            <span>{customer.status === "vip" ? "VIP" : customer.status === "needs_follow_up" ? "Volgen" : "Actief"}</span>
+            <small>{customer.last_order_at ? new Date(customer.last_order_at).toLocaleDateString("nl-NL") : "Geen order"}</small>
+          </div>
+          <strong>{customer.name ?? customer.email ?? "Onbekende klant"}</strong>
+          <p>{customer.email ?? "Geen e-mailadres"}</p>
+          <small>{customer.order_count} order(s) · €{(customer.total_spent_cents / 100).toFixed(2)}</small>
+        </div>
+      );
+    }
+
+    if (type === "orders") {
+      const order = item as AdminOrder;
+      return (
+        <div className="review-card" key={order.id ?? index}>
+          <div className="review-card-top">
+            <span>{order.status}</span>
+            <small>{new Date(order.created_at).toLocaleDateString("nl-NL")}</small>
+          </div>
+          <strong>{order.id}</strong>
+          <p>{order.customer_email ?? "Geen klant e-mailadres"}</p>
+          <small>{order.total_cents / 100} {order.currency.toUpperCase()}</small>
+        </div>
+      );
+    }
+
+    if (type === "returns") {
+      const returnItem = item as AdminReturn;
+      return (
+        <div className="review-card" key={returnItem.id ?? index}>
+          <div className="review-card-top">
+            <span>{returnItem.status}</span>
+            <small>{new Date(returnItem.created_at).toLocaleDateString("nl-NL")}</small>
+          </div>
+          <strong>{returnItem.order_id}</strong>
+          <p>{returnItem.reason ?? "Geen reden opgegeven"}</p>
+          <small>{returnItem.customer_email ?? returnItem.customer_name ?? "Klant"}</small>
+        </div>
+      );
+    }
+
+    if (type === "reviews") {
+      const review = item as AdminReview;
+      return (
+        <div className="review-card" key={review.id ?? index}>
+          <div className="review-card-top">
+            <span>{review.status}</span>
+            <small>{new Date(review.created_at).toLocaleDateString("nl-NL")}</small>
+          </div>
+          <strong>{review.title ?? "Bekijk review"}</strong>
+          <p>{review.body ?? "Geen tekst beschikbaar"}</p>
+          <small>{review.customer_name ?? review.customer_email ?? "Klant"} · {review.rating}/5</small>
+        </div>
+      );
+    }
+
+    if (type === "logistics") {
+      const event = item as AdminLogisticsEvent;
+      return (
+        <div className="review-card" key={event.id ?? index}>
+          <div className="review-card-top">
+            <span>{event.event_type}</span>
+            <small>{new Date(event.created_at).toLocaleDateString("nl-NL")}</small>
+          </div>
+          <strong>{event.order_id}</strong>
+          <p>{event.message ?? "Geen details beschikbaar"}</p>
+          <small>{event.carrier ?? "Logistiek"} · {event.tracking_code ?? "Geen tracking"}</small>
+        </div>
+      );
+    }
+
+    const question = item as AdminServiceQuestion;
+    return (
+      <div className="review-card" key={question.id ?? index}>
+        <div className="review-card-top">
+          <span>{question.status}</span>
+          <small>{new Date(question.created_at).toLocaleDateString("nl-NL")}</small>
+        </div>
+        <strong>{question.subject ?? "Klantenvraag"}</strong>
+        <p>{question.message ?? "Geen details beschikbaar"}</p>
+        <small>{question.customer_name ?? question.customer_email ?? "Klant"}</small>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Operations</p>
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h3>Live overzicht</h3>
+          {rows.length ? <div className="review-board">{rows.map((item, index) => renderItem(item, index))}</div> : <p className="empty-state">Geen data beschikbaar voor deze module.</p>}
+        </article>
+        <article className="admin-panel">
+          <h3>Workflow</h3>
+          <div className="compact-list">
+            <p>Gebruik deze module om klantencontact, orderafhandeling, retouren, reviews en servicevragen centraal te volgen.</p>
+            <p>Alle data wordt uit de bestaande admincontext geladen; zodra de relevante Supabase-tabellen gevuld zijn, verschijnen ze automatisch hier.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
 function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   return (
     <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Preset kiezen" title="Preset kiezen">
@@ -803,7 +1011,7 @@ function TodayDashboard({
   );
 }
 
-function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pendingInterviewComments: AdminInterviewComment[]; pendingPosts: AdminPost[]; reports: AdminReport[] }) {
+function ReviewCenter({ pendingInterviewComments, pendingPosts, reports, operationsReviews }: { pendingInterviewComments: AdminInterviewComment[]; pendingPosts: AdminPost[]; reports: AdminReport[]; operationsReviews: AdminReview[] }) {
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
@@ -819,6 +1027,20 @@ function ReviewCenter({ pendingInterviewComments, pendingPosts, reports }: { pen
         <span><strong>{reports.length}</strong> open meldingen</span>
       </div>
       <div className="review-board">
+        <article className="admin-panel review-lane">
+          <h3>Productreviews</h3>
+          {operationsReviews.length ? operationsReviews.map((review) => (
+            <div className="review-card" key={review.id}>
+              <div className="review-card-top">
+                <span>{review.status}</span>
+                <small>{new Date(review.created_at).toLocaleDateString("nl-NL")}</small>
+              </div>
+              <strong>{review.title ?? "Review"}</strong>
+              <p>{review.body ?? "Geen tekst beschikbaar"}</p>
+              <small>{review.customer_name ?? review.customer_email ?? "Klant"} · {review.rating}/5</small>
+            </div>
+          )) : <p className="empty-state">Geen productreviews beschikbaar.</p>}
+        </article>
         <article className="admin-panel review-lane">
           <h3>Interview comments</h3>
           {pendingInterviewComments.length ? pendingInterviewComments.map((comment) => (
@@ -925,24 +1147,143 @@ function ElementorBuilder({ settings, onOpenSections }: { settings: SiteDesignSe
   );
 }
 
-function AccessAndRoles() {
+function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [emailInput, setEmailInput] = useState("");
+  const [roleInput, setRoleInput] = useState<AdminUserRole>("admin");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!emailInput.trim()) return;
+    setErrorMsg("");
+    
+    startTransition(async () => {
+      const res = await addAdminUser(emailInput, roleInput);
+      if (res.error) {
+        setErrorMsg("Fout: " + res.error);
+      } else {
+        setEmailInput("");
+        router.refresh();
+      }
+    });
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Weet je zeker dat je deze beheerder wilt verwijderen?")) return;
+    setErrorMsg("");
+    
+    startTransition(async () => {
+      const res = await removeAdminUser(id);
+      if (res.error) {
+        setErrorMsg("Fout bij verwijderen: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  async function handleRoleChange(id: string, newRole: AdminUserRole) {
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await updateAdminUserRole(id, newRole);
+      if (res.error) {
+        setErrorMsg("Fout bij bijwerken rol: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
         <div>
           <p className="eyebrow">Security</p>
           <h2>Beheerders en rollen</h2>
-          <p>Overzicht van gewenste rollen. Live toegang loopt nu via Supabase Auth en de toegestane e-maillijst.</p>
+          <p>Beheer hier live de actieve beheerders en hun specifieke machtigingen in het systeem.</p>
         </div>
         <ShieldCheck aria-hidden />
       </div>
-      <ModuleReadiness state="Setup nodig" detail="Rolbeheer is nog geen live CRUD. Voeg beheerders nu toe via ADMIN_EMAILS en Supabase Auth." />
-      <div className="admin-table-card">
-        {roleRows.map((row) => (
-          <div className="admin-table-row" key={row.role}>
-            <strong>{row.role}</strong><span>{row.access}</span><span>{row.members}</span><small>Risico: {row.risk}</small>
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h3>Beheerder toevoegen</h3>
+          <form className="form-grid" onSubmit={handleAdd}>
+            <label>
+              E-mailadres
+              <input 
+                type="email" 
+                required 
+                placeholder="beheerder@stukverdriet.nl" 
+                value={emailInput} 
+                onChange={(e) => setEmailInput(e.target.value)} 
+                disabled={isPending}
+              />
+            </label>
+            <label>
+              Rol
+              <select 
+                value={roleInput} 
+                onChange={(e) => setRoleInput(e.target.value as AdminUserRole)}
+                disabled={isPending}
+                aria-label="Selecteer rol"
+                title="Selecteer rol"
+              >
+                <option value="super_admin">Super Admin (Eigenaar)</option>
+                <option value="admin">Admin (Redacteur)</option>
+                <option value="editor">Editor (Inhoud)</option>
+                <option value="moderator">Moderator (Community)</option>
+              </select>
+            </label>
+            <button className="button" type="submit" disabled={isPending}>
+              {isPending ? "Bezig..." : "Toevoegen"}
+            </button>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h3>Actieve Beheerders ({adminUsers.length})</h3>
+          <div className="admin-table-card">
+            {adminUsers.map((user) => (
+              <div className="admin-table-row" key={user.id}>
+                <div>
+                  <strong>{user.email}</strong>
+                  <p className="small-note">Toegevoegd op: {new Date(user.created_at).toLocaleDateString("nl-NL")}</p>
+                </div>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value as AdminUserRole)}
+                    disabled={isPending}
+                    aria-label="Wijzig rol"
+                    title="Wijzig rol"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="admin">Admin</option>
+                    <option value="editor">Editor</option>
+                    <option value="moderator">Moderator</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    className="text-link danger" 
+                    style={{ background: "transparent", border: "none", cursor: "pointer" }}
+                    onClick={() => handleDelete(user.id)}
+                    disabled={isPending}
+                  >
+                    Verwijder
+                  </button>
+                </div>
+              </div>
+            ))}
+            {!adminUsers.length ? (
+              <p className="empty-state">Geen database beheerders geconfigureerd.</p>
+            ) : null}
           </div>
-        ))}
+        </article>
       </div>
     </div>
   );
@@ -960,10 +1301,6 @@ function ApiKeyVault({ missingSupabase }: { missingSupabase?: boolean }) {
         </div>
         <KeyRound aria-hidden />
       </div>
-      <ModuleReadiness
-        state="Alleen inventaris"
-        detail={missingSupabase ? "Supabase ontbreekt. Secrets horen in Vercel env of een server-side secret manager." : "Secrets worden bewust niet in de browser aangepast. Beheer ze via Vercel env of een secret manager."}
-      />
       <div className="key-grid">
         {keys.map((key) => (
           <article className="key-card" key={key}>
@@ -1442,29 +1779,341 @@ function SiteSettingsForm() {
   );
 }
 
-function HostAndFaqForms() {
+function HostAndFaqForms({ faqs = [], hosts = [] }: { faqs?: FAQ[]; hosts?: HostProfile[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Host Form State
+  const [editingHostId, setEditingHostId] = useState<string | null>(null);
+  const [hostName, setHostName] = useState("");
+  const [hostRole, setHostRole] = useState("");
+  const [hostImageUrl, setHostImageUrl] = useState("");
+  const [hostBio, setHostBio] = useState("");
+  const [hostMotivation, setHostMotivation] = useState("");
+  const [hostOrder, setHostOrder] = useState(100);
+  const [hostStatus, setHostStatus] = useState<ContentStatus>("draft");
+
+  // FAQ Form State
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [faqQuestion, setFaqQuestion] = useState("");
+  const [faqAnswer, setFaqAnswer] = useState("");
+  const [faqCategory, setFaqCategory] = useState("");
+  const [faqOrder, setFaqOrder] = useState(100);
+  const [faqStatus, setFaqStatus] = useState<ContentStatus>("draft");
+
+  function editHost(host: HostProfile) {
+    setEditingHostId(host.id);
+    setHostName(host.name);
+    setHostRole(host.role ?? "");
+    setHostImageUrl(host.image_url ?? "");
+    setHostBio(host.bio ?? "");
+    setHostMotivation(host.personal_motivation ?? "");
+    setHostOrder(host.display_order);
+    setHostStatus((host.status as ContentStatus) ?? "draft");
+  }
+
+  function resetHostForm() {
+    setEditingHostId(null);
+    setHostName("");
+    setHostRole("");
+    setHostImageUrl("");
+    setHostBio("");
+    setHostMotivation("");
+    setHostOrder(100);
+    setHostStatus("draft");
+  }
+
+  function handleSaveHost(e: React.FormEvent) {
+    e.preventDefault();
+    if (!hostName.trim()) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      const res = await saveHostDb(
+        editingHostId,
+        hostName,
+        hostRole || null,
+        hostImageUrl || null,
+        hostBio || null,
+        hostMotivation || null,
+        hostOrder,
+        hostStatus
+      );
+      if (res.error) {
+        setErrorMsg("Host fout: " + res.error);
+      } else {
+        resetHostForm();
+        router.refresh();
+      }
+    });
+  }
+
+  function handleDeleteHost(id: string) {
+    if (!confirm("Weet je zeker dat je deze host wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await deleteHostDb(id);
+      if (res.error) {
+        setErrorMsg("Host verwijderfout: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  function editFaq(faq: FAQ) {
+    setEditingFaqId(faq.id);
+    setFaqQuestion(faq.question);
+    setFaqAnswer(faq.answer);
+    setFaqCategory(faq.category ?? "");
+    setFaqOrder(faq.display_order);
+    setFaqStatus((faq.status as ContentStatus) ?? "draft");
+  }
+
+  function resetFaqForm() {
+    setEditingFaqId(null);
+    setFaqQuestion("");
+    setFaqAnswer("");
+    setFaqCategory("");
+    setFaqOrder(100);
+    setFaqStatus("draft");
+  }
+
+  function handleSaveFaq(e: React.FormEvent) {
+    e.preventDefault();
+    if (!faqQuestion.trim() || !faqAnswer.trim()) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      const res = await saveFaqDb(
+        editingFaqId,
+        faqQuestion,
+        faqAnswer,
+        faqCategory || null,
+        faqOrder,
+        faqStatus
+      );
+      if (res.error) {
+        setErrorMsg("FAQ fout: " + res.error);
+      } else {
+        resetFaqForm();
+        router.refresh();
+      }
+    });
+  }
+
+  function handleDeleteFaq(id: string) {
+    if (!confirm("Weet je zeker dat je deze FAQ wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await deleteFaqDb(id);
+      if (res.error) {
+        setErrorMsg("FAQ verwijderfout: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <div className="admin-grid wide">
-      <AdminForm title="Host toevoegen" action={saveHost}>
-        <input type="hidden" name="return_tab" value="hosts" readOnly />
-        <label>Naam<input name="name" required /></label>
-        <label>Rol<input name="role" /></label>
-        <label>Foto URL<input name="image_url" /></label>
-        <label>Bio<textarea name="bio" /></label>
-        <label>Persoonlijke motivatie<textarea name="personal_motivation" /></label>
-        <label>Volgorde<input name="display_order" type="number" defaultValue="100" /></label>
-        <label>Status<StatusSelect /></label>
-        <button className="button" type="submit">Host opslaan</button>
-      </AdminForm>
-      <AdminForm title="FAQ toevoegen" action={saveFaq}>
-        <input type="hidden" name="return_tab" value="hosts" readOnly />
-        <label>Vraag<input name="question" required /></label>
-        <label>Antwoord<textarea name="answer" required /></label>
-        <label>Categorie<input name="category" /></label>
-        <label>Volgorde<input name="display_order" type="number" defaultValue="100" /></label>
-        <label>Status<StatusSelect /></label>
-        <button className="button" type="submit">FAQ opslaan</button>
-      </AdminForm>
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      {/* HOST MANAGEMENT PANEL */}
+      <article className="admin-panel">
+        <h2>{editingHostId ? "Host bewerken" : "Host toevoegen"}</h2>
+        <form className="form-grid" onSubmit={handleSaveHost}>
+          <label>Naam<input required value={hostName} onChange={(e) => setHostName(e.target.value)} disabled={isPending} /></label>
+          <label>Rol<input value={hostRole} onChange={(e) => setHostRole(e.target.value)} disabled={isPending} placeholder="bijv. Gastvrouw" /></label>
+          <label>Foto URL<input value={hostImageUrl} onChange={(e) => setHostImageUrl(e.target.value)} disabled={isPending} placeholder="/img/hosts/..." /></label>
+          <label>Bio<textarea value={hostBio} onChange={(e) => setHostBio(e.target.value)} disabled={isPending} /></label>
+          <label>Persoonlijke motivatie<textarea value={hostMotivation} onChange={(e) => setHostMotivation(e.target.value)} disabled={isPending} /></label>
+          <div className="field-row">
+            <label>Volgorde<input type="number" value={hostOrder} onChange={(e) => setHostOrder(Number(e.target.value))} disabled={isPending} /></label>
+            <label>Status
+              <select value={hostStatus} onChange={(e) => setHostStatus(e.target.value as ContentStatus)} disabled={isPending} aria-label="Host status" title="Host status">
+                <option value="draft">Concept</option>
+                <option value="scheduled">Gepland</option>
+                <option value="published">Gepubliceerd</option>
+                <option value="archived">Gearchiveerd</option>
+              </select>
+            </label>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+            {editingHostId ? <button className="button ghost" type="button" onClick={resetHostForm} disabled={isPending}>Annuleren</button> : null}
+          </div>
+        </form>
+
+        <h3 style={{ marginTop: "2rem" }}>Geregistreerde Hosts ({hosts.length})</h3>
+        <div className="compact-list" style={{ marginTop: "1rem" }}>
+          {hosts.map((host) => (
+            <div key={host.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+              <div>
+                <strong>{host.name}</strong> <small>({host.role || "geen rol"})</small>
+                <p className="small-note">Volgorde: {host.display_order} · Status: {host.status}</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button type="button" className="text-link" onClick={() => editHost(host)} disabled={isPending}>Bewerk</button>
+                <button type="button" className="text-link danger" onClick={() => handleDeleteHost(host.id)} disabled={isPending}>Verwijder</button>
+              </div>
+            </div>
+          ))}
+          {!hosts.length ? <p className="empty-state">Geen hosts in database.</p> : null}
+        </div>
+      </article>
+
+      {/* FAQ MANAGEMENT PANEL */}
+      <article className="admin-panel">
+        <h2>{editingFaqId ? "FAQ bewerken" : "FAQ toevoegen"}</h2>
+        <form className="form-grid" onSubmit={handleSaveFaq}>
+          <label>Vraag<input required value={faqQuestion} onChange={(e) => setFaqQuestion(e.target.value)} disabled={isPending} /></label>
+          <label>Antwoord<textarea required value={faqAnswer} onChange={(e) => setFaqAnswer(e.target.value)} disabled={isPending} /></label>
+          <label>Categorie<input value={faqCategory} onChange={(e) => setFaqCategory(e.target.value)} disabled={isPending} placeholder="bijv. Algemeen" /></label>
+          <div className="field-row">
+            <label>Volgorde<input type="number" value={faqOrder} onChange={(e) => setFaqOrder(Number(e.target.value))} disabled={isPending} /></label>
+            <label>Status
+              <select value={faqStatus} onChange={(e) => setFaqStatus(e.target.value as ContentStatus)} disabled={isPending} aria-label="FAQ status" title="FAQ status">
+                <option value="draft">Concept</option>
+                <option value="scheduled">Gepland</option>
+                <option value="published">Gepubliceerd</option>
+                <option value="archived">Gearchiveerd</option>
+              </select>
+            </label>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+            {editingFaqId ? <button className="button ghost" type="button" onClick={resetFaqForm} disabled={isPending}>Annuleren</button> : null}
+          </div>
+        </form>
+
+        <h3 style={{ marginTop: "2rem" }}>Geregistreerde FAQ&apos;s ({faqs.length})</h3>
+        <div className="compact-list" style={{ marginTop: "1rem" }}>
+          {faqs.map((faq) => (
+            <div key={faq.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ maxWidth: "70%" }}>
+                <strong>{faq.question}</strong>
+                <p className="small-note">Categorie: {faq.category || "Algemeen"} · Volgorde: {faq.display_order}</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button type="button" className="text-link" onClick={() => editFaq(faq)} disabled={isPending}>Bewerk</button>
+                <button type="button" className="text-link danger" onClick={() => handleDeleteFaq(faq.id)} disabled={isPending}>Verwijder</button>
+              </div>
+            </div>
+          ))}
+          {!faqs.length ? <p className="empty-state">Geen FAQ&apos;s in database.</p> : null}
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function DocumentsManager({ legalDocuments = [] }: { legalDocuments?: LegalDocument[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [content, setContent] = useState("");
+  const [isVisible, setIsVisible] = useState(true);
+
+  function editDoc(doc: LegalDocument) {
+    setEditingId(doc.id);
+    setTitle(doc.title);
+    setSlug(doc.slug);
+    setContent(doc.content);
+    setIsVisible(doc.is_visible);
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setTitle("");
+    setSlug("");
+    setContent("");
+    setIsVisible(true);
+  }
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !slug.trim() || !content.trim()) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      const res = await saveLegalDocument(editingId, title, slug, content, isVisible);
+      if (res.error) {
+        setErrorMsg("Fout bij opslaan document: " + res.error);
+      } else {
+        resetForm();
+        router.refresh();
+      }
+    });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Weet je zeker dat je dit document wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await deleteLegalDocument(id);
+      if (res.error) {
+        setErrorMsg("Fout bij verwijderen document: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Sitebeheer</p>
+          <h2>Documentatie & juridische documenten</h2>
+          <p>Beheer hier live de Algemene Voorwaarden, Privacyverklaring en andere teksten voor de website.</p>
+        </div>
+      </div>
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h2>{editingId ? "Document bewerken" : "Document toevoegen"}</h2>
+          <form className="form-grid" onSubmit={handleSave}>
+            <label>Titel<input required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isPending} placeholder="bijv. Algemene Voorwaarden" /></label>
+            <label>Slug<input required value={slug} onChange={(e) => setSlug(e.target.value)} disabled={isPending} placeholder="bijv. algemene-voorwaarden" /></label>
+            <label>Inhoud (Markdown / Tekst)<textarea style={{ minHeight: "250px" }} required value={content} onChange={(e) => setContent(e.target.value)} disabled={isPending} /></label>
+            <label className="check-row">
+              <input type="checkbox" checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} disabled={isPending} />
+              Document zichtbaar op de site
+            </label>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+              {editingId ? <button className="button ghost" type="button" onClick={resetForm} disabled={isPending}>Annuleren</button> : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Bestaande Documenten ({legalDocuments.length})</h2>
+          <div className="compact-list" style={{ marginTop: "1rem" }}>
+            {legalDocuments.map((doc) => (
+              <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <div>
+                  <strong>{doc.title}</strong>
+                  <p className="small-note">Slug: /{doc.slug} · Status: {doc.is_visible ? "Zichtbaar" : "Onzichtbaar"}</p>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => editDoc(doc)} disabled={isPending}>Bewerk</button>
+                  <button type="button" className="text-link danger" onClick={() => handleDelete(doc.id)} disabled={isPending}>Verwijder</button>
+                </div>
+              </div>
+            ))}
+            {!legalDocuments.length ? <p className="empty-state">Geen documenten in database.</p> : null}
+          </div>
+        </article>
+      </div>
     </div>
   );
 }
