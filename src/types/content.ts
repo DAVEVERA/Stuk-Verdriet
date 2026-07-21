@@ -486,4 +486,37 @@ export type LegalDocument = {
   updated_at: string;
 };
 
+export type MarketingItemStatus = "draft" | "needs_text" | "review" | "scheduled";
+
+export type MarketingItem = {
+  id: string;
+  date: string;
+  channel: string;
+  title: string;
+  status: MarketingItemStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AISettings = {
+  id: string;
+  text_prompt: string;
+  image_prompt: string;
+  tone_warmth: number;
+  tone_directness: number;
+  tone_hopeful: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Automation = {
+  id: string;
+  trigger_event: string;
+  action_type: string;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type { Interview, InterviewComment, InterviewEngagement } from "./interview";

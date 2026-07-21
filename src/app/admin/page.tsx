@@ -1,7 +1,7 @@
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
-import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts } from "@/lib/admin-operations";
+import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession } from "@/lib/local-admin";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
@@ -148,6 +148,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const legalDocuments = admin ? await getLegalDocuments() : [];
   const faqs = admin ? await getAdminFaqs() : [];
   const hosts = admin ? await getAdminHosts() : [];
+  const marketingItems = admin ? await getAdminMarketingItems() : [];
+  const aiSettings = admin ? await getAISettings() : null;
+  const automations = admin ? await getAdminAutomations() : [];
 
   return (
     <AdminDashboard
@@ -178,6 +181,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       legalDocuments={legalDocuments}
       faqs={faqs}
       hosts={hosts}
+      marketingItems={marketingItems}
+      aiSettings={aiSettings ?? undefined}
+      automations={automations}
     />
   );
 }

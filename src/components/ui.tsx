@@ -1303,33 +1303,11 @@ export function HostCard({ host }: { host: HostProfile }) {
   );
 }
 
-export function Icon({ name }: { name: CommunityCategory["icon"] }) {
-  const props = { size: 28, "aria-hidden": true };
-  const icon = {
-    heart: <Heart {...props} />,
-    users: <Users {...props} />,
-    user: <User {...props} />,
-    leaf: <Leaf {...props} />,
-    message: <MessageCircle {...props} />,
-    star: <Star {...props} />,
-    shield: <Shield {...props} />
-  }[name];
-  return <div className="line-icon">{icon}</div>;
-}
+import { Icon } from "./ui/Icon";
+import { PageIntro } from "./ui/PageIntro";
+import { formatDate } from "./ui/formatDate";
 
-export function PageIntro({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
-  return (
-    <section className="page-intro">
-      <p className="eyebrow">{eyebrow}</p>
-      <h1>{title}</h1>
-      {children}
-    </section>
-  );
-}
-
-export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value));
-}
+export { Icon, PageIntro, formatDate };
 
 function displayAuthor(name: string | null, type: string) {
   if (type === "anonymous") return "Anoniem";

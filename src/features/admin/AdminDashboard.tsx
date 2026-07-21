@@ -40,7 +40,7 @@ import {
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
-import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb } from "@/lib/admin-operations";
+import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation } from "@/lib/admin-operations";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
 import type {
   AdminCustomer,
@@ -63,7 +63,11 @@ import type {
   FAQ,
   HostProfile,
   AdminUserRole,
-  ContentStatus
+  ContentStatus,
+  MarketingItem,
+  AISettings,
+  Automation,
+  MarketingItemStatus
 } from "@/types/content";
 
 type AdminPost = {
@@ -132,6 +136,9 @@ type AdminDashboardProps = {
   legalDocuments?: LegalDocument[];
   faqs?: FAQ[];
   hosts?: HostProfile[];
+  marketingItems?: MarketingItem[];
+  aiSettings?: AISettings;
+  automations?: Automation[];
 };
 
 export type AdminAnalyticsRow = {
@@ -267,13 +274,6 @@ const integrationIcons = {
   Supabase: Database
 };
 
-const marketingItems = [
-  { date: "2026-07-12", channel: "Instagram", title: "Quote uit interview omzetten naar carousel", status: "Concept" },
-  { date: "2026-07-15", channel: "TikTok", title: "Korte podcastclip met ondertiteling", status: "AI tekst nodig" },
-  { date: "2026-07-18", channel: "Facebook", title: "Communityvraag rond herinneren", status: "Review" },
-  { date: "2026-07-22", channel: "Nieuwsbrief", title: "Nieuwe aflevering + steunbronnen", status: "Gepland" }
-];
-
 const roleRows = [
   { role: "Eigenaar", access: "Alles beheren", members: "1 beheerder", risk: "Hoog" },
   { role: "Redacteur", access: "Podcast, interviews, kalender", members: "2 gebruikers", risk: "Middel" },
@@ -308,7 +308,10 @@ export function AdminDashboard({
   adminUsers = [],
   legalDocuments = [],
   faqs = [],
-  hosts = []
+  hosts = [],
+  marketingItems = [],
+  aiSettings,
+  automations = []
 }: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
@@ -1315,26 +1318,139 @@ function ApiKeyVault({ missingSupabase }: { missingSupabase?: boolean }) {
   );
 }
 
-function MarketingCalendar() {
+function MarketingCalendar({ marketingItems = [] }: { marketingItems?: MarketingItem[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [channel, setChannel] = useState("Instagram");
+  const [title, setTitle] = useState("");
+  const [status, setStatus] = useState<MarketingItemStatus>("draft");
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!channel.trim() || !title.trim() || !date) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      const res = await saveMarketingItem(editingId, date, channel, title, status);
+      if (res.error) {
+        setErrorMsg("Kalender fout: " + res.error);
+      } else {
+        resetForm();
+        router.refresh();
+      }
+    });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Weet je zeker dat je dit kalenderitem wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await deleteMarketingItem(id);
+      if (res.error) {
+        setErrorMsg("Kalender verwijderfout: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  function editItem(item: MarketingItem) {
+    setEditingId(item.id);
+    setDate(item.date);
+    setChannel(item.channel);
+    setTitle(item.title);
+    setStatus(item.status);
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setDate(new Date().toISOString().split("T")[0]);
+    setChannel("Instagram");
+    setTitle("");
+    setStatus("draft");
+  }
+
+  const channelLabelColors: Record<string, string> = {
+    Instagram: "var(--insta-color, #E1306C)",
+    TikTok: "#000000",
+    Facebook: "#1877F2",
+    Nieuwsbrief: "var(--pine, #1A4D3E)",
+    Website: "var(--accent, #D4AF37)"
+  };
+
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
         <div>
           <p className="eyebrow">Marketing</p>
           <h2>Marketingkalender</h2>
-          <p>Plan campagnes per kanaal, laat AI captions schrijven en routeer goedgekeurde items naar Make.</p>
+          <p>Beheer hier live alle geplande campagnes, social posts en nieuwsbrieven in een interactieve planning.</p>
         </div>
-        <button className="button ghost" type="button" disabled><Plus size={17} aria-hidden /> Planning volgt</button>
       </div>
-      <ModuleReadiness state="Roadmap" detail="Deze kalender is een planningsoverzicht. Live toevoegen vereist nog een marketing_items tabel en server action." />
-      <div className="calendar-list">
-        {marketingItems.map((item) => (
-          <article className="calendar-item" key={`${item.date}-${item.title}`}>
-            <time>{new Date(item.date).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}</time>
-            <div><strong>{item.title}</strong><small>{item.channel}</small></div>
-            <span>{item.status}</span>
-          </article>
-        ))}
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h2>{editingId ? "Item bewerken" : "Item toevoegen"}</h2>
+          <form className="form-grid" onSubmit={handleSave}>
+            <label>Datum<input type="date" required value={date} onChange={(e) => setDate(e.target.value)} disabled={isPending} /></label>
+            <label>Kanaal
+              <select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={isPending} aria-label="Kanaal" title="Kanaal">
+                <option value="Instagram">Instagram</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Nieuwsbrief">Nieuwsbrief</option>
+                <option value="Website">Website</option>
+              </select>
+            </label>
+            <label>Titel / Campagne-omschrijving<input required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isPending} placeholder="bijv. Quote uit interview plaatsen" /></label>
+            <label>Status
+              <select value={status} onChange={(e) => setStatus(e.target.value as MarketingItemStatus)} disabled={isPending} aria-label="Item status" title="Item status">
+                <option value="draft">Concept</option>
+                <option value="needs_text">AI tekst nodig</option>
+                <option value="review">Review</option>
+                <option value="scheduled">Gepland</option>
+              </select>
+            </label>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+              {editingId ? <button className="button ghost" type="button" onClick={resetForm} disabled={isPending}>Annuleren</button> : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Geplande Marketing ({marketingItems.length})</h2>
+          <div className="calendar-list" style={{ marginTop: "1rem" }}>
+            {marketingItems.map((item) => (
+              <article className="calendar-item" key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+                  <time style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--light-bg)", padding: "10px", borderRadius: "8px", minWidth: "60px" }}>
+                    <span style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{new Date(item.date).getDate()}</span>
+                    <span style={{ fontSize: "0.8rem", textTransform: "uppercase" }}>{new Date(item.date).toLocaleDateString("nl-NL", { month: "short" })}</span>
+                  </time>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                      <small style={{ color: channelLabelColors[item.channel] || "var(--pine)", fontWeight: "bold" }}>{item.channel}</small>
+                      <small style={{ opacity: 0.7 }}>· Status: {item.status}</small>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => editItem(item)} disabled={isPending}>Bewerk</button>
+                  <button type="button" className="text-link danger" onClick={() => handleDelete(item.id)} disabled={isPending}>Verwijder</button>
+                </div>
+              </article>
+            ))}
+            {!marketingItems.length ? <p className="empty-state">Geen marketingplanning in database.</p> : null}
+          </div>
+        </article>
       </div>
     </div>
   );
@@ -1370,35 +1486,208 @@ function IntegrationCenter({ analyticsSources }: { analyticsSources: AdminAnalyt
   );
 }
 
-function AIStudio() {
+function AIStudio({
+  aiSettings,
+  automations = []
+}: {
+  aiSettings?: AISettings;
+  automations?: Automation[];
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // AI Prompts and Tone state (initialized with database values or fallbacks)
+  const [textPrompt, setTextPrompt] = useState(aiSettings?.text_prompt ?? "Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden.");
+  const [imagePrompt, setImagePrompt] = useState(aiSettings?.image_prompt ?? "Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst.");
+  const [toneWarmth, setToneWarmth] = useState(aiSettings?.tone_warmth ?? 82);
+  const [toneDirectness, setToneDirectness] = useState(aiSettings?.tone_directness ?? 58);
+  const [toneHopeful, setToneHopeful] = useState(aiSettings?.tone_hopeful ?? 74);
+
+  // Automation Form State
+  const [triggerEvent, setTriggerEvent] = useState("Als podcast live gaat");
+  const [actionType, setActionType] = useState("Maak kalender-item aan");
+  const [autoDescription, setAutoDescription] = useState("");
+
+  async function handleSaveSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await saveAISettings(textPrompt, imagePrompt, toneWarmth, toneDirectness, toneHopeful);
+      if (res.error) {
+        setErrorMsg("Fout bij opslaan AI instellingen: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  async function handleAddAutomation(e: React.FormEvent) {
+    e.preventDefault();
+    if (!autoDescription.trim()) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      const res = await saveAutomation(null, triggerEvent, actionType, autoDescription, true);
+      if (res.error) {
+        setErrorMsg("Automation fout: " + res.error);
+      } else {
+        setAutoDescription("");
+        router.refresh();
+      }
+    });
+  }
+
+  async function handleToggleAutomation(automation: Automation) {
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await saveAutomation(
+        automation.id,
+        automation.trigger_event,
+        automation.action_type,
+        automation.description,
+        !automation.is_active
+      );
+      if (res.error) {
+        setErrorMsg("Fout bij wijzigen status: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  async function handleDeleteAutomation(id: string) {
+    if (!confirm("Weet je zeker dat je deze automation wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await deleteAutomation(id);
+      if (res.error) {
+        setErrorMsg("Fout bij verwijderen automation: " + res.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
         <div>
           <p className="eyebrow">AI studio</p>
           <h2>Tekst, beeld en persoonlijkheid</h2>
-          <p>Prompt templates, tone-of-voice training en Nano Banana beeldgeneratie naast een schrijfchatbot.</p>
+          <p>Pas hier live de AI prompt templates en de tone-of-voice persoonlijkheidsschuifregelaars van je merk aan.</p>
         </div>
         <Bot aria-hidden />
       </div>
-      <ModuleReadiness state="Roadmap" detail="AI-acties zijn nog niet gekoppeld aan server-side generatie. Gebruik dit als prompt- en tone-of-voice ontwerp." />
-      <div className="ai-workbench">
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide" style={{ marginBottom: "2rem" }}>
+        {/* LEFT PANEL - PROMPT WRITING */}
         <article className="admin-panel">
-          <h3><WandSparkles size={18} aria-hidden /> Tekstschrijver</h3>
-          <textarea defaultValue="Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden." />
-          <button className="button ghost" type="button" disabled><Sparkles size={17} aria-hidden /> Nog niet gekoppeld</button>
+          <h2>Prompt Sjablonen & Generatoren</h2>
+          <form className="form-grid" onSubmit={handleSaveSettings}>
+            <label>
+              <h3><WandSparkles size={18} aria-hidden /> Tekstschrijver Prompt</h3>
+              <p className="small-note">Stuurinstructie voor captions en teksten.</p>
+              <textarea 
+                value={textPrompt} 
+                onChange={(e) => setTextPrompt(e.target.value)} 
+                disabled={isPending}
+                style={{ minHeight: "100px" }}
+              />
+            </label>
+
+            <label>
+              <h3><ImageIcon size={18} aria-hidden /> Nano Banana Beeld Prompt</h3>
+              <p className="small-note">Instructie voor AI-beeldgeneratoren.</p>
+              <textarea 
+                value={imagePrompt} 
+                onChange={(e) => setImagePrompt(e.target.value)} 
+                disabled={isPending}
+                style={{ minHeight: "100px" }}
+              />
+            </label>
+
+            <h3><Brain size={18} aria-hidden /> Merk Persoonlijkheid (Fine-tuning)</h3>
+            <p className="small-note">Instellingen beïnvloeden de AI-tonaliteit.</p>
+            <div className="tone-grid" style={{ gap: "15px" }}>
+              <label style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Warmte ({toneWarmth}%)</span>
+                <input type="range" min="0" max="100" value={toneWarmth} onChange={(e) => setToneWarmth(Number(e.target.value))} disabled={isPending} />
+              </label>
+              <label style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Directheid ({toneDirectness}%)</span>
+                <input type="range" min="0" max="100" value={toneDirectness} onChange={(e) => setToneDirectness(Number(e.target.value))} disabled={isPending} />
+              </label>
+              <label style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Hoopvol ({toneHopeful}%)</span>
+                <input type="range" min="0" max="100" value={toneHopeful} onChange={(e) => setToneHopeful(Number(e.target.value))} disabled={isPending} />
+              </label>
+            </div>
+
+            <button className="button" type="submit" disabled={isPending} style={{ marginTop: "1rem" }}>
+              AI Instellingen Opslaan
+            </button>
+          </form>
         </article>
+
+        {/* RIGHT PANEL - AUTOMATIONS & IDEAS */}
         <article className="admin-panel">
-          <h3><ImageIcon size={18} aria-hidden /> Nano Banana beelden</h3>
-          <textarea defaultValue="Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst." />
-          <button className="button ghost" type="button" disabled><ImagePlus size={17} aria-hidden /> Nog niet gekoppeld</button>
-        </article>
-        <article className="admin-panel">
-          <h3><Brain size={18} aria-hidden /> Persoonlijkheid finetunen</h3>
-          <div className="tone-grid">
-            <label>Warmte<input type="range" min="0" max="100" defaultValue="82" /></label>
-            <label>Directheid<input type="range" min="0" max="100" defaultValue="58" /></label>
-            <label>Hoopvol<input type="range" min="0" max="100" defaultValue="74" /></label>
+          <h2><Workflow size={18} aria-hidden /> AI Automation Builder</h2>
+          <p className="small-note">Maak laagdrempelig eigen automatische AI-taken aan die reageren op website-events.</p>
+
+          <form className="form-grid" onSubmit={handleAddAutomation} style={{ marginTop: "1rem" }}>
+            <label>Als (Trigger Event)
+              <select value={triggerEvent} onChange={(e) => setTriggerEvent(e.target.value)} disabled={isPending} aria-label="Trigger" title="Trigger">
+                <option value="Als podcast live gaat">Als podcast live gaat</option>
+                <option value="Als nieuw lid lid wordt">Als nieuw community-lid registreert</option>
+                <option value="Als herinnering geplaatst wordt">Als herinnering/pulse geplaatst wordt</option>
+                <option value="Als nieuwe bestelling gedaan wordt">Als nieuwe bestelling gedaan wordt</option>
+              </select>
+            </label>
+            <label>Dan (AI Actie)
+              <select value={actionType} onChange={(e) => setActionType(e.target.value)} disabled={isPending} aria-label="Actie" title="Actie">
+                <option value="Maak kalender-item aan">Maak kalender-item aan</option>
+                <option value="Schrijf Instagram caption">Schrijf Instagram caption</option>
+                <option value="Genereer AI visual template">Genereer AI visual template</option>
+                <option value="Plan nieuwsbrief concept">Plan nieuwsbrief concept</option>
+              </select>
+            </label>
+            <label>Omschrijving / AI Instructie
+              <textarea 
+                required 
+                placeholder="bijv: Gebruik de podcasttitel en schrijf een Instagram-caption met maximaal 3 hashtags." 
+                value={autoDescription} 
+                onChange={(e) => setAutoDescription(e.target.value)} 
+                disabled={isPending} 
+              />
+            </label>
+            <button className="button" type="submit" disabled={isPending}>
+              Automation Activeren
+            </button>
+          </form>
+
+          <h3 style={{ marginTop: "2rem" }}>Actieve AI Automations ({automations.length})</h3>
+          <div className="compact-list" style={{ marginTop: "1rem" }}>
+            {automations.map((auto) => (
+              <div key={auto.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ maxWidth: "70%" }}>
+                  <strong style={{ fontSize: "0.95rem" }}>{auto.trigger_event} &rarr; {auto.action_type}</strong>
+                  <p className="small-note" style={{ margin: "4px 0" }}>{auto.description}</p>
+                  <small style={{ opacity: 0.7 }}>Status: {auto.is_active ? "Actief" : "Gepauzeerd"}</small>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => handleToggleAutomation(auto)} disabled={isPending}>
+                    {auto.is_active ? "Pauzeer" : "Hervat"}
+                  </button>
+                  <button type="button" className="text-link danger" onClick={() => handleDeleteAutomation(auto.id)} disabled={isPending}>
+                    Wis
+                  </button>
+                </div>
+              </div>
+            ))}
+            {!automations.length ? <p className="empty-state">Geen automations geconfigureerd. Voeg er een toe om te starten.</p> : null}
           </div>
         </article>
       </div>

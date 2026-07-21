@@ -13,7 +13,11 @@ import type {
   FAQ,
   HostProfile,
   AdminUserRole,
-  ContentStatus
+  ContentStatus,
+  MarketingItem,
+  AISettings,
+  Automation,
+  MarketingItemStatus
 } from "@/types/content";
 
 export async function getAdminCustomers() {
@@ -423,6 +427,216 @@ export async function deleteHost(id: string) {
 
   const { error } = await admin
     .from("host_profiles")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+// === MARKETING ITEMS CRUD ===
+export async function getAdminMarketingItems() {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return [] as MarketingItem[];
+
+  const { data, error } = await admin
+    .from("marketing_items")
+    .select("*")
+    .order("date", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching marketing items:", error);
+    return [] as MarketingItem[];
+  }
+  return (data ?? []) as MarketingItem[];
+}
+
+export async function saveMarketingItem(
+  id: string | null,
+  date: string,
+  channel: string,
+  title: string,
+  status: MarketingItemStatus
+) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "supabase-not-configured" };
+
+  const payload = {
+    date,
+    channel: channel.trim(),
+    title: title.trim(),
+    status,
+    updated_at: new Date().toISOString()
+  };
+
+  if (id) {
+    const { data, error } = await admin
+      .from("marketing_items")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as MarketingItem };
+  } else {
+    const { data, error } = await admin
+      .from("marketing_items")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as MarketingItem };
+  }
+}
+
+export async function deleteMarketingItem(id: string) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "supabase-not-configured" };
+
+  const { error } = await admin
+    .from("marketing_items")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+// === AI SETTINGS ===
+export async function getAISettings() {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return null as AISettings | null;
+
+  const { data, error } = await admin
+    .from("ai_settings")
+    .select("*")
+    .eq("id", "main")
+    .maybeSingle();
+
+  if (error || !data) {
+    // Return a default object if row doesn't exist yet
+    return {
+      id: "main",
+      text_prompt: "Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden.",
+      image_prompt: "Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst.",
+      tone_warmth: 82,
+      tone_directness: 58,
+      tone_hopeful: 74,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } as AISettings;
+  }
+  return data as AISettings;
+}
+
+export async function saveAISettings(
+  textPrompt: string,
+  imagePrompt: string,
+  toneWarmth: number,
+  toneDirectness: number,
+  toneHopeful: number
+) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "supabase-not-configured" };
+
+  const payload = {
+    text_prompt: textPrompt,
+    image_prompt: imagePrompt,
+    tone_warmth: toneWarmth,
+    tone_directness: toneDirectness,
+    tone_hopeful: toneHopeful,
+    updated_at: new Date().toISOString()
+  };
+
+  const { data, error } = await admin
+    .from("ai_settings")
+    .upsert({ id: "main", ...payload })
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true, data: data as AISettings };
+}
+
+// === AUTOMATIONS CRUD ===
+export async function getAdminAutomations() {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return [] as Automation[];
+
+  const { data, error } = await admin
+    .from("automations")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching automations:", error);
+    return [] as Automation[];
+  }
+  return (data ?? []) as Automation[];
+}
+
+export async function saveAutomation(
+  id: string | null,
+  triggerEvent: string,
+  actionType: string,
+  description: string,
+  isActive: boolean
+) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "supabase-not-configured" };
+
+  const payload = {
+    trigger_event: triggerEvent.trim(),
+    action_type: actionType.trim(),
+    description: description.trim(),
+    is_active: isActive,
+    updated_at: new Date().toISOString()
+  };
+
+  if (id) {
+    const { data, error } = await admin
+      .from("automations")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as Automation };
+  } else {
+    const { data, error } = await admin
+      .from("automations")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as Automation };
+  }
+}
+
+export async function deleteAutomation(id: string) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { error: "supabase-not-configured" };
+
+  const { error } = await admin
+    .from("automations")
     .delete()
     .eq("id", id);
 
