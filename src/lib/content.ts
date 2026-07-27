@@ -144,7 +144,8 @@ export async function getPublishedEpisodes(): Promise<PodcastEpisode[]> {
     return false;
   });
 
-  return filtered.map(normalizeEpisode).sort(newestFirst);
+  const source = filtered.length ? filtered : fallbackEpisodes;
+  return source.map(normalizeEpisode).sort(newestFirst);
 }
 
 export async function getLatestEpisode() {
