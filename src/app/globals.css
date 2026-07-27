@@ -958,20 +958,19 @@ p {
   line-height: 1.08;
 }
 
-.hero-player-spotify {
-  background: #121212;
+.hero-player-audio {
+  background: rgba(18, 18, 18, 0.92);
   border-radius: 12px;
   box-shadow: 0 10px 26px rgba(11, 15, 12, 0.24);
   min-width: 0;
   overflow: hidden;
+  padding: 12px;
   width: 100%;
 }
 
-.hero-player-spotify-frame {
-  background: #121212;
-  border: 0;
+.hero-player-audio-control {
+  accent-color: var(--sand);
   display: block;
-  height: 152px;
   max-width: 100%;
   width: 100%;
 }
@@ -7014,12 +7013,12 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
     overflow: hidden;
   }
 
-  .hero-player-spotify {
+  .hero-player-audio {
     border-radius: 10px;
   }
 
-  .hero-player-spotify-frame {
-    height: 152px;
+  .hero-player-audio-control {
+    min-height: 42px;
   }
 
   .hero-player-signup-promo a {

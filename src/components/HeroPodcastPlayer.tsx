@@ -1,54 +1,34 @@
 import type { PodcastEpisode } from "@/types/content";
 
-const heroSpotifyEpisodeUrl = "https://open.spotify.com/embed/episode/1krrANNcoXfDGxTX70pN5o?theme=0";
-const heroSpotifyEpisodeTitle = "Aflevering 2";
-
-function getSpotifyEmbedUrl(value?: string | null) {
-  if (!value) return heroSpotifyEpisodeUrl;
-
-  try {
-    const url = new URL(value);
-    if (url.hostname !== "open.spotify.com") return heroSpotifyEpisodeUrl;
-    if (!url.pathname.startsWith("/embed/")) {
-      url.pathname = `/embed${url.pathname}`;
-    }
-    url.search = "?theme=0";
-    return url.toString();
-  } catch {
-    return heroSpotifyEpisodeUrl;
-  }
-}
+const heroEpisodeTitle = "Afl. 2 - In gesprek met een AYA en haar vader";
+const heroEpisodeAudioUrl =
+  "https://traffic.omny.fm/d/clips/56337cb8-b71d-4e6c-b279-b31700c37714/39e4cd19-74cc-4c95-82d1-b483009801e1/17a8a080-a3df-4694-a7a2-b49400ec1ef6/audio.mp3?utm_source=Podcast&in_playlist=75be1074-3a78-4407-80fb-b48300980637";
+const heroSpotifyEpisodeUrl = "https://open.spotify.com/episode/1krrANNcoXfDGxTX70pN5o";
 
 export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode | null; episodes: PodcastEpisode[] }) {
   const episode = latest ?? episodes[0] ?? null;
   if (!episode) return null;
 
-  const spotifyEmbedUrl = getSpotifyEmbedUrl(heroSpotifyEpisodeUrl);
-  const playerTitle = episode.title.toLowerCase().includes("aflevering 2") ? episode.title : heroSpotifyEpisodeTitle;
-
   return (
     <aside id="hero-player" className="hero-podcast-player" aria-label="Podcastspeler">
       <div className="hero-player-topline">
         <p className="hero-player-kicker">Luister nu</p>
-        <h2>{playerTitle}</h2>
+        <h2>{heroEpisodeTitle}</h2>
       </div>
 
-      <div className="hero-player-spotify">
-        <iframe
-          data-testid="embed-iframe"
-          className="hero-player-spotify-frame"
-          title={`Luister naar ${playerTitle} op Spotify`}
-          src={spotifyEmbedUrl}
-          width="100%"
-          height="152"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          allowFullScreen
-          loading="lazy"
+      <div className="hero-player-audio">
+        <audio
+          className="hero-player-audio-control"
+          controls
+          preload="metadata"
+          src={heroEpisodeAudioUrl}
         />
       </div>
 
       <div className="hero-player-signup-promo">
-        <a href="#aanmelden">Geef mij een seintje</a>
+        <a href={heroSpotifyEpisodeUrl} target="_blank" rel="noreferrer">
+          Open aflevering op Spotify
+        </a>
       </div>
     </aside>
   );
