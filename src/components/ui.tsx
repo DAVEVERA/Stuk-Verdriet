@@ -420,7 +420,7 @@ export function CommunityAccountDock({
               </>
             ) : (
               <>
-                <form className="admin-magic-link-form" action="/api/local-admin-login" method="post">
+                <form className="admin-magic-link-form" action="/api/community-local-admin-login" method="post">
                   <input type="hidden" name="next" value="/community" readOnly />
                   <label>
                     Gebruikersnaam
