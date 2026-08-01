@@ -6,28 +6,29 @@ import type {
   Interview,
   PodcastEpisode,
   PodcastSeason,
+  LegalDocument,
   SocialLinks,
-  SponsorLogo
-} from "@/types/content";
+  SponsorLogo,
+} from '@/types/content';
 
 export const fallbackSeasons: PodcastSeason[] = [
   {
-    id: "season-1",
-    title: "Seizoen 1",
+    id: 'season-1',
+    title: 'Seizoen 1',
     season_number: 1,
     description: null,
     cover_image: null,
-    status: "published"
-  }
+    status: 'published',
+  },
 ];
 
 export const fallbackInterviews: Interview[] = [
   {
-    id: "interview-mijn-verhaal-mag-erbij",
-    title: "Mijn verhaal mag erbij",
-    slug: "mijn-verhaal-mag-erbij",
+    id: 'interview-mijn-verhaal-mag-erbij',
+    title: 'Mijn verhaal mag erbij',
+    slug: 'mijn-verhaal-mag-erbij',
     excerpt:
-      "Achter Stuk Verdriet staat niet alleen een podcast, maar ook een plek die met aandacht, gevoel en overtuiging is gebouwd.",
+      'Achter Stuk Verdriet staat niet alleen een podcast, maar ook een plek die met aandacht, gevoel en overtuiging is gebouwd.',
     full_content: `# Mijn verhaal mag erbij
 
 Achter Stuk Verdriet staat niet alleen een podcast, maar ook een plek die met aandacht, gevoel en overtuiging is gebouwd.
@@ -53,20 +54,21 @@ Deze plek is er. Ik hoop hiermee iets meer gebouwd te hebben dan een website en 
 Verdriet verdient een stem. Laat van je horen.
 
 Veel succes en bedankt Daniela, Susan Mathijsen, Anissa Kroot en Anita voor deze bijzondere en eervolle opdracht.`,
-    cover_image_url: "/img/DV.jpeg",
-    interviewee_name: "Dave Vera",
-    publication_date: "2026-07-15",
-    tags: ["stuk verdriet", "website", "community", "toegankelijkheid", "verhalen"],
+    cover_image_url: '/img/DV.jpeg',
+    interviewee_name: 'Dave Vera',
+    publication_date: '2026-07-15',
+    tags: ['stuk verdriet', 'website', 'community', 'toegankelijkheid', 'verhalen'],
     like_count: 0,
     comment_count: 0,
     share_count: 0,
-    status: "published"
+    status: 'published',
   },
   {
-    id: "interview-4",
-    title: "Ik ben vooral... ik",
-    slug: "ik-ben-vooral-ik",
-    excerpt: "Een persoonlijk verhaal over het vele gezichten van rouw, gemis en hoe liefde van vorm verandert wanneer iemand sterft.",
+    id: 'interview-4',
+    title: 'Ik ben vooral... ik',
+    slug: 'ik-ben-vooral-ik',
+    excerpt:
+      'Een persoonlijk verhaal over het vele gezichten van rouw, gemis en hoe liefde van vorm verandert wanneer iemand sterft.',
     full_content: `# Ik ben vooral... ik
 
 Ik ben moeder. Ik ben kind. Ik ben vrouw. Ik ben zus. Maar boven alles ben ik vooral ik.
@@ -138,169 +140,250 @@ Sindsdien draag ik die woorden altijd met me mee.
 Want ergens geloof ik dat daar, op die allerkleinste ster in het heelal van ons hart, de mensen wonen die wij zo intens missen.
 
 En misschien is dat wel de enige plek waar afscheid en liefde voor altijd naast elkaar mogen bestaan.`,
-    cover_image_url: "/img/interview1.png",
-    interviewee_name: "Anoniem",
-    publication_date: "2026-07-08",
-    tags: ["verlies", "rouw", "liefde", "moeder", "herinnering", "gemis"],
+    cover_image_url: '/img/interview1.png',
+    interviewee_name: 'Anoniem',
+    publication_date: '2026-07-08',
+    tags: ['verlies', 'rouw', 'liefde', 'moeder', 'herinnering', 'gemis'],
     like_count: 0,
     comment_count: 0,
     share_count: 0,
-    status: "published"
-  }
+    status: 'published',
+  },
 ];
 
 export const fallbackEpisodes: PodcastEpisode[] = [
   {
-    id: "episode-1",
-    title: "Aflevering 1: Het begin.",
-    slug: "voor-de-vroege-vogels",
+    id: 'episode-1',
+    title: 'Aflevering 1: Het begin.',
+    slug: 'voor-de-vroege-vogels',
     season_number: 0,
     episode_number: 0,
-    short_intro: "Luister naar deze bijzondere aflevering.",
-    description: "Deze aflevering kun je nu beluisteren.",
-    audio_file_url: "/audio/Aflevering 1.mpeg",
-    spotify_url: "https://open.spotify.com/episode/3Eh39z3GjPJB5ivTEB4zyX",
+    short_intro: 'Luister naar deze bijzondere aflevering.',
+    description: 'Deze aflevering kun je nu beluisteren.',
+    audio_file_url: '/audio/Aflevering 1.mpeg',
+    spotify_url: 'https://open.spotify.com/episode/3Eh39z3GjPJB5ivTEB4zyX',
     podimo_url: null,
     apple_podcast_url: null,
     image_url:
-      "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1200&q=80",
-    publication_date: "2026-06-18",
-    next_episode_date: "2026-07-02",
-    duration: "31:10",
+      'https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1200&q=80',
+    publication_date: '2026-06-18',
+    next_episode_date: '2026-07-02',
+    duration: '31:10',
     link_cards: [],
-    transcript_status: "missing",
-    transcript_language: "nl-NL",
+    transcript_status: 'missing',
+    transcript_language: 'nl-NL',
     transcript_segments: [],
     transcript_vtt_url: null,
     transcript_operation_name: null,
     transcript_generated_at: null,
     featured_latest: true,
-    status: "published"
-  }
+    status: 'published',
+  },
 ];
 
 export const fallbackCategories: CommunityCategory[] = [
-  { id: "rouw", title: "Rouw algemeen", slug: "rouw-algemeen", description: "Ruimte voor herkenning, vragen en steun.", icon: "heart", display_order: 1 },
-  { id: "ouders", title: "Voor ouders", slug: "voor-ouders", description: "Voor ouders die leven met gemis.", icon: "users", display_order: 2 },
-  { id: "ayas", title: "Voor AYA's", slug: "voor-ayas", description: "Voor jonge mensen die rouw meemaken.", icon: "user", display_order: 3 },
-  { id: "naasten", title: "Naasten en familie", slug: "naasten-en-familie", description: "Voor broers, zussen, vrienden en andere naasten.", icon: "users", display_order: 4 },
-  { id: "praktisch", title: "Praktische steun", slug: "praktische-steun", description: "Ervaringen en tips voor wat er geregeld moet worden.", icon: "leaf", display_order: 5 },
-  { id: "vragen", title: "Vragen & antwoorden", slug: "vragen-en-antwoorden", description: "Stel een vraag of reageer op die van een ander.", icon: "message", display_order: 6 },
-  { id: "verhalen", title: "Verhalen & herkenning", slug: "verhalen-en-herkenning", description: "Persoonlijke verhalen die mogen bestaan.", icon: "star", display_order: 7 },
-  { id: "podcast", title: "Podcast", slug: "podcast", description: "Echte stemmen en eerlijke gesprekken over missen, liefhebben en verder leven.", icon: "message", display_order: 8 },
-  { id: "hulp", title: "Hulp & ondersteuning", slug: "hulp-en-ondersteuning", description: "Soms is er meer nodig dan tijd alleen.", icon: "shield", display_order: 9 },
-  { id: "herinneren", title: "Herinneren", slug: "herinneren", description: "Omdat liefde niet stopt waar het leven eindigt.", icon: "heart", display_order: 10 },
-  { id: "leven-na-verlies", title: "Leven na verlies", slug: "leven-na-verlies", description: "Verder leven zonder verder te hoeven gaan.", icon: "leaf", display_order: 11 },
-  { id: "omgeving", title: "Voor de omgeving", slug: "voor-de-omgeving", description: "Je hoeft niet de juiste woorden te hebben om er te zijn.", icon: "users", display_order: 12 }
+  {
+    id: 'rouw',
+    title: 'Rouw algemeen',
+    slug: 'rouw-algemeen',
+    description: 'Ruimte voor herkenning, vragen en steun.',
+    icon: 'heart',
+    display_order: 1,
+  },
+  {
+    id: 'ouders',
+    title: 'Voor ouders',
+    slug: 'voor-ouders',
+    description: 'Voor ouders die leven met gemis.',
+    icon: 'users',
+    display_order: 2,
+  },
+  {
+    id: 'ayas',
+    title: "Voor AYA's",
+    slug: 'voor-ayas',
+    description: 'Voor jonge mensen die rouw meemaken.',
+    icon: 'user',
+    display_order: 3,
+  },
+  {
+    id: 'naasten',
+    title: 'Naasten en familie',
+    slug: 'naasten-en-familie',
+    description: 'Voor broers, zussen, vrienden en andere naasten.',
+    icon: 'users',
+    display_order: 4,
+  },
+  {
+    id: 'praktisch',
+    title: 'Praktische steun',
+    slug: 'praktische-steun',
+    description: 'Ervaringen en tips voor wat er geregeld moet worden.',
+    icon: 'leaf',
+    display_order: 5,
+  },
+  {
+    id: 'vragen',
+    title: 'Vragen & antwoorden',
+    slug: 'vragen-en-antwoorden',
+    description: 'Stel een vraag of reageer op die van een ander.',
+    icon: 'message',
+    display_order: 6,
+  },
+  {
+    id: 'verhalen',
+    title: 'Verhalen & herkenning',
+    slug: 'verhalen-en-herkenning',
+    description: 'Persoonlijke verhalen die mogen bestaan.',
+    icon: 'star',
+    display_order: 7,
+  },
+  {
+    id: 'podcast',
+    title: 'Podcast',
+    slug: 'podcast',
+    description: 'Echte stemmen en eerlijke gesprekken over missen, liefhebben en verder leven.',
+    icon: 'message',
+    display_order: 8,
+  },
+  {
+    id: 'hulp',
+    title: 'Hulp & ondersteuning',
+    slug: 'hulp-en-ondersteuning',
+    description: 'Soms is er meer nodig dan tijd alleen.',
+    icon: 'shield',
+    display_order: 9,
+  },
+  {
+    id: 'herinneren',
+    title: 'Herinneren',
+    slug: 'herinneren',
+    description: 'Omdat liefde niet stopt waar het leven eindigt.',
+    icon: 'heart',
+    display_order: 10,
+  },
+  {
+    id: 'leven-na-verlies',
+    title: 'Leven na verlies',
+    slug: 'leven-na-verlies',
+    description: 'Verder leven zonder verder te hoeven gaan.',
+    icon: 'leaf',
+    display_order: 11,
+  },
+  {
+    id: 'omgeving',
+    title: 'Voor de omgeving',
+    slug: 'voor-de-omgeving',
+    description: 'Je hoeft niet de juiste woorden te hebben om er te zijn.',
+    icon: 'users',
+    display_order: 12,
+  },
 ];
 
 export const fallbackPosts: CommunityPost[] = [
   {
-    id: "post-1",
+    id: 'post-1',
     author_name: null,
-    author_display_type: "anonymous",
-    title: "Hoe houd je ruimte voor iemand die gemist wordt?",
-    slug: "ruimte-voor-iemand-die-gemist-wordt",
-    body:
-      "Soms wil ik iemands naam blijven noemen, maar ik twijfel of anderen dat zwaar vinden. Hoe doen jullie dat op verjaardagen, gewone dagen of momenten waarop iemand ineens heel dichtbij voelt?",
+    author_display_type: 'anonymous',
+    title: 'Hoe houd je ruimte voor iemand die gemist wordt?',
+    slug: 'ruimte-voor-iemand-die-gemist-wordt',
+    body: 'Soms wil ik iemands naam blijven noemen, maar ik twijfel of anderen dat zwaar vinden. Hoe doen jullie dat op verjaardagen, gewone dagen of momenten waarop iemand ineens heel dichtbij voelt?',
     image_url: null,
-    category: "Rouw algemeen",
-    post_type: "question",
+    category: 'Rouw algemeen',
+    post_type: 'question',
     resource_url: null,
     resource_label: null,
-    tags: ["herkenning"],
-    target_group: "naasten",
-    created_at: "2026-07-14T10:00:00.000Z",
-    status: "approved",
+    tags: ['herkenning'],
+    target_group: 'naasten',
+    created_at: '2026-07-14T10:00:00.000Z',
+    status: 'approved',
     reply_count: 4,
-    support_count: 18
+    support_count: 18,
   },
   {
-    id: "post-2",
-    author_name: "Susan",
-    author_display_type: "first_name",
-    title: "Een klein ritueel voor een zware dag",
-    slug: "klein-ritueel-voor-een-zware-dag",
-    body:
-      "Op dagen waarop alles scherp voelt, helpt het mij om iets kleins te doen dat niet hoeft te worden uitgelegd. Een kaars aan, een wandeling, een liedje, of gewoon even hardop zeggen: vandaag mis ik je.",
+    id: 'post-2',
+    author_name: 'Susan',
+    author_display_type: 'first_name',
+    title: 'Een klein ritueel voor een zware dag',
+    slug: 'klein-ritueel-voor-een-zware-dag',
+    body: 'Op dagen waarop alles scherp voelt, helpt het mij om iets kleins te doen dat niet hoeft te worden uitgelegd. Een kaars aan, een wandeling, een liedje, of gewoon even hardop zeggen: vandaag mis ik je.',
     image_url: null,
-    category: "Herinneren",
-    post_type: "tip",
+    category: 'Herinneren',
+    post_type: 'tip',
     resource_url: null,
     resource_label: null,
-    tags: ["ritueel", "herinneren"],
-    target_group: "ouders",
-    created_at: "2026-07-13T18:20:00.000Z",
-    status: "approved",
+    tags: ['ritueel', 'herinneren'],
+    target_group: 'ouders',
+    created_at: '2026-07-13T18:20:00.000Z',
+    status: 'approved',
     reply_count: 7,
-    support_count: 31
+    support_count: 31,
   },
   {
-    id: "post-3",
-    author_name: "Daniela",
-    author_display_type: "first_name",
-    title: "Wat zeg je tegen iemand die net slecht nieuws heeft gekregen?",
-    slug: "wat-zeg-je-bij-slecht-nieuws",
-    body:
-      "Ik merk dat veel mensen bang zijn om iets verkeerds te zeggen. Misschien helpt het om niet te zoeken naar de perfecte zin, maar naar aanwezigheid. Iets als: ik weet niet wat ik moet zeggen, maar ik ben er.",
+    id: 'post-3',
+    author_name: 'Daniela',
+    author_display_type: 'first_name',
+    title: 'Wat zeg je tegen iemand die net slecht nieuws heeft gekregen?',
+    slug: 'wat-zeg-je-bij-slecht-nieuws',
+    body: 'Ik merk dat veel mensen bang zijn om iets verkeerds te zeggen. Misschien helpt het om niet te zoeken naar de perfecte zin, maar naar aanwezigheid. Iets als: ik weet niet wat ik moet zeggen, maar ik ben er.',
     image_url: null,
-    category: "Voor de omgeving",
-    post_type: "story",
+    category: 'Voor de omgeving',
+    post_type: 'story',
     resource_url: null,
     resource_label: null,
-    tags: ["woorden", "naasten"],
-    target_group: "vrienden",
-    created_at: "2026-07-12T12:45:00.000Z",
-    status: "approved",
+    tags: ['woorden', 'naasten'],
+    target_group: 'vrienden',
+    created_at: '2026-07-12T12:45:00.000Z',
+    status: 'approved',
     reply_count: 3,
-    support_count: 22
+    support_count: 22,
   },
   {
-    id: "post-4",
+    id: 'post-4',
     author_name: null,
-    author_display_type: "anonymous",
-    title: "Handige route: hulp en ondersteuning",
-    slug: "handige-route-hulp-en-ondersteuning",
-    body:
-      "Voor wie merkt dat lezen alleen niet genoeg is: verzamel hier rustige routes naar hulp, lotgenotencontact en steun die past bij rouw, ziekte of langdurige spanning.",
+    author_display_type: 'anonymous',
+    title: 'Handige route: hulp en ondersteuning',
+    slug: 'handige-route-hulp-en-ondersteuning',
+    body: 'Voor wie merkt dat lezen alleen niet genoeg is: verzamel hier rustige routes naar hulp, lotgenotencontact en steun die past bij rouw, ziekte of langdurige spanning.',
     image_url: null,
-    category: "Hulp & ondersteuning",
-    post_type: "link",
-    resource_url: "/themas/hulp-en-ondersteuning",
-    resource_label: "Bekijk hulp en ondersteuning",
-    tags: ["hulp", "lotgenoten"],
+    category: 'Hulp & ondersteuning',
+    post_type: 'link',
+    resource_url: '/themas/hulp-en-ondersteuning',
+    resource_label: 'Bekijk hulp en ondersteuning',
+    tags: ['hulp', 'lotgenoten'],
     target_group: null,
-    created_at: "2026-07-11T09:15:00.000Z",
-    status: "approved",
+    created_at: '2026-07-11T09:15:00.000Z',
+    status: 'approved',
     reply_count: 1,
-    support_count: 12
-  }
+    support_count: 12,
+  },
 ];
 
 export const fallbackHosts: HostProfile[] = [
   {
-    id: "susan",
-    name: "Susan",
-    role: "Host",
-    image_url: "/img/portretsuus.png",
+    id: 'susan',
+    name: 'Susan',
+    role: 'Host',
+    image_url: '/img/portretsuus.png',
     bio: null,
     personal_motivation: null,
     display_order: 1,
-    status: "published"
+    status: 'published',
   },
   {
-    id: "daniela",
-    name: "Daniela",
-    role: "Host",
-    image_url: "/img/portret-daniela.jpg",
+    id: 'daniela',
+    name: 'Daniela',
+    role: 'Host',
+    image_url: '/img/portret-daniela.jpg',
     bio: null,
     personal_motivation: null,
     display_order: 2,
-    status: "published"
-  }
+    status: 'published',
+  },
 ];
 
 export const fallbackFaqs: FAQ[] = [];
+export const fallbackLegalDocuments: LegalDocument[] = [];
 export const fallbackSponsors: SponsorLogo[] = [];
 
 export const fallbackSocialLinks: SocialLinks = {
@@ -310,5 +393,5 @@ export const fallbackSocialLinks: SocialLinks = {
   spotify_url: null,
   youtube_music_url: null,
   podimo_url: null,
-  apple_podcast_url: null
+  apple_podcast_url: null,
 };

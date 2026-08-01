@@ -1,5 +1,6 @@
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
-import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
+import { CommunityChatWidget } from "@/components/CommunityChatWidget";
+import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
 import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
@@ -145,7 +146,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const analyticsSources = getAnalyticsSources(Boolean(admin));
 
   const adminUsers = admin ? await getAdminUsers() : [];
-  const legalDocuments = admin ? await getLegalDocuments() : [];
+  const legalDocuments = admin ? await getLegalDocuments() : fallbackLegalDocuments;
   const faqs = admin ? await getAdminFaqs() : [];
   const hosts = admin ? await getAdminHosts() : [];
   const marketingItems = admin ? await getAdminMarketingItems() : [];
@@ -153,38 +154,41 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const automations = admin ? await getAdminAutomations() : [];
 
   return (
-    <AdminDashboard
-      episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
-      seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
-      pendingPosts={pendingPosts ?? []}
-      reports={reports ?? []}
-      pendingInterviewComments={normalizedPendingInterviewComments}
-      analyticsRows={analyticsRows}
-      analyticsSources={analyticsSources}
-      shopProducts={shopProducts}
-      shopOrders={shopOrders}
-      shopSettings={shopSettings}
-      customers={customers}
-      orders={orders}
-      returns={returns}
-      reviews={reviews}
-      logisticsEvents={logisticsEvents}
-      serviceQuestions={serviceQuestions}
-      stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
-      sectionDesign={sectionDesign}
-      missingSupabase={!hasSupabaseEnv}
-      localPreview={localAdminAllowed && !allowed && isLocalAdminEnabled()}
-      savedMessage={saved ?? null}
-      errorMessage={error ?? null}
-      initialTab={tab ?? null}
-      adminUsers={adminUsers}
-      legalDocuments={legalDocuments}
-      faqs={faqs}
-      hosts={hosts}
-      marketingItems={marketingItems}
-      aiSettings={aiSettings ?? undefined}
-      automations={automations}
-    />
+    <>
+      <AdminDashboard
+        episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
+        seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
+        pendingPosts={pendingPosts ?? []}
+        reports={reports ?? []}
+        pendingInterviewComments={normalizedPendingInterviewComments}
+        analyticsRows={analyticsRows}
+        analyticsSources={analyticsSources}
+        shopProducts={shopProducts}
+        shopOrders={shopOrders}
+        shopSettings={shopSettings}
+        customers={customers}
+        orders={orders}
+        returns={returns}
+        reviews={reviews}
+        logisticsEvents={logisticsEvents}
+        serviceQuestions={serviceQuestions}
+        stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
+        sectionDesign={sectionDesign}
+        missingSupabase={!hasSupabaseEnv}
+        localPreview={localAdminAllowed && !allowed && isLocalAdminEnabled()}
+        savedMessage={saved ?? null}
+        errorMessage={error ?? null}
+        initialTab={tab ?? null}
+        adminUsers={adminUsers}
+        legalDocuments={legalDocuments}
+        faqs={faqs}
+        hosts={hosts}
+        marketingItems={marketingItems}
+        aiSettings={aiSettings ?? undefined}
+        automations={automations}
+      />
+      <CommunityChatWidget />
+    </>
   );
 }
 

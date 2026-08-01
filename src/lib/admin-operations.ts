@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-import { createSupabaseAdminClient } from "@/lib/supabase";
+import { createSupabaseAdminClient } from '@/lib/supabase';
 import type {
   AdminCustomer,
   AdminLogisticsEvent,
@@ -17,42 +17,42 @@ import type {
   MarketingItem,
   AISettings,
   Automation,
-  MarketingItemStatus
-} from "@/types/content";
+  MarketingItemStatus,
+} from '@/types/content';
 
 export async function getAdminCustomers() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminCustomer[];
 
   const { data, error } = await admin
-    .from("shop_customers")
-    .select("*")
-    .order("created_at", { ascending: false })
+    .from('shop_customers')
+    .select('*')
+    .order('created_at', { ascending: false })
     .limit(50);
 
   if (!error && data?.length) return data as AdminCustomer[];
 
   const { data: orders, error: ordersError } = await admin
-    .from("shop_orders")
-    .select("id, customer_email, status, total_cents, currency, created_at, updated_at")
-    .order("created_at", { ascending: false })
+    .from('shop_orders')
+    .select('id, customer_email, status, total_cents, currency, created_at, updated_at')
+    .order('created_at', { ascending: false })
     .limit(25);
 
   if (ordersError || !orders?.length) return [] as AdminCustomer[];
 
   return orders.map((order) => ({
     id: order.id,
-    name: order.customer_email ? order.customer_email.split("@")[0] : "Klant",
+    name: order.customer_email ? order.customer_email.split('@')[0] : 'Klant',
     email: order.customer_email ?? null,
     phone: null,
-    status: order.status === "paid" ? "active" : "needs_follow_up",
+    status: order.status === 'paid' ? 'active' : 'needs_follow_up',
     created_at: order.created_at,
     updated_at: order.updated_at,
     last_order_at: order.created_at,
     order_count: 1,
     total_spent_cents: Number(order.total_cents ?? 0),
     note: null,
-    source: "shop"
+    source: 'shop',
   })) as AdminCustomer[];
 }
 
@@ -60,7 +60,11 @@ export async function getAdminOrders() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminOrder[];
 
-  const { data, error } = await admin.from("shop_orders").select("*").order("created_at", { ascending: false }).limit(50);
+  const { data, error } = await admin
+    .from('shop_orders')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   if (error) return [] as AdminOrder[];
   return (data ?? []) as AdminOrder[];
@@ -70,26 +74,34 @@ export async function getAdminReturns() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminReturn[];
 
-  const { data, error } = await admin.from("shop_order_returns").select("*").order("created_at", { ascending: false }).limit(25);
+  const { data, error } = await admin
+    .from('shop_order_returns')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(25);
 
   if (!error && data?.length) return data as AdminReturn[];
 
-  const { data: orders, error: ordersError } = await admin.from("shop_orders").select("*").order("created_at", { ascending: false }).limit(25);
+  const { data: orders, error: ordersError } = await admin
+    .from('shop_orders')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(25);
 
   if (ordersError || !orders?.length) return [] as AdminReturn[];
 
   return (orders as AdminOrder[])
-    .filter((order) => order.status === "cancelled" || order.status === "refunded")
+    .filter((order) => order.status === 'cancelled' || order.status === 'refunded')
     .map((order) => ({
       id: `${order.id}-return`,
       order_id: order.id,
       customer_email: order.customer_email,
-      customer_name: order.customer_email ? order.customer_email.split("@")[0] : null,
-      reason: "Retour aangevraagd via klantservice",
-      status: "requested",
+      customer_name: order.customer_email ? order.customer_email.split('@')[0] : null,
+      reason: 'Retour aangevraagd via klantservice',
+      status: 'requested',
       created_at: order.created_at,
       updated_at: order.updated_at,
-      notes: order.fulfillment_notes ?? null
+      notes: order.fulfillment_notes ?? null,
     })) as AdminReturn[];
 }
 
@@ -97,7 +109,11 @@ export async function getAdminReviews() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminReview[];
 
-  const { data, error } = await admin.from("shop_reviews").select("*").order("created_at", { ascending: false }).limit(25);
+  const { data, error } = await admin
+    .from('shop_reviews')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(25);
 
   if (!error && data?.length) return data as AdminReview[];
 
@@ -108,7 +124,11 @@ export async function getAdminLogisticsEvents() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminLogisticsEvent[];
 
-  const { data, error } = await admin.from("shop_logistics_events").select("*").order("created_at", { ascending: false }).limit(50);
+  const { data, error } = await admin
+    .from('shop_logistics_events')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   if (!error && data?.length) return data as AdminLogisticsEvent[];
 
@@ -119,7 +139,11 @@ export async function getAdminServiceQuestions() {
   const admin = createSupabaseAdminClient();
   if (!admin) return [] as AdminServiceQuestion[];
 
-  const { data, error } = await admin.from("customer_questions").select("*").order("created_at", { ascending: false }).limit(50);
+  const { data, error } = await admin
+    .from('customer_questions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   if (!error && data?.length) return data as AdminServiceQuestion[];
 
@@ -132,13 +156,13 @@ export async function getAdminUsers() {
   if (!admin) return [] as AdminUser[];
 
   const { data, error } = await admin
-    .from("admin_users")
-    .select("*")
-    .order("created_at", { ascending: false })
+    .from('admin_users')
+    .select('*')
+    .order('created_at', { ascending: false })
     .limit(1000);
 
   if (error) {
-    console.error("Error fetching admin users:", error);
+    console.error('Error fetching admin users:', error);
     return [] as AdminUser[];
   }
   return (data ?? []) as AdminUser[];
@@ -146,17 +170,17 @@ export async function getAdminUsers() {
 
 export async function addAdminUser(email: string, role: AdminUserRole) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const cleanEmail = email.trim().toLowerCase();
   const { data, error } = await admin
-    .from("admin_users")
+    .from('admin_users')
     .insert({ email: cleanEmail, role })
     .select()
     .single();
 
   if (error) {
-    console.error("Error adding admin user:", error);
+    console.error('Error adding admin user:', error);
     return { error: error.message };
   }
   return { success: true, data: data as AdminUser };
@@ -164,15 +188,12 @@ export async function addAdminUser(email: string, role: AdminUserRole) {
 
 export async function removeAdminUser(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("admin_users")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('admin_users').delete().eq('id', id);
 
   if (error) {
-    console.error("Error removing admin user:", error);
+    console.error('Error removing admin user:', error);
     return { error: error.message };
   }
   return { success: true };
@@ -180,17 +201,17 @@ export async function removeAdminUser(id: string) {
 
 export async function updateAdminUserRole(id: string, role: AdminUserRole) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const { data, error } = await admin
-    .from("admin_users")
+    .from('admin_users')
     .update({ role, updated_at: new Date().toISOString() })
-    .eq("id", id)
+    .eq('id', id)
     .select()
     .single();
 
   if (error) {
-    console.error("Error updating admin role:", error);
+    console.error('Error updating admin role:', error);
     return { error: error.message };
   }
   return { success: true, data: data as AdminUser };
@@ -202,13 +223,13 @@ export async function getLegalDocuments() {
   if (!admin) return [] as LegalDocument[];
 
   const { data, error } = await admin
-    .from("legal_documents")
-    .select("*")
-    .order("created_at", { ascending: false })
+    .from('legal_documents')
+    .select('*')
+    .order('created_at', { ascending: false })
     .limit(1000);
 
   if (error) {
-    console.error("Error fetching legal documents:", error);
+    console.error('Error fetching legal documents:', error);
     return [] as LegalDocument[];
   }
   return (data ?? []) as LegalDocument[];
@@ -222,38 +243,38 @@ export async function saveLegalDocument(
   isVisible: boolean
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const docPayload = {
     title: title.trim(),
     slug: slug.trim().toLowerCase(),
     content,
     is_visible: isVisible,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   if (id) {
     const { data, error } = await admin
-      .from("legal_documents")
+      .from('legal_documents')
       .update(docPayload)
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      console.error("Error updating legal document:", error);
+      console.error('Error updating legal document:', error);
       return { error: error.message };
     }
     return { success: true, data: data as LegalDocument };
   } else {
     const { data, error } = await admin
-      .from("legal_documents")
+      .from('legal_documents')
       .insert(docPayload)
       .select()
       .single();
 
     if (error) {
-      console.error("Error inserting legal document:", error);
+      console.error('Error inserting legal document:', error);
       return { error: error.message };
     }
     return { success: true, data: data as LegalDocument };
@@ -262,15 +283,12 @@ export async function saveLegalDocument(
 
 export async function deleteLegalDocument(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("legal_documents")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('legal_documents').delete().eq('id', id);
 
   if (error) {
-    console.error("Error deleting legal document:", error);
+    console.error('Error deleting legal document:', error);
     return { error: error.message };
   }
   return { success: true };
@@ -282,12 +300,12 @@ export async function getAdminFaqs() {
   if (!admin) return [] as FAQ[];
 
   const { data, error } = await admin
-    .from("faqs")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .from('faqs')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching FAQs:", error);
+    console.error('Error fetching FAQs:', error);
     return [] as FAQ[];
   }
   return (data ?? []) as FAQ[];
@@ -302,7 +320,7 @@ export async function saveFaq(
   status: ContentStatus
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const faqPayload = {
     question: question.trim(),
@@ -310,14 +328,14 @@ export async function saveFaq(
     category: category ? category.trim() : null,
     display_order: displayOrder,
     status,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   if (id) {
     const { data, error } = await admin
-      .from("faqs")
+      .from('faqs')
       .update(faqPayload)
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -326,11 +344,7 @@ export async function saveFaq(
     }
     return { success: true, data: data as FAQ };
   } else {
-    const { data, error } = await admin
-      .from("faqs")
-      .insert(faqPayload)
-      .select()
-      .single();
+    const { data, error } = await admin.from('faqs').insert(faqPayload).select().single();
 
     if (error) {
       return { error: error.message };
@@ -341,12 +355,9 @@ export async function saveFaq(
 
 export async function deleteFaq(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("faqs")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('faqs').delete().eq('id', id);
 
   if (error) {
     return { error: error.message };
@@ -360,12 +371,12 @@ export async function getAdminHosts() {
   if (!admin) return [] as HostProfile[];
 
   const { data, error } = await admin
-    .from("host_profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .from('host_profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching host profiles:", error);
+    console.error('Error fetching host profiles:', error);
     return [] as HostProfile[];
   }
   return (data ?? []) as HostProfile[];
@@ -382,7 +393,7 @@ export async function saveHost(
   status: ContentStatus
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const hostPayload = {
     name: name.trim(),
@@ -392,14 +403,14 @@ export async function saveHost(
     personal_motivation: personalMotivation ? personalMotivation.trim() : null,
     display_order: displayOrder,
     status,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   if (id) {
     const { data, error } = await admin
-      .from("host_profiles")
+      .from('host_profiles')
       .update(hostPayload)
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -408,11 +419,7 @@ export async function saveHost(
     }
     return { success: true, data: data as HostProfile };
   } else {
-    const { data, error } = await admin
-      .from("host_profiles")
-      .insert(hostPayload)
-      .select()
-      .single();
+    const { data, error } = await admin.from('host_profiles').insert(hostPayload).select().single();
 
     if (error) {
       return { error: error.message };
@@ -423,12 +430,9 @@ export async function saveHost(
 
 export async function deleteHost(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("host_profiles")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('host_profiles').delete().eq('id', id);
 
   if (error) {
     return { error: error.message };
@@ -442,13 +446,13 @@ export async function getAdminMarketingItems() {
   if (!admin) return [] as MarketingItem[];
 
   const { data, error } = await admin
-    .from("marketing_items")
-    .select("*")
-    .order("date", { ascending: true })
+    .from('marketing_items')
+    .select('*')
+    .order('date', { ascending: true })
     .limit(1000);
 
   if (error) {
-    console.error("Error fetching marketing items:", error);
+    console.error('Error fetching marketing items:', error);
     return [] as MarketingItem[];
   }
   return (data ?? []) as MarketingItem[];
@@ -462,21 +466,21 @@ export async function saveMarketingItem(
   status: MarketingItemStatus
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const payload = {
     date,
     channel: channel.trim(),
     title: title.trim(),
     status,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   if (id) {
     const { data, error } = await admin
-      .from("marketing_items")
+      .from('marketing_items')
       .update(payload)
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -485,11 +489,7 @@ export async function saveMarketingItem(
     }
     return { success: true, data: data as MarketingItem };
   } else {
-    const { data, error } = await admin
-      .from("marketing_items")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await admin.from('marketing_items').insert(payload).select().single();
 
     if (error) {
       return { error: error.message };
@@ -500,12 +500,9 @@ export async function saveMarketingItem(
 
 export async function deleteMarketingItem(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("marketing_items")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('marketing_items').delete().eq('id', id);
 
   if (error) {
     return { error: error.message };
@@ -519,22 +516,24 @@ export async function getAISettings() {
   if (!admin) return null as AISettings | null;
 
   const { data, error } = await admin
-    .from("ai_settings")
-    .select("*")
-    .eq("id", "main")
+    .from('ai_settings')
+    .select('*')
+    .eq('id', 'main')
     .maybeSingle();
 
   if (error || !data) {
     // Return a default object if row doesn't exist yet
     return {
-      id: "main",
-      text_prompt: "Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden.",
-      image_prompt: "Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst.",
+      id: 'main',
+      text_prompt:
+        'Schrijf een warme Instagram-caption over een nieuw interview, zonder te zwaar te worden.',
+      image_prompt:
+        'Maak een serene social visual met vlinder, zachte natuur en ruimte voor echte HTML tekst.',
       tone_warmth: 82,
       tone_directness: 58,
       tone_hopeful: 74,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     } as AISettings;
   }
   return data as AISettings;
@@ -548,7 +547,7 @@ export async function saveAISettings(
   toneHopeful: number
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const payload = {
     text_prompt: textPrompt,
@@ -556,12 +555,12 @@ export async function saveAISettings(
     tone_warmth: toneWarmth,
     tone_directness: toneDirectness,
     tone_hopeful: toneHopeful,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   const { data, error } = await admin
-    .from("ai_settings")
-    .upsert({ id: "main", ...payload })
+    .from('ai_settings')
+    .upsert({ id: 'main', ...payload })
     .select()
     .single();
 
@@ -577,13 +576,13 @@ export async function getAdminAutomations() {
   if (!admin) return [] as Automation[];
 
   const { data, error } = await admin
-    .from("automations")
-    .select("*")
-    .order("created_at", { ascending: false })
+    .from('automations')
+    .select('*')
+    .order('created_at', { ascending: false })
     .limit(1000);
 
   if (error) {
-    console.error("Error fetching automations:", error);
+    console.error('Error fetching automations:', error);
     return [] as Automation[];
   }
   return (data ?? []) as Automation[];
@@ -597,21 +596,21 @@ export async function saveAutomation(
   isActive: boolean
 ) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
   const payload = {
     trigger_event: triggerEvent.trim(),
     action_type: actionType.trim(),
     description: description.trim(),
     is_active: isActive,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   if (id) {
     const { data, error } = await admin
-      .from("automations")
+      .from('automations')
       .update(payload)
-      .eq("id", id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -620,11 +619,7 @@ export async function saveAutomation(
     }
     return { success: true, data: data as Automation };
   } else {
-    const { data, error } = await admin
-      .from("automations")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await admin.from('automations').insert(payload).select().single();
 
     if (error) {
       return { error: error.message };
@@ -635,12 +630,9 @@ export async function saveAutomation(
 
 export async function deleteAutomation(id: string) {
   const admin = createSupabaseAdminClient();
-  if (!admin) return { error: "supabase-not-configured" };
+  if (!admin) return { error: 'supabase-not-configured' };
 
-  const { error } = await admin
-    .from("automations")
-    .delete()
-    .eq("id", id);
+  const { error } = await admin.from('automations').delete().eq('id', id);
 
   if (error) {
     return { error: error.message };
