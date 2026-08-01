@@ -5,7 +5,7 @@ import {
   hasSupabaseEnv,
 } from '@/lib/supabase';
 import { CommunityPulseStrip } from '@/components/CommunityPulseStrip';
-import { CommunityAccountDock, CommunityPostCard, Icon, LocalAdminLogin } from '@/components/ui';
+import { CommunityAccountDock, CommunityPostCard, Icon } from '@/components/ui';
 import type {
   CommunityConversation,
   CommunityFriendship,
@@ -148,7 +148,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           hasSupabaseEnv={hasSupabaseEnv}
           selectedConversationId={params.conversation ?? null}
           chatError={params.error ?? null}
-          localAdminLogin={<LocalAdminLogin next="/community" error={params.error ?? null} />}
         />
       </section>
 
