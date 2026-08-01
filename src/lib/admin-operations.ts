@@ -134,7 +134,8 @@ export async function getAdminUsers() {
   const { data, error } = await admin
     .from("admin_users")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
   if (error) {
     console.error("Error fetching admin users:", error);
@@ -203,7 +204,8 @@ export async function getLegalDocuments() {
   const { data, error } = await admin
     .from("legal_documents")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
   if (error) {
     console.error("Error fetching legal documents:", error);
@@ -282,7 +284,6 @@ export async function getAdminFaqs() {
   const { data, error } = await admin
     .from("faqs")
     .select("*")
-    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -361,7 +362,6 @@ export async function getAdminHosts() {
   const { data, error } = await admin
     .from("host_profiles")
     .select("*")
-    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -444,7 +444,8 @@ export async function getAdminMarketingItems() {
   const { data, error } = await admin
     .from("marketing_items")
     .select("*")
-    .order("date", { ascending: true });
+    .order("date", { ascending: true })
+    .limit(1000);
 
   if (error) {
     console.error("Error fetching marketing items:", error);
@@ -578,7 +579,8 @@ export async function getAdminAutomations() {
   const { data, error } = await admin
     .from("automations")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
   if (error) {
     console.error("Error fetching automations:", error);
