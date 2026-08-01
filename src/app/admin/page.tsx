@@ -2,7 +2,7 @@ import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons } from "@/lib/fallback-data";
 import { getSiteDesignSettings } from "@/lib/content";
 import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
-import { hasLocalAdminSession } from "@/lib/local-admin";
+import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
@@ -173,7 +173,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
       sectionDesign={sectionDesign}
       missingSupabase={!hasSupabaseEnv}
-      localPreview={localAdminAllowed && !allowed}
+      localPreview={localAdminAllowed && !allowed && isLocalAdminEnabled()}
       savedMessage={saved ?? null}
       errorMessage={error ?? null}
       initialTab={tab ?? null}
@@ -348,6 +348,7 @@ function AdminAccessGate({
     callback: "De loginlink kon niet worden verwerkt. Vraag een nieuwe link aan.",
     email: "Vul een geldig e-mailadres in.",
     "email-login": "De magic link kon niet worden verzonden. Controleer Supabase Auth.",
+    "local-admin": "Controleer de gebruikersnaam en het wachtwoord.",
     "missing-supabase": "Supabase Auth is nog niet geconfigureerd voor deze omgeving.",
     "rate-limited": "Er zijn te veel pogingen. Probeer het later opnieuw.",
     unauthorized: "Dit account heeft geen beheerrechten."
@@ -359,17 +360,20 @@ function AdminAccessGate({
         <p className="eyebrow">Stuk Verdriet beheer</p>
         <h1 id="admin-access-title">Beheeromgeving</h1>
         <p>
-          Log in met het e-mailadres dat als beheerder is toegestaan. Je ontvangt een eenmalige magic link waarmee je
-          direct terugkomt in het adminportaal.
+          Log direct in met een toegestaan beheeraccount. Geen OTP of mailboxronde nodig.
         </p>
 
-        <form className="admin-magic-link-form" action="/api/admin/magic-link" method="post">
+        <form className="admin-magic-link-form" action="/api/local-admin-login" method="post">
           <input type="hidden" name="next" value="/admin" readOnly />
           <label>
-            Beheer e-mailadres
-            <input name="email" type="email" autoComplete="email" required placeholder="naam@domein.nl" />
+            Gebruikersnaam
+            <input name="username" autoComplete="username" required placeholder="susan of daniela" />
           </label>
-          <button className="button" type="submit">Stuur magic link</button>
+          <label>
+            Wachtwoord
+            <input name="password" type="password" autoComplete="current-password" required />
+          </label>
+          <button className="button" type="submit">Inloggen</button>
         </form>
 
         {sent ? (
@@ -382,6 +386,14 @@ function AdminAccessGate({
         {signedInEmail ? (
           <p className="small-note">Je bent ingelogd als {signedInEmail}, maar dit account staat niet in `ADMIN_EMAILS`.</p>
         ) : null}
+        <form className="admin-magic-link-form admin-magic-link-fallback" action="/api/admin/magic-link" method="post">
+          <input type="hidden" name="next" value="/admin" readOnly />
+          <label>
+            Fallback via e-mail
+            <input name="email" type="email" autoComplete="email" placeholder="naam@domein.nl" required />
+          </label>
+          <button className="text-link" type="submit">Stuur magic link als fallback</button>
+        </form>
       </div>
     </section>
   );

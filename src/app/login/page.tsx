@@ -7,8 +7,7 @@ type LoginPageProps = {
 };
 
 const errorMessages: Record<string, string> = {
-  "local-admin": "Controleer de lokale admingegevens.",
-  "local-disabled": "Lokale admin-login is alleen beschikbaar in development.",
+  "local-admin": "Controleer de gebruikersnaam en het wachtwoord.",
   oauth: "Inloggen via Google lukte niet.",
   email: "Vul een geldig e-mailadres in.",
   "email-login": "De magic link kon niet worden verzonden.",
@@ -41,8 +40,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
             <input type="hidden" name="next" value={next} readOnly />
             <label>
-              Gebruiker
-              <input name="username" autoComplete="username" required />
+              Gebruikersnaam
+              <input name="username" autoComplete="username" placeholder="susan of daniela" required />
             </label>
             <label>
               Wachtwoord
