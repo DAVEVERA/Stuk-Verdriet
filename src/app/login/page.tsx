@@ -12,7 +12,9 @@ const errorMessages: Record<string, string> = {
   email: "Vul een geldig e-mailadres in.",
   "email-login": "De magic link kon niet worden verzonden.",
   callback: "De loginlink kon niet worden verwerkt.",
-  "missing-supabase": "Supabase is nog niet geconfigureerd voor deze omgeving."
+  "missing-supabase": "Supabase is nog niet geconfigureerd voor deze omgeving.",
+  "missing-secret": "De beveiligde login is in deze omgeving nog niet geconfigureerd.",
+  "rate-limited": "Er zijn te veel inlogpogingen. Wacht tien minuten en probeer het opnieuw."
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {

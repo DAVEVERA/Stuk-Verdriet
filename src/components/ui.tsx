@@ -419,21 +419,7 @@ export function CommunityAccountDock({
                 </form>
               </>
             ) : (
-              <>
-                <form className="admin-magic-link-form" action="/api/community-local-admin-login" method="post">
-                  <input type="hidden" name="next" value="/community" readOnly />
-                  <label>
-                    Gebruikersnaam
-                    <input name="username" autoComplete="username" required placeholder="susan of daniela" />
-                  </label>
-                  <label>
-                    Wachtwoord
-                    <input name="password" type="password" autoComplete="current-password" required />
-                  </label>
-                  <button className="community-panel-button" type="submit">Inloggen</button>
-                </form>
-                <Link className="community-panel-button secondary" href={loginHref}>Inloggen met e-mail</Link>
-              </>
+              <Link className="community-panel-button" href={loginHref}>Inloggen om mee te doen</Link>
             )}
             {!hasSupabaseEnv ? <p className="small-note">Supabase env vars ontbreken nog.</p> : null}
           </div>

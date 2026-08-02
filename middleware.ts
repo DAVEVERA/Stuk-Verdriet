@@ -1,10 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { hasRouteAccess, isProtectedRoute, routeAccessCookie } from "@/lib/route-password";
+import {
+  communityAccessCookie,
+  hasCommunityAccess,
+  hasRouteAccess,
+  isProtectedRoute,
+  routeAccessCookie
+} from "@/lib/route-password";
 
 export async function middleware(request: NextRequest) {
   if (!isProtectedRoute(request.nextUrl.pathname)) return NextResponse.next();
 
-  if (await hasRouteAccess(request.cookies.get(routeAccessCookie)?.value)) {
+  const isCommunityRoute =
+    request.nextUrl.pathname === "/community" || request.nextUrl.pathname.startsWith("/community/");
+  const hasAccess = isCommunityRoute
+    ? await hasCommunityAccess(request.cookies.get(communityAccessCookie)?.value)
+    : await hasRouteAccess(request.cookies.get(routeAccessCookie)?.value);
+
+  if (hasAccess) {
     const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
     return response;

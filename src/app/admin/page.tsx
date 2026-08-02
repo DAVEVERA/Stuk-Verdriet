@@ -354,6 +354,7 @@ function AdminAccessGate({
     "email-login": "De magic link kon niet worden verzonden. Controleer Supabase Auth.",
     "local-admin": "Controleer de gebruikersnaam en het wachtwoord.",
     "missing-supabase": "Supabase Auth is nog niet geconfigureerd voor deze omgeving.",
+    "missing-secret": "De beveiligde beheerlogin is in deze omgeving nog niet geconfigureerd.",
     "rate-limited": "Er zijn te veel pogingen. Probeer het later opnieuw.",
     unauthorized: "Dit account heeft geen beheerrechten."
   };

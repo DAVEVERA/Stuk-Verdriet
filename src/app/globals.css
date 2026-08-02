@@ -537,7 +537,7 @@ textarea {
 }
 
 .admin-access-panel > p {
-  color: var(--eucalyptus);
+  color: var(--pine);
   line-height: 1.65;
   margin: 0;
 }
@@ -551,7 +551,7 @@ textarea {
 .admin-magic-link-form label {
   color: var(--pine);
   display: grid;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 700;
   gap: 8px;
 }

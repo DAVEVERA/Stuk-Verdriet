@@ -16,7 +16,9 @@ function adminPassword() {
 }
 
 function adminSessionSecret() {
-  return process.env.ADMIN_SESSION_SECRET ?? "";
+  const configuredSecret = process.env.ADMIN_SESSION_SECRET || process.env.STUK_VERDRIET_ROUTE_SECRET;
+  if (configuredSecret) return configuredSecret;
+  return process.env.NODE_ENV === "production" ? "" : `${localAdminPassword}:stukverdriet-admin-session`;
 }
 
 export function isLocalAdminEnabled() {
@@ -24,7 +26,7 @@ export function isLocalAdminEnabled() {
 }
 
 export function isAdminPasswordLoginEnabled() {
-  return true;
+  return Boolean(adminSessionSecret());
 }
 
 export function isValidAdminPassword(password: string) {
@@ -36,7 +38,7 @@ export function isBuiltInAdminCredential(username: string, password: string) {
 }
 
 function sessionSecret() {
-  return adminSessionSecret() || `${localAdminPassword}:stukverdriet-admin-session`;
+  return adminSessionSecret();
 }
 
 function signSessionPayload(payload: string) {
