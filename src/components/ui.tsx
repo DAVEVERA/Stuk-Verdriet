@@ -639,6 +639,26 @@ export function SocialEmbedSection() {
   );
 }
 
+export function SpotifyEmbedPlayer({ episode }: { episode: PodcastEpisode }) {
+  const spotifyEmbedUrl = episode.spotify_url ? getSpotifyEmbedUrl(episode.spotify_url) : null;
+  if (!spotifyEmbedUrl) return null;
+
+  return (
+    <iframe
+      className="spotify-embed-player"
+      title={`Spotify-player: ${episode.title}`}
+      style={{ borderRadius: "12px" }}
+      src={spotifyEmbedUrl}
+      width="100%"
+      height="152"
+      frameBorder={0}
+      allowFullScreen
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+    />
+  );
+}
+
 export function StickySpotifyPlayer({ episode }: { episode: PodcastEpisode | null }) {
   const spotifyEmbedUrl = episode?.spotify_url ? getSpotifyEmbedUrl(episode.spotify_url) : null;
 

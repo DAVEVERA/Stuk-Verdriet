@@ -975,6 +975,13 @@ p {
   width: 100%;
 }
 
+.spotify-embed-player {
+  border: 0;
+  display: block;
+  max-width: 100%;
+  width: 100%;
+}
+
 .hero-player-signup-promo {
   align-items: stretch;
   background: rgba(255, 253, 248, 0.1);
@@ -6114,6 +6121,14 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
 
 .flyout-panel .queue-item .meta {
   color: var(--eucalyptus);
+}
+
+.episode-queue-item-with-player {
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+
+.episode-queue-item-with-player .spotify-embed-player {
+  margin-top: 10px;
 }
 
 @media (max-width: 640px) {

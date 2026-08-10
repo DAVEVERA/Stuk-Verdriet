@@ -8,7 +8,7 @@ import { site, type OnepagerPanel } from "@/lib/site";
 import { subscribeEpisodeSignup } from "@/lib/actions";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks, ThemeArticle, ThemeArticleBlock } from "@/types/content";
-import { CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList } from "@/components/ui";
+import { CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList, SpotifyEmbedPlayer } from "@/components/ui";
 
 type FlyoutOverlayProps = {
   initialPanel?: OnepagerPanel | null;
@@ -184,13 +184,14 @@ export function FlyoutOverlay({
                   <h3>{season.title}</h3>
                   <div className="episode-stack">
                     {seasonEpisodes.map((episode) => (
-                      <article className="queue-item active" key={episode.id}>
+                      <article className="queue-item active episode-queue-item-with-player" key={episode.id}>
                         <div className="queue-play">
                           <span>{episode.episode_number}</span>
                         </div>
                         <div>
                           <h4>{episode.title}</h4>
                           <EpisodeMeta episode={episode} />
+                          {episode.spotify_url ? <SpotifyEmbedPlayer episode={episode} /> : null}
                         </div>
                       </article>
                     ))}
