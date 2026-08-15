@@ -16,6 +16,15 @@ supabase/.temp/
 .vscode/
 .idea/
 
+# Agents
+.claude/
+.claude\settings.local.json
+.codex/
+.github/
+.playwright-cli/
+docs/superpowers
+.archive
+
 # Logs and generated QA artifacts
 *.log
 npm-debug.log*
@@ -23,6 +32,10 @@ yarn-debug.log*
 yarn-error.log*
 screenshots/
 output/
+README.md/
+TODO.md/
+tiktokg2sLRQM3hrMDb1k51r5XvSU72wtt7Xcf.txt/
+
 
 # Environment files and secrets
 # Alles wat met .env begint negeren, behalve het (bewust gedeelde) voorbeeld.
@@ -30,3 +43,5 @@ output/
 .env
 .env.*
 !.env.example
+.gitignore
+docs/Phase-3-Admin-Portal-And-Media-Library.md
