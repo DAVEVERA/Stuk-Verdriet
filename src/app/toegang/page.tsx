@@ -16,44 +16,7 @@ export const metadata = {
 
 export default async function AccessPage({ searchParams }: AccessPageProps) {
   const params = (await searchParams) ?? {};
-  const next = safeProtectedNext(params.next ?? "/community");
-  const isShop = next === "/shop" || next.startsWith("/shop/");
-  const communityError = params.error === "rate-limited"
-    ? "Er zijn te veel inlogpogingen. Wacht tien minuten en probeer het opnieuw."
-    : params.error === "missing-secret"
-      ? "De beveiligde login is in deze omgeving nog niet geconfigureerd."
-      : "Gebruikersnaam of wachtwoord klopt niet. Probeer het opnieuw.";
-
-  if (!isShop) {
-    return (
-      <section className="admin-access-page" aria-labelledby="community-access-title">
-        <div className="admin-access-panel">
-          <p className="eyebrow">Stuk Verdriet community</p>
-          <h1 id="community-access-title">Communityomgeving</h1>
-          <p>
-            Log direct in met een toegestaan beheeraccount. Persoonlijk aanmelden doe je daarna binnen SNAAR.
-          </p>
-
-          <form className="admin-magic-link-form" action="/api/local-admin-login" method="post">
-            <input type="hidden" name="next" value={next} readOnly />
-            <label>
-              Gebruikersnaam
-              <input name="username" autoComplete="username" required placeholder="susan of daniela" autoFocus />
-            </label>
-            <label>
-              Wachtwoord
-              <input name="password" type="password" autoComplete="current-password" required />
-            </label>
-            <button className="button" type="submit">Inloggen</button>
-          </form>
-
-          {params.error ? (
-            <p className="notice" role="alert">{communityError}</p>
-          ) : null}
-        </div>
-      </section>
-    );
-  }
+  const next = safeProtectedNext(params.next ?? "/shop");
 
   return (
     <div className="login-under-construction">
