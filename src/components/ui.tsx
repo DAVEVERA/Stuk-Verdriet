@@ -9,6 +9,7 @@ import { useFormStatus } from "react-dom";
 import {
   Calendar,
   ChevronDown,
+  ChevronLeft,
   Download,
   Edit3,
   Grid3X3,
@@ -253,7 +254,13 @@ export function CommunityAccountDock({
         </button>
       </div>
 
-      {activePanel ? <div className="community-dock-panel">
+      {activePanel ? <div
+        className={
+          activePanel === "chats"
+            ? `community-dock-panel community-dock-panel-chat${activeConversation ? " has-active-conversation" : ""}`
+            : "community-dock-panel"
+        }
+      >
         {activePanel === "menu" ? (
           <div className="community-panel-section">
             <div className="community-panel-heading">
@@ -278,7 +285,15 @@ export function CommunityAccountDock({
         {activePanel === "chats" ? (
           <div className="community-panel-section community-chat-panel">
             <div className="community-panel-heading">
-              <h2>Berichten</h2>
+              <button
+                type="button"
+                className="community-chat-back"
+                aria-label="Sluit berichten"
+                onClick={() => setActivePanel(null)}
+              >
+                <ChevronLeft size={22} aria-hidden />
+              </button>
+              <h2>{activeConversation ? activeParticipant?.display_name ?? "Bericht" : "Berichten"}</h2>
               <button type="button" aria-label="Nieuwe chat" onClick={() => setActiveConversationId(null)}>
                 <Edit3 size={18} aria-hidden />
               </button>

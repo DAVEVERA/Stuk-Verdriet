@@ -3206,6 +3206,18 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   font-weight: 760;
 }
 
+.community-chat-back {
+  display: none;
+}
+
+.community-chat-panel .community-panel-heading h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .community-panel-alert {
   background: #fff7e8;
   border: 1px solid rgba(171, 116, 40, 0.24);
@@ -3693,6 +3705,67 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
 
   body:has(.site-header.community-logo-header.nav-open):has(.mobile-sidebar.open) .community-dock-panel {
     width: min(270px, calc(min(18rem, 86vw) - 36px));
+  }
+
+  .community-dock-panel-chat {
+    background: var(--white);
+    border: 0;
+    border-radius: 0;
+    bottom: 0;
+    box-shadow: none;
+    height: 100dvh;
+    left: 0;
+    max-width: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 100vw;
+    z-index: 200;
+  }
+
+  .community-dock-panel-chat .community-panel-section.community-chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  }
+
+  .community-chat-back {
+    align-items: center;
+    background: transparent;
+    color: var(--pine);
+    display: inline-flex;
+    height: 34px;
+    justify-content: center;
+    margin-left: -8px;
+    width: 34px;
+  }
+
+  .community-dock-panel-chat .community-chat-search {
+    flex: 0 0 auto;
+  }
+
+  .community-dock-panel-chat .community-chat-list {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .community-dock-panel-chat .community-message-thread {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .community-dock-panel-chat .community-chat-compose {
+    flex: 0 0 auto;
+  }
+
+  .community-dock-panel-chat.has-active-conversation .community-chat-search,
+  .community-dock-panel-chat.has-active-conversation .community-chat-list {
+    display: none;
   }
 }
 
