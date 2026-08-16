@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useRef, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useFormStatus } from 'react-dom';
 import {
   Calendar,
@@ -248,7 +247,6 @@ export function CommunityAccountDock({
     selectedConversationId ? 'chats' : null
   );
   const [collapsed, setCollapsed] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     selectedConversationId ?? conversations[0]?.id ?? null
   );
@@ -304,23 +302,6 @@ export function CommunityAccountDock({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activePanel]);
-
-  useEffect(() => {
-    const sidebar = document.querySelector<HTMLElement>('.mobile-sidebar');
-    if (!sidebar) return;
-    function syncOpenState() {
-      const isVisible = getComputedStyle(sidebar!).display !== 'none';
-      setSidebarOpen(isVisible && sidebar!.classList.contains('open'));
-    }
-    const classObserver = new MutationObserver(syncOpenState);
-    classObserver.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-    const mediaQuery = window.matchMedia('(min-width: 821px)');
-    mediaQuery.addEventListener('change', syncOpenState);
-    return () => {
-      classObserver.disconnect();
-      mediaQuery.removeEventListener('change', syncOpenState);
-    };
-  }, []);
 
   function openPanel(panel: CommunityDockPanel) {
     setActivePanel((current) => (current === panel ? null : panel));
@@ -395,7 +376,7 @@ export function CommunityAccountDock({
       >
         <Grid3X3 size={20} aria-hidden />
       </button>
-      {sidebarOpen ? null : dockActions}
+      {dockActions}
 
       {activePanel ? (
         <div
@@ -695,12 +676,6 @@ export function CommunityAccountDock({
           ) : null}
         </div>
       ) : null}
-      {sidebarOpen
-        ? (() => {
-            const slot = document.getElementById('sidebar-dock-slot');
-            return slot ? createPortal(dockActions, slot) : null;
-          })()
-        : null}
     </aside>
   );
 }
