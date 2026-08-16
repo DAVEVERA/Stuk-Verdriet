@@ -5,12 +5,12 @@ import { headers } from "next/headers";
 // bruikbaar; importeren vanuit een client component faalt tijdens de build.
 //
 // LET OP: deze rate limiter houdt state in het geheugen van één server-instantie.
-// Op Vercel (serverless) draaien meerdere instanties, dus dit is een eerste
+// In een serverless omgeving draaien meerdere instanties, dus dit is een eerste
 // verdedigingslaag tegen spam/floods, geen harde garantie. De echte bescherming
-// van bezoekersgegevens komt van Row Level Security in Supabase (leesrechten op
+// van bezoekersgegevens komt van databasebeleid (leesrechten op
 // e-mailtabellen liggen uitsluitend bij de service role). Voor sterkere limieten
 // over instanties heen: verplaats deze state later naar een gedeelde store
-// (bijv. een Supabase-tabel of Upstash Redis).
+// (bijvoorbeeld een centrale limietentabel).
 
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -60,7 +60,7 @@ export async function assertSameOriginRequest() {
 
 export async function requestIpAddress() {
   const headerStore = await headers();
-  // Vercel zet x-real-ip op het echte client-IP: één waarde die de client niet
+  // De hostinglaag zet x-real-ip op het echte client-IP: één waarde die de client niet
   // zelf kan vervalsen. Daarom die eerst gebruiken. Pas als die ontbreekt vallen
   // we terug op de eerste X-Forwarded-For entry (let op: die is wél spoofbaar).
   const realIp = headerStore.get("x-real-ip")?.trim();

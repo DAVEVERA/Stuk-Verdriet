@@ -146,20 +146,20 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
         </div>
 
         <section className="pulse-ai-box">
-          <label className="community-checkbox-row"><input name="ai_assist" type="checkbox" checked={aiAssist} onChange={(event) => setAiAssist(event.target.checked)} />Laat AI dit moment vormgeven voor EUR 1,99</label>
+          <label className="community-checkbox-row"><input name="ai_assist" type="checkbox" checked={aiAssist} onChange={(event) => setAiAssist(event.target.checked)} />Laat de ontwerpassistent dit moment vormgeven voor EUR 1,99</label>
           <p>Voor EUR 1,99 kan dit moment als verticale Facebook Reel-render worden uitgewerkt. Bewaar eerst de aanvraag, rond daarna de microbetaling af in Stripe.</p>
           <textarea name="ai_prompt" rows={3} disabled={!aiAssist} placeholder="Beschrijf de sfeer, kleuren en wat dit moment mag dragen." />
           {aiAssist ? (
             <div className="pulse-payment-card">
               <div>
-                <strong>AI-render verticaal</strong>
+                <strong>Verticaal ontwerp</strong>
                 <span>Formaat voor stories/reels, voorbereid voor Gemini Flash-rendering op basis van jouw prompt.</span>
               </div>
               <button type="button" onClick={() => setPaymentOpen((open) => !open)}>
                 {paymentOpen ? "Betaling sluiten" : "Koop render EUR 1,99"}
               </button>
               {paymentOpen ? (
-                <div className="pulse-payment-popout" role="dialog" aria-label="Stripe betaling voor AI-render">
+                <div className="pulse-payment-popout" role="dialog" aria-label="Betaling voor automatisch ontwerp">
                   <Script src="https://js.stripe.com/v3/buy-button.js" strategy="lazyOnload" />
                   <div
                     className="pulse-stripe-button"
@@ -174,7 +174,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
           ) : null}
         </section>
 
-        <button className="community-panel-button" type="submit"><Sparkles size={17} /> {aiAssist ? "AI-aanvraag bewaren" : "Nieuw moment plaatsen"}</button>
+        <button className="community-panel-button" type="submit"><Sparkles size={17} /> {aiAssist ? "Ontwerpaanvraag bewaren" : "Nieuw moment plaatsen"}</button>
       </form>
     </div>
   );

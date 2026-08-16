@@ -29,8 +29,8 @@ export function encodeAuthNext(value: string) {
 }
 
 function safeEmailOtpType(value: string | null): EmailOtpType {
-  // Supabase deprecated "signup"/"magiclink" as verifyOtp types in favor of "email";
-  // the value still arrives as "magiclink" in confirmation URLs, so it must be normalized here.
+  // Oudere bevestigingslinks gebruiken nog "signup" of "magiclink" als type;
+  // normaliseer die waarden naar het huidige e-mailtype.
   if (value === "signup" || value === "magiclink") return "email";
   const allowed: EmailOtpType[] = ["invite", "recovery", "email_change", "email"];
   return allowed.includes(value as EmailOtpType) ? (value as EmailOtpType) : "email";

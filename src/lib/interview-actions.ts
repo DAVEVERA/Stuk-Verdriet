@@ -3,7 +3,7 @@
 import { assertSameOriginRequest, consumeRateLimit, requestIpAddress } from "@/lib/request-guard";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
-// Zonder geconfigureerde Supabase-omgeving (of zonder ingelogde gebruiker bij
+// Zonder geconfigureerde gegevensservice (of zonder ingelogde gebruiker bij
 // likes) doen deze acties stilletjes niets: de kaart toont de interactie
 // optimistisch en de site blijft gewoon werken.
 

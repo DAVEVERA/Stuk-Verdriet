@@ -1,10 +1,8 @@
-import { isCommunityStandaloneBuild } from "@/lib/community-visibility";
-
 export const site = {
   name: "Stuk Verdriet",
   tagline: "Verdriet verdient een stem.",
   email: "info@stukverdriet.nl",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://stukverdriet.com",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.stukverdriet.com",
   logo: "/brand/sverdriet_logo.webp",
   colors: {
     pine: "#425645",
@@ -24,7 +22,7 @@ export const navigation = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast", panel: "podcast" },
   { href: "/themas", label: "Thema's", panel: "themas" },
-  ...(isCommunityStandaloneBuild() ? [{ href: "/community", label: "Community", panel: "community" as const }] : []),
+  { href: "/community", label: "Community", panel: "community" },
   { href: "/over", label: "Over ons", panel: "over" },
   { href: "/contact", label: "Contact", panel: "contact" }
 ];

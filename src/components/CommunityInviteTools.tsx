@@ -7,7 +7,7 @@ type CommunityInviteToolsProps = {
   inviteUrl?: string;
 };
 
-export function CommunityInviteTools({ inviteUrl = "https://stuk-verdriet-community.vercel.app/community" }: CommunityInviteToolsProps) {
+export function CommunityInviteTools({ inviteUrl = "https://www.stukverdriet.com/community" }: CommunityInviteToolsProps) {
   const [feedback, setFeedback] = useState("");
   const message = "Ik wil je uitnodigen voor SNAAR, de community van Stuk Verdriet. Hier kun je rustig meelezen, reageren of verbinding maken.";
   const encodedMessage = encodeURIComponent(`${message}\n\n${inviteUrl}`);

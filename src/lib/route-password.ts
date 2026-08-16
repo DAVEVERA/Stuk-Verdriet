@@ -1,6 +1,6 @@
 export const routeAccessCookie = "stukverdriet-route-access";
 
-const protectedPrefixes = ["/shop", "/community"];
+const protectedPrefixes = ["/shop", "/community/profiel"];
 
 function routePassword() {
   return process.env.STUK_VERDRIET_ROUTE_PASSWORD ?? "";

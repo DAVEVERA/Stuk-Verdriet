@@ -138,10 +138,11 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
       </div>
       <p className="copyright">
         <span>
-          &copy; {new Date().getFullYear()} Stuk Verdriet - Met liefde gebouwd door{" "}
+          &copy; {new Date().getFullYear()} Stuk Verdriet - Developer{" "}
           <a href="https://mnrv.nl" target="_blank" rel="noopener noreferrer">
             MNRV
           </a>
+          {" · Bouwer Dave"}
         </span>
         {isCommunityPage ? null : (
           <a
@@ -175,7 +176,7 @@ type CommunityDockPanel = "menu" | "chats" | "notifications" | "account";
 
 const communityChatErrors: Record<string, string> = {
   "chat-target": "Kies een vindbaar communityprofiel om een gesprek te starten.",
-  "chat-service": "De berichtenservice is nog niet goed gekoppeld. Controleer de Supabase service-role configuratie.",
+  "chat-service": "De berichtenservice is tijdelijk niet beschikbaar.",
   "chat-create": "Het gesprek kon niet worden aangemaakt. Probeer het opnieuw.",
   "message": "Schrijf een bericht van maximaal 2000 tekens.",
   "message-send": "Het bericht kon niet worden verzonden. Controleer of je nog deelnemer bent aan dit gesprek."
@@ -436,7 +437,7 @@ export function CommunityAccountDock({
             ) : (
               <Link className="community-panel-button" href={loginHref}>Inloggen om mee te doen</Link>
             )}
-            {!hasSupabaseEnv ? <p className="small-note">Supabase env vars ontbreken nog.</p> : null}
+            {!hasSupabaseEnv ? <p className="small-note">De communityservice is tijdelijk niet beschikbaar.</p> : null}
           </div>
         ) : null}
       </div> : null}
@@ -517,7 +518,7 @@ export function EpisodeSignupSection({ status }: { status?: string | null }) {
     error: "Aanmelden lukte niet. Probeer het nog eens.",
     invalid: "Vul je naam en een geldig e-mailadres in.",
     "rate-limited": "Er zijn te veel aanmeldpogingen. Probeer het later opnieuw.",
-    storage: "Aanmelden is nog niet gekoppeld aan Supabase.",
+    storage: "Aanmelden is tijdelijk niet beschikbaar.",
     subscribed: "Je staat op de lijst. We laten je weten wanneer aflevering 1 klaarstaat."
   };
 
@@ -1130,8 +1131,8 @@ export function CommunityFeedback({ submitted, error }: { submitted?: boolean; e
     "community-images": "Uploaden van de afbeelding is niet gelukt. Probeer een kleiner bestand of plaats je bericht zonder afbeelding.",
     image: "De afbeelding moet JPG, JPEG, PNG of WEBP zijn en maximaal 4 MB groot zijn.",
     "missing-fields": "Controleer of titel, categorie en bericht zijn ingevuld.",
-    storage: "Afbeeldingen uploaden is nog niet goed gekoppeld. Controleer de Supabase Storage bucket.",
-    supabase: "Community plaatsen vereist Supabase-configuratie."
+    storage: "Afbeeldingen uploaden is tijdelijk niet beschikbaar.",
+    supabase: "Een bijdrage plaatsen is tijdelijk niet beschikbaar."
   };
   return <p className="notice" role="alert">{messages[error] ?? "Controleer de invoer en probeer het opnieuw."}</p>;
 }

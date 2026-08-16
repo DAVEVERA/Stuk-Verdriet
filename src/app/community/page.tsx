@@ -1,4 +1,5 @@
 import { getApprovedCommunityPosts, getCommunityCategories } from '@/lib/content';
+import type { Metadata } from 'next';
 import {
   createSupabaseAdminClient,
   createSupabaseServerClient,
@@ -25,6 +26,14 @@ type CommunityPageProps = {
 };
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Community',
+  description: 'Lees verhalen, deel ervaringen en vind verbinding binnen de community van Stuk Verdriet.',
+  alternates: {
+    canonical: '/community',
+  },
+};
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
   const params = (await searchParams) ?? {};

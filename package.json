@@ -2,6 +2,8 @@
   "name": "stuk-verdriet",
   "version": "0.1.0",
   "private": true,
+  "author": "MNRV",
+  "license": "UNLICENSED",
   "description": "Mobile-first website, podcast environment, and moderated community for Stuk Verdriet.",
   "scripts": {
     "dev": "next dev",
@@ -15,7 +17,6 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.108.2",
-    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.562.0",
     "next": "^16.2.9",
     "react": "^19.2.1",

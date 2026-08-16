@@ -37,7 +37,7 @@ De afgelopen periode heb ik met veel toewijding gewerkt aan stukverdriet.com. Ni
 
 Maar al snel ontdekte ik dat dit geen alledaags project was.
 
-Normaal bouw ik webshops, AI-oplossingen en digitale platformen. Projecten waarin logica, techniek en efficiëntie centraal staan. Dit was anders. Rouw laat zich nu eenmaal niet netjes uitlijnen in een scriptje, een onepager of een contactformulier. Je kunt verdriet niet vangen in pixels alleen.
+Normaal bouw ik webshops, digitale oplossingen en platformen. Projecten waarin logica, techniek en efficiëntie centraal staan. Dit was anders. Rouw laat zich nu eenmaal niet netjes uitlijnen in een scriptje, een onepager of een contactformulier. Je kunt verdriet niet vangen in pixels alleen.
 
 Zoiets bouw je niet met je hoofd, maar met je hart.
 

@@ -12,7 +12,7 @@ const errorMessages: Record<string, string> = {
   email: "Vul een geldig e-mailadres in.",
   "email-login": "De magic link kon niet worden verzonden.",
   callback: "De loginlink kon niet worden verwerkt.",
-  "missing-supabase": "Supabase is nog niet geconfigureerd voor deze omgeving.",
+  "missing-supabase": "De inlogservice is nog niet geconfigureerd voor deze omgeving.",
   "missing-secret": "De beveiligde login is in deze omgeving nog niet geconfigureerd.",
   "rate-limited": "Er zijn te veel inlogpogingen. Wacht tien minuten en probeer het opnieuw."
 };
@@ -54,7 +54,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </form>
         ) : (
           <div className="community-login-options">
-            <Link className="button" href={googleLoginHref}>Verder met Google</Link>
+            <Link className="button" href={googleLoginHref} prefetch={false}>Verder met Google</Link>
             <form className="local-admin-login-form" action={signInWithEmail}>
               <input type="hidden" name="next" value={next} readOnly />
               <label>

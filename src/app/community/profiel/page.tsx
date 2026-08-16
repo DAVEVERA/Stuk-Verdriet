@@ -97,7 +97,7 @@ const successMessages: Record<string, string> = {
   "connection-declined": "Het verzoek is verwijderd.",
   "connection-removed": "Verbinding verbroken.",
   "pulse-saved": "Er is een nieuw moment gedeeld.",
-  "pulse-ai-requested": "Je AI-aanvraag is bewaard.",
+  "pulse-ai-requested": "Je ontwerpaanvraag is bewaard.",
   "pulse-deleted": "Moment verwijderd.",
   "pulse-reacted": "Dit raakte mij is opgeslagen.",
   "pulse-saved-bookmark": "Moment bewaard."
@@ -656,7 +656,7 @@ function ProfilePulseSection({ moments, displayName }: { moments: CommunityPulse
                 <div>
                   <strong>{moment.title}</strong>
                   <span>{moment.status === "draft" ? "Concept" : "Gedeeld"} · {moment.visibility === "community" ? "Community" : moment.visibility === "connections" ? "Verbindingen" : "Alleen ik"}</span>
-                  {moment.ai_generation_status === "requested" ? <span>AI-aanvraag staat klaar · EUR {(moment.ai_estimated_price_cents / 100).toFixed(2).replace(".", ",")}</span> : null}
+                  {moment.ai_generation_status === "requested" ? <span>Ontwerpaanvraag staat klaar · EUR {(moment.ai_estimated_price_cents / 100).toFixed(2).replace(".", ",")}</span> : null}
                 </div>
                 <form action={deleteCommunityPulseMoment}>
                   <input type="hidden" name="return_to" value={profileHref("pulse")} readOnly />
@@ -885,7 +885,7 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
             <ProfilePulseSection moments={pulseMoments} displayName={displayName} />
           ) : (
             <section className="community-profile-section">
-              <div className="community-profile-empty"><Camera size={28} /><strong>Aan de Pols wordt klaargezet</strong><span>De ontwerpmodule is gebouwd; de database-migratie moet nog met Supabase database-rechten worden toegepast.</span></div>
+              <div className="community-profile-empty"><Camera size={28} /><strong>Aan de Pols wordt klaargezet</strong><span>De ontwerpmodule is tijdelijk nog niet beschikbaar.</span></div>
             </section>
           )
         ) : null}

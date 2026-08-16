@@ -29,9 +29,7 @@ const nextConfig: NextConfig = {
     const formActionSrc = [
       "form-action 'self'",
       "https://stukverdriet.com",
-      "https://www.stukverdriet.com",
-      "https://stuk-verdriet-community.vercel.app",
-      "https://*.vercel.app"
+      "https://www.stukverdriet.com"
     ].join(" ");
     const scriptSrc = [
       "script-src 'self' 'unsafe-inline'",
@@ -40,6 +38,9 @@ const nextConfig: NextConfig = {
     ]
       .filter(Boolean)
       .join(" ");
+    const upgradeInsecureRequests = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://")
+      ? "upgrade-insecure-requests"
+      : null;
 
     const contentSecurityPolicy = [
       "default-src 'self'",
@@ -54,8 +55,10 @@ const nextConfig: NextConfig = {
       scriptSrc,
       "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com",
       "frame-src 'self' https://open.spotify.com https://www.gofundme.com https://www.instagram.com https://www.tiktok.com",
-      "upgrade-insecure-requests"
-    ].join("; ");
+      upgradeInsecureRequests
+    ]
+      .filter(Boolean)
+      .join("; ");
 
     return [
       {

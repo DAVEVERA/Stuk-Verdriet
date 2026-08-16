@@ -8,20 +8,11 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
-# Deployment/local platform state
-.vercel/
-supabase/.temp/
-
 # Local editor settings
 .vscode/
 .idea/
 
-# Agents
-.claude/
-.claude\settings.local.json
-.codex/
-.github/
-.playwright-cli/
+# Local project artifacts
 docs/superpowers
 .archive
 

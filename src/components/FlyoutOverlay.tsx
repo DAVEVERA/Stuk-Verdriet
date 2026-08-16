@@ -120,7 +120,7 @@ export function FlyoutOverlay({
         error: "Aanmelden lukte niet. Probeer het nog eens.",
         invalid: "Vul je naam en een geldig e-mailadres in.",
         "rate-limited": "Er zijn te veel aanmeldpogingen. Probeer het later opnieuw.",
-        storage: "Aanmelden is nog niet gekoppeld aan Supabase.",
+        storage: "Aanmelden is tijdelijk niet beschikbaar.",
         subscribed: "Je staat op de lijst. We laten je weten wanneer aflevering 2 klaarstaat."
       };
 

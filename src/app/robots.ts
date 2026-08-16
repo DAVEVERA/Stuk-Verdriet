@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 
-const productionSiteUrl = "https://stukverdriet.com";
+const productionSiteUrl = "https://www.stukverdriet.com";
 
 function getBaseUrl() {
   const configuredUrl = site.url.trim();
@@ -17,7 +17,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/auth", "/login", "/redirect"]
+        disallow: ["/admin", "/auth", "/login", "/redirect", "/community/profiel"]
       }
     ],
     sitemap: `${baseUrl}/sitemap.xml`

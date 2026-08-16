@@ -510,7 +510,7 @@ export async function deleteMarketingItem(id: string) {
   return { success: true };
 }
 
-// === AI SETTINGS ===
+// === CONTENTASSISTENT INSTELLINGEN ===
 export async function getAISettings() {
   const admin = createSupabaseAdminClient();
   if (!admin) return null as AISettings | null;
