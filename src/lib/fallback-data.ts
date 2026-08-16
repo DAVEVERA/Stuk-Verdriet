@@ -209,8 +209,8 @@ export const fallbackEpisodes: PodcastEpisode[] = [
   },
   {
     id: 'episode-3',
-    title: 'Afl. 3 - Rouw is rouw',
-    slug: 'rouw-is-rouw',
+    title: 'Afl. 3 - Rauw is rouw',
+    slug: 'rauw-is-rouw',
     season_number: 0,
     episode_number: 2,
     short_intro: 'Luister naar deze bijzondere aflevering.',
