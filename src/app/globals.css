@@ -3408,6 +3408,10 @@ body:has(.site-header.community-logo-header.nav-open) .community-account-dock {
   padding: 0;
 }
 
+.community-dock-fab {
+  display: none;
+}
+
 body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   background: rgba(255, 253, 248, 0.12);
   border: 1px solid rgba(255, 253, 248, 0.16);
@@ -3954,6 +3958,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
     max-width: calc(100vw - 20px);
     right: max(10px, calc(env(safe-area-inset-right) + 10px));
     top: max(88px, calc(env(safe-area-inset-top) + 88px));
+    transition: top 200ms ease;
   }
 
   body:has(.site-header.community-logo-header.nav-open):has(.mobile-sidebar.open) .community-account-dock {
@@ -3963,10 +3968,55 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
     z-index: 80;
   }
 
+  .community-account-dock.collapsed {
+    bottom: max(18px, calc(env(safe-area-inset-bottom) + 18px));
+    max-width: none;
+    top: auto;
+  }
+
+  .community-account-dock.collapsed .community-dock-actions {
+    display: none;
+  }
+
+  .community-dock-fab {
+    align-items: center;
+    background: var(--pine);
+    border: 0;
+    border-radius: 999px;
+    box-shadow: 0 12px 28px rgba(20, 30, 22, 0.32);
+    color: var(--white);
+    cursor: pointer;
+    display: none;
+    height: 50px;
+    justify-content: center;
+    width: 50px;
+  }
+
+  .community-account-dock.collapsed .community-dock-fab {
+    display: inline-flex;
+  }
+
   .community-dock-actions {
     gap: 7px;
     grid-template-columns: repeat(3, 42px) minmax(54px, auto);
     justify-content: end;
+  }
+
+  .community-pulse-create-card,
+  .community-pulse-card,
+  .community-pulse-empty {
+    flex: 0 0 92px;
+    height: 164px;
+  }
+
+  .community-pulse-avatar {
+    height: 38px;
+    top: 10px;
+    width: 38px;
+  }
+
+  .community-pulse-create-image {
+    height: 104px;
   }
 
   body:has(.site-header.community-logo-header.nav-open):has(.mobile-sidebar.open) .community-dock-actions {

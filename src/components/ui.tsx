@@ -246,6 +246,7 @@ export function CommunityAccountDock({
   const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(
     selectedConversationId ? 'chats' : null
   );
+  const [collapsed, setCollapsed] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     selectedConversationId ?? conversations[0]?.id ?? null
   );
@@ -290,12 +291,39 @@ export function CommunityAccountDock({
     return () => window.clearInterval(refreshTimer);
   }, [activePanel, isLoggedIn, router]);
 
+  useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 820px)').matches;
+    if (!isMobile) return;
+    const collapseThreshold = window.innerHeight * 0.55;
+    function handleScroll() {
+      setCollapsed(window.scrollY > collapseThreshold);
+    }
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activePanel]);
+
   function openPanel(panel: CommunityDockPanel) {
     setActivePanel((current) => (current === panel ? null : panel));
+    setCollapsed(false);
   }
 
+  const isDockCollapsed = collapsed && !activePanel;
+
   return (
-    <aside className="community-account-dock" aria-label="Community account">
+    <aside
+      className={isDockCollapsed ? 'community-account-dock collapsed' : 'community-account-dock'}
+      aria-label="Community account"
+    >
+      <button
+        className="community-dock-fab"
+        type="button"
+        onClick={() => setCollapsed(false)}
+        aria-label="Open communitymenu"
+        tabIndex={isDockCollapsed ? 0 : -1}
+      >
+        <Grid3X3 size={20} aria-hidden />
+      </button>
       <div className="community-dock-actions" aria-label="Community snelmenu">
         <button
           className={activePanel === 'menu' ? 'active' : undefined}

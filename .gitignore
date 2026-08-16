@@ -15,7 +15,7 @@ next-env.d.ts
 # Local project artifacts
 docs/superpowers
 .archive
-
+.docs
 # Logs and generated QA artifacts
 *.log
 npm-debug.log*
@@ -26,6 +26,7 @@ output/
 README.md/
 TODO.md/
 tiktokg2sLRQM3hrMDb1k51r5XvSU72wtt7Xcf.txt/
+docs\superpowers
 
 
 # Environment files and secrets
