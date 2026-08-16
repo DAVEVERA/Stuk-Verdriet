@@ -22,6 +22,7 @@ type CommunityPageProps = {
     conversation?: string;
     comments?: string;
     reply?: string;
+    account?: string;
   }>;
 };
 
@@ -178,6 +179,12 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
               <p className="notice community-feed-notice" role="status">
                 Je reactie is ontvangen en wordt op de richtlijnen gecontroleerd. Je ziet de actuele
                 status bij Mijn profiel onder Bijdragen.
+              </p>
+            ) : null}
+            {params.account === 'deleted' ? (
+              <p className="notice community-feed-notice" role="status">
+                Je account is verwijderd. Je bent uitgelogd en kunt je op elk moment opnieuw
+                aanmelden.
               </p>
             ) : null}
             {params.error === 'reply' || params.error === 'reply-create' ? (

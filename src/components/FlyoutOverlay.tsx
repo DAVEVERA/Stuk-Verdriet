@@ -145,7 +145,7 @@ export function FlyoutOverlay({
               </div>
               <div className="podcast-next-card" aria-labelledby="podcast-next-title">
                 <p className="eyebrow">Binnenkort</p>
-                <h3 id="podcast-next-title">Aflevering 2</h3>
+                <h3 id="podcast-next-title">Aflevering 4</h3>
                 <p>Nieuwe stemmen, nieuwe vragen en opnieuw ruimte voor wat meestal moeilijk hardop gezegd wordt.</p>
                 <span>Schrijf je in en ontvang een seintje zodra de volgende aflevering klaarstaat.</span>
               </div>

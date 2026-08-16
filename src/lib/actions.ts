@@ -989,6 +989,72 @@ export async function deleteCommunityPulseMoment(formData: FormData) {
   redirect(withReturnStatus(returnPath, "profile", "pulse-deleted"));
 }
 
+export async function deleteCommunityPost(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const postId = profileText(formData, "post_id", 64);
+  if (!postId) redirect(withReturnStatus(returnPath, "error", "activity"));
+  const { error } = await admin.from("community_posts").delete().eq("id", postId).eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "activity"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "post-deleted"));
+}
+
+export async function deleteCommunityReply(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const replyId = profileText(formData, "reply_id", 64);
+  if (!replyId) redirect(withReturnStatus(returnPath, "error", "activity"));
+  const { error } = await admin.from("community_replies").delete().eq("id", replyId).eq("user_id", user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "activity"));
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "reply-deleted"));
+}
+
+export async function deleteCommunityAccount(formData: FormData) {
+  const returnPath = "/community/profiel";
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  const confirmation = profileText(formData, "confirm_text", 40);
+  if (confirmation !== "VERWIJDER") redirect(withReturnStatus(returnPath, "error", "account-confirm"));
+
+  const mode = String(formData.get("mode") ?? "").trim();
+  if (mode !== "anonymize" && mode !== "erase") redirect(withReturnStatus(returnPath, "error", "account-confirm"));
+
+  if (mode === "erase") {
+    await admin.from("community_posts").delete().eq("user_id", user.id);
+    await admin.from("community_replies").delete().eq("user_id", user.id);
+  } else {
+    await admin
+      .from("community_posts")
+      .update({ author_name: "Verwijderde gebruiker" })
+      .eq("user_id", user.id);
+    await admin
+      .from("community_replies")
+      .update({ author_name: "Verwijderde gebruiker" })
+      .eq("user_id", user.id);
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+  if (error) redirect(withReturnStatus(returnPath, "error", "account-delete"));
+
+  const supabase = await createSupabaseServerClient();
+  if (supabase) await supabase.auth.signOut();
+
+  redirect("/community?account=deleted");
+}
+
 export async function reactToCommunityPulseMoment(formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
   if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "pulse"));

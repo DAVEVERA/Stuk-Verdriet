@@ -17,9 +17,11 @@ import {
   createCommunityProfileAlbum,
   createCommunityProfileEvent,
   deleteCommunityConnection,
+  deleteCommunityPost,
   deleteCommunityProfilePhoto,
   deleteCommunityProfileEvent,
   deleteCommunityPulseMoment,
+  deleteCommunityReply,
   respondToCommunityFriendRequest,
   sendCommunityFriendRequest,
   signOut,
@@ -29,6 +31,8 @@ import {
   updateCommunityProfileEvent
 } from "@/lib/actions";
 import { CommunityInviteTools } from "@/components/CommunityInviteTools";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type {
@@ -68,6 +72,9 @@ const profileMessages: Record<string, string> = {
   friend: "Dit verbindingsverzoek kon niet worden verwerkt.",
   connection: "Dit verbindingsverzoek kon niet worden verwerkt.",
   pulse: "Dit Aan de Pols moment kon niet worden opgeslagen.",
+  activity: "Dit kon niet worden verwijderd. Probeer het opnieuw.",
+  "account-confirm": "Kies een optie en typ VERWIJDER om je account te verwijderen.",
+  "account-delete": "Je account kon niet worden verwijderd. Probeer het later opnieuw.",
   invalid: "Je sessie kon niet veilig worden gecontroleerd. Vernieuw de pagina en probeer opnieuw.",
   "profile-email": "Vul een geldig e-mailadres in.",
   "profile-media-empty": "Kies eerst een foto om te uploaden.",
@@ -100,7 +107,9 @@ const successMessages: Record<string, string> = {
   "pulse-ai-requested": "Je ontwerpaanvraag is bewaard.",
   "pulse-deleted": "Moment verwijderd.",
   "pulse-reacted": "Dit raakte mij is opgeslagen.",
-  "pulse-saved-bookmark": "Moment bewaard."
+  "pulse-saved-bookmark": "Moment bewaard.",
+  "post-deleted": "Je bericht is verwijderd.",
+  "reply-deleted": "Je reactie is verwijderd."
 };
 
 const profileTabs: Array<{ id: ProfileTab; label: string }> = [
@@ -329,7 +338,7 @@ function ProfileEventsSection({ events, filter, compact = false }: { events: Pro
           <summary><CalendarDays size={18} /> Moment toevoegen</summary>
           <form action={createCommunityProfileEvent} encType="multipart/form-data">
             <input type="hidden" name="return_to" value={profileHref("events", `events=${filter}`)} readOnly />
-            <label>Moment<input name="title" maxLength={120} placeholder="Bijvoorbeeld: Eva's dag" required /></label>
+            <label>Moment<input name="title" maxLength={120} placeholder="Momenten zoals deze..." required /></label>
             <label>Welke datum wil je onthouden?<input name="starts_at" type="datetime-local" required /></label>
             <label>Eindmoment, als dat relevant is<input name="ends_at" type="datetime-local" /></label>
             <label>Plek of context<input name="location" maxLength={140} /></label>
@@ -564,6 +573,7 @@ function ProfileActivitySection({
   const activity = [
     ...posts.map((post) => ({
       id: `post-${post.id}`,
+      rawId: post.id,
       type: "post" as const,
       title: post.title,
       body: post.body,
@@ -573,6 +583,7 @@ function ProfileActivitySection({
     })),
     ...normalizedReplies.map((reply) => ({
       id: `reply-${reply.id}`,
+      rawId: reply.id,
       type: "reply" as const,
       title: reply.community_posts?.title ? `Reactie op ${reply.community_posts.title}` : "Jouw reactie",
       body: reply.body,
@@ -608,6 +619,20 @@ function ProfileActivitySection({
               <strong className={`community-profile-status status-${item.status}`}>
                 {communityStatusLabels[item.status]}
               </strong>
+              <form action={item.type === "post" ? deleteCommunityPost : deleteCommunityReply}>
+                <input type="hidden" name="return_to" value={profileHref("activity")} readOnly />
+                <input type="hidden" name={item.type === "post" ? "post_id" : "reply_id"} value={item.rawId} readOnly />
+                <ConfirmDeleteButton
+                  className="text-link community-profile-activity-delete"
+                  confirmMessage={
+                    item.type === "post"
+                      ? "Dit bericht definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+                      : "Deze reactie definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+                  }
+                >
+                  Verwijderen
+                </ConfirmDeleteButton>
+              </form>
             </article>
           ))}
         </div>
@@ -661,7 +686,12 @@ function ProfilePulseSection({ moments, displayName }: { moments: CommunityPulse
                 <form action={deleteCommunityPulseMoment}>
                   <input type="hidden" name="return_to" value={profileHref("pulse")} readOnly />
                   <input type="hidden" name="moment_id" value={moment.id} readOnly />
-                  <button className="text-link" type="submit">Moment verwijderen</button>
+                  <ConfirmDeleteButton
+                    className="text-link"
+                    confirmMessage="Dit moment definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+                  >
+                    Moment verwijderen
+                  </ConfirmDeleteButton>
                 </form>
               </article>
             ))}
@@ -683,7 +713,7 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
         {[
           ["intro", "Intro"], ["persoonlijk", "Persoonlijke gegevens"], ["werk", "Werk"], ["onderwijs", "Onderwijs"],
           ["hobbys", "Hobby's en interesses"], ["reizen", "Reizen"], ["links", "Links"], ["contact", "Contactgegevens"],
-          ["privacy", "Privacy"], ["namen", "Namen"]
+          ["privacy", "Privacy"], ["namen", "Namen"], ["account", "Account"]
         ].map(([id, label], index) => <a key={id} className={index === 0 ? "active" : ""} href={`#info-${id}`}>{label}</a>)}
       </aside>
       <form className="community-profile-info-form" action={updateCommunityProfileInfo}>
@@ -736,10 +766,26 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
             <label>Telefoon<input name="phone" type="tel" maxLength={40} defaultValue={details.phone ?? ""} /></label>
           </div>
         </fieldset>
-        <fieldset id="info-privacy"><legend>Privacy</legend><label className="community-checkbox-row"><input name="is_discoverable" type="checkbox" defaultChecked={profile?.is_discoverable ?? false} />Anderen binnen SNAAR mogen mijn profiel vinden en mij een bericht of verbindingsverzoek sturen.</label></fieldset>
+        <fieldset id="info-privacy">
+          <legend>Privacy</legend>
+          <label className="community-checkbox-row"><input name="is_discoverable" type="checkbox" defaultChecked={profile?.is_discoverable ?? false} />Anderen binnen SNAAR mogen mijn profiel vinden en mij een bericht of verbindingsverzoek sturen.</label>
+          <ul className="community-privacy-tips">
+            <li>Zet je vindbaarheid uit als je alleen wilt meelezen zonder benaderd te worden.</li>
+            <li>Deel geen achternaam, adres of telefoonnummer in je bio of hobby&apos;s als je dat liever voor jezelf houdt.</li>
+            <li>Een profielfoto is optioneel. Zonder foto blijft je voorletter zichtbaar in plaats van een gezicht.</li>
+            <li>Berichten die je post blijven zichtbaar tot je ze zelf verwijdert of je account opheft.</li>
+            <li>Je kunt op elk moment je eigen berichten en momenten verwijderen bij Activiteit en Aan de Pols.</li>
+          </ul>
+        </fieldset>
         <fieldset id="info-namen"><legend>Namen</legend><label>Weergavenaam<input name="display_name" maxLength={80} required defaultValue={displayName} /></label></fieldset>
         <div className="community-profile-savebar"><p>Je bepaalt zelf wat je invult. Lege velden worden niet op je profiel getoond.</p><button className="community-panel-button" type="submit">Informatie opslaan</button></div>
       </form>
+      <fieldset id="info-account" className="community-profile-account-fieldset">
+        <legend>Account</legend>
+        <p>Download een kopie van je gegevens of beheer je account.</p>
+        <a className="community-panel-button secondary" href="/api/community/export" download>Download al mijn gegevens</a>
+        <DeleteAccountForm />
+      </fieldset>
     </section>
   );
 }

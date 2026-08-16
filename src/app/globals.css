@@ -2877,15 +2877,6 @@ textarea {
   line-height: 1.12;
 }
 
-.community-pulse-heading a {
-  color: var(--pine);
-  flex: 0 0 auto;
-  font-size: 0.86rem;
-  font-weight: 850;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .community-pulse-rail {
   display: flex;
   gap: 8px;
@@ -2960,7 +2951,7 @@ textarea {
   z-index: 1;
 }
 
-.community-pulse-card > img,
+.community-pulse-card img,
 .pulse-designer-preview > img,
 .pulse-profile-thumb > img {
   object-fit: cover;
@@ -3767,6 +3758,67 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   color: var(--pine);
 }
 
+.community-panel-button.danger {
+  background: #9f2424;
+  color: var(--white);
+}
+
+.community-panel-button.danger:disabled {
+  background: rgba(159, 36, 36, 0.4);
+  cursor: not-allowed;
+}
+
+.community-delete-account-form {
+  background: rgba(159, 36, 36, 0.05);
+  border: 1px solid rgba(159, 36, 36, 0.2);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.community-delete-account-form fieldset {
+  border: 0;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.community-delete-account-form legend {
+  color: var(--pine);
+  font-size: 0.94rem;
+  font-weight: 850;
+  padding: 0;
+}
+
+.community-delete-account-note {
+  color: #9f2424;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.community-delete-account-form label:not(.community-checkbox-row) {
+  display: grid;
+  font-size: 0.88rem;
+  font-weight: 750;
+  gap: 6px;
+}
+
+.community-delete-account-form input[type="text"],
+.community-delete-account-form input:not([type="radio"]) {
+  border: 1px solid rgba(66, 86, 69, 0.24);
+  border-radius: 6px;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.community-delete-account-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .community-account-summary {
   align-items: start;
 }
@@ -4470,7 +4522,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   border-bottom: 1px solid rgba(66, 86, 69, 0.12);
   border-top: 1px solid rgba(66, 86, 69, 0.16);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 0;
   padding: 6px 0;
 }
@@ -10045,6 +10097,35 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   padding: 0;
 }
 
+.community-profile-account-fieldset {
+  border: 0;
+  border-top: 1px solid rgba(66, 86, 69, 0.13);
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 18px 16px;
+  scroll-margin-top: 100px;
+}
+
+.community-profile-account-fieldset legend {
+  color: var(--pine);
+  font-size: 1.05rem;
+  font-weight: 850;
+  padding: 0;
+}
+
+.community-profile-account-fieldset p {
+  color: var(--eucalyptus);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.community-profile-account-fieldset > a,
+.community-profile-account-fieldset > button {
+  justify-self: start;
+}
+
 .community-profile-field-grid {
   display: grid;
   gap: 12px;
@@ -10062,6 +10143,31 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   height: 20px;
   min-height: 20px;
   width: 20px;
+}
+
+.community-privacy-tips {
+  background: rgba(66, 86, 69, 0.05);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 14px 16px;
+}
+
+.community-privacy-tips li {
+  color: var(--eucalyptus);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  padding-left: 16px;
+  position: relative;
+}
+
+.community-privacy-tips li::before {
+  color: var(--pine);
+  content: "-";
+  left: 0;
+  position: absolute;
 }
 
 .community-profile-savebar {
@@ -10293,6 +10399,15 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   justify-self: start;
   line-height: 1.25;
   padding: 7px 9px;
+}
+
+.community-profile-activity-item form {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.community-profile-activity-delete {
+  color: #9f2424;
 }
 
 .community-profile-status.status-pending {
@@ -10739,6 +10854,11 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
     grid-column: auto;
     justify-self: end;
     text-align: center;
+  }
+
+  .community-profile-activity-item form {
+    grid-column: auto;
+    justify-self: end;
   }
 }
 

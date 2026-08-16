@@ -27,9 +27,8 @@ export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: Community
       <div className="community-pulse-heading">
         <div>
           <p className="eyebrow">Aan de Pols</p>
-          <h2 id="community-pulse-title">Even stilstaan bij wat er vanbinnen speelt.</h2>
+          <h2 id="community-pulse-title">Korte momentjes</h2>
         </div>
-        <Link href={isLoggedIn ? "/community/profiel?tab=pulse" : "/login?next=%2Fcommunity%2Fprofiel"}>Deel een moment</Link>
       </div>
       <div className="community-pulse-rail" role="list" aria-label="Aan de Pols momenten">
         <Link className="community-pulse-create-card" href={isLoggedIn ? "/community/profiel?tab=pulse" : "/login?next=%2Fcommunity%2Fprofiel"} role="listitem">
@@ -43,7 +42,7 @@ export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: Community
           return (
             <article className={`community-pulse-card animation-${moment.animation}`} key={moment.id} role="listitem" style={{ backgroundColor: moment.background_color }}>
               <button className="community-pulse-card-open" type="button" onClick={() => setOpenIndex(index)} aria-label={`Bekijk moment: ${moment.title}`}>
-                {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="120px" /> : null}
+                {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="(max-width: 820px) 92px, 104px" /> : null}
                 <span className="community-pulse-avatar">
                   {profile?.avatar_url ? <Image src={profile.avatar_url} alt="" fill sizes="42px" /> : <span>{(profile?.display_name ?? "S").slice(0, 1).toUpperCase()}</span>}
                 </span>

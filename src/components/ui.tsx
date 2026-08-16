@@ -186,7 +186,7 @@ export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks
           <a href="https://mnrv.nl" target="_blank" rel="noopener noreferrer">
             MNRV
           </a>
-          {' · Bouwer Dave'}
+          {' · Tailored by DV'}
         </span>
         {isCommunityPage ? null : (
           <a
@@ -375,7 +375,7 @@ export function CommunityAccountDock({
         aria-label="Mijn profiel"
         aria-pressed={activePanel === 'account'}
       >
-        <ProfileAvatar name={displayName} avatarUrl={avatarUrl} />
+        <User size={21} aria-hidden />
         <ChevronDown size={14} aria-hidden />
       </button>
     </div>
@@ -590,7 +590,6 @@ export function CommunityAccountDock({
             <div className="community-panel-section">
               <div className="community-panel-heading">
                 <h2>Meldingen</h2>
-                <span>Rustig overzicht</span>
               </div>
               <div className="community-notification-list">
                 {isLoggedIn ? (
@@ -1329,7 +1328,6 @@ const snaarIcons = {
   favoriteBefore: '/img/icons_SNAAR/favorite_before_click/icons8-favorite-48.png',
   favoriteAfter: '/img/icons_SNAAR/favorite_after_click/icons8-favorite-100.png',
   comment: '/img/icons_SNAAR/comment/icons8-comment-48.png',
-  share: '/img/icons_SNAAR/share_arrow/icons8-forward-arrow-48.png',
 };
 
 export function CommunityPostCard({
@@ -1390,25 +1388,25 @@ export function CommunityPostCard({
         </div>
       ) : null}
       <div className="post-meta community-engagement-row">
-        <span>
-          <Image src={snaarIcons.favoriteAfter} alt="" width={16} height={16} />{' '}
-          {post.support_count} steun
-        </span>
         <span>{post.reply_count} reacties</span>
       </div>
       <div className="community-card-actions" role="group" aria-label="Berichtacties">
         {showActions ? (
           <form action={supportPost.bind(null, post.id)}>
             <input type="hidden" name="return_to" value="/community" readOnly />
-            <SupportPostSubmitButton supported={Boolean(post.has_supported)} />
+            <SupportPostSubmitButton
+              supported={Boolean(post.has_supported)}
+              count={post.support_count}
+            />
           </form>
         ) : (
           <Link
             className="community-post-action"
             href={`/login?next=${encodeURIComponent(postUrl)}`}
+            aria-label="Dit raakte mij"
           >
             <Image src={snaarIcons.favoriteBefore} alt="" width={21} height={21} />
-            Steun
+            <span>{post.support_count}</span>
           </Link>
         )}
         <button
@@ -1421,7 +1419,6 @@ export function CommunityPostCard({
           <Image src={snaarIcons.comment} alt="" width={21} height={21} />
           Reageer
         </button>
-        <SharePostButton postUrl={postUrl} title={post.title} />
       </div>
       {showActions ? (
         <CommunityReportMenu
@@ -1711,39 +1708,13 @@ export function CommunityStoryForm({
   );
 }
 
-function SharePostButton({ postUrl, title }: { postUrl: string; title: string }) {
-  const [feedback, setFeedback] = useState<string | null>(null);
-
-  const sharePost = async () => {
-    const url = new URL(postUrl, window.location.origin).toString();
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        setFeedback('Gedeeld');
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setFeedback('Link gekopieerd');
-    } catch {
-      setFeedback('Probeer opnieuw');
-    }
-  };
-
-  return (
-    <button
-      className="community-post-action"
-      type="button"
-      onClick={sharePost}
-      aria-label={`Deel ${title}`}
-      aria-live="polite"
-    >
-      <Image src={snaarIcons.share} alt="" width={21} height={21} />
-      <span>{feedback ?? 'Deel'}</span>
-    </button>
-  );
-}
-
-function SupportPostSubmitButton({ supported }: { supported: boolean }) {
+function SupportPostSubmitButton({
+  supported,
+  count,
+}: {
+  supported: boolean;
+  count: number;
+}) {
   const { pending } = useFormStatus();
 
   return (
@@ -1753,6 +1724,7 @@ function SupportPostSubmitButton({ supported }: { supported: boolean }) {
       disabled={pending}
       aria-disabled={pending}
       aria-pressed={supported}
+      aria-label={supported ? 'Steun intrekken' : 'Dit raakte mij'}
     >
       <Image
         src={supported ? snaarIcons.favoriteAfter : snaarIcons.favoriteBefore}
@@ -1760,7 +1732,7 @@ function SupportPostSubmitButton({ supported }: { supported: boolean }) {
         width={21}
         height={21}
       />
-      <span>{pending ? 'Steunt...' : supported ? 'Gesteund' : 'Steun'}</span>
+      <span>{count}</span>
     </button>
   );
 }
