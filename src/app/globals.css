@@ -417,6 +417,20 @@ textarea {
   width: 44px;
 }
 
+.sidebar-dock-slot {
+  border-bottom: 1px solid rgba(255, 253, 248, 0.12);
+  padding: 0 24px 20px;
+}
+
+.sidebar-dock-slot:empty {
+  display: none;
+}
+
+.sidebar-dock-slot .community-dock-actions {
+  grid-template-columns: repeat(3, 42px) minmax(54px, auto);
+  justify-content: start;
+}
+
 .sidebar-nav {
   display: flex;
   flex: 1;
@@ -3910,7 +3924,7 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
   }
 
   body:has(.site-header.community-logo-header.nav-open) .community-account-dock {
-    right: max(92px, calc((100vw - min(1080px, calc(100vw - clamp(24px, 6vw, 64px)))) / 2 + 148px));
+    right: calc((100vw - min(1080px, calc(100vw - clamp(24px, 6vw, 64px)))) / 2 + 8px);
   }
 
   body:has(.site-header.community-logo-header.nav-open) .site-header.community-logo-header .header-inner {
@@ -4042,7 +4056,8 @@ body:has(.site-header.community-logo-header.nav-open) .community-dock-actions {
     width: min(360px, calc(100vw - 20px));
   }
 
-  body:has(.site-header.community-logo-header.nav-open):has(.mobile-sidebar.open) .community-dock-panel {
+  body:has(.site-header.community-logo-header.nav-open):has(.mobile-sidebar.open)
+    .community-dock-panel:not(.community-dock-panel-chat) {
     width: min(270px, calc(min(18rem, 86vw) - 36px));
   }
 

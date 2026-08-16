@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useFormStatus } from 'react-dom';
 import {
   Calendar,
@@ -247,6 +248,7 @@ export function CommunityAccountDock({
     selectedConversationId ? 'chats' : null
   );
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     selectedConversationId ?? conversations[0]?.id ?? null
   );
@@ -303,12 +305,81 @@ export function CommunityAccountDock({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activePanel]);
 
+  useEffect(() => {
+    const sidebar = document.querySelector<HTMLElement>('.mobile-sidebar');
+    if (!sidebar) return;
+    function syncOpenState() {
+      const isVisible = getComputedStyle(sidebar!).display !== 'none';
+      setSidebarOpen(isVisible && sidebar!.classList.contains('open'));
+    }
+    const classObserver = new MutationObserver(syncOpenState);
+    classObserver.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    const mediaQuery = window.matchMedia('(min-width: 821px)');
+    mediaQuery.addEventListener('change', syncOpenState);
+    return () => {
+      classObserver.disconnect();
+      mediaQuery.removeEventListener('change', syncOpenState);
+    };
+  }, []);
+
   function openPanel(panel: CommunityDockPanel) {
     setActivePanel((current) => (current === panel ? null : panel));
     setCollapsed(false);
   }
 
   const isDockCollapsed = collapsed && !activePanel;
+
+  const dockActions = (
+    <div className="community-dock-actions" aria-label="Community snelmenu">
+      <button
+        className={activePanel === 'menu' ? 'active' : undefined}
+        type="button"
+        onClick={() => openPanel('menu')}
+        aria-label="Menu"
+        aria-pressed={activePanel === 'menu'}
+      >
+        <Grid3X3 size={21} aria-hidden />
+      </button>
+      <button
+        className={activePanel === 'chats' ? 'active' : undefined}
+        type="button"
+        onClick={() => openPanel('chats')}
+        aria-label="Berichten"
+        aria-pressed={activePanel === 'chats'}
+      >
+        <Image
+          src="/img/icons_SNAAR/chat_icon/icons8-chat-48.png"
+          alt=""
+          width={22}
+          height={22}
+        />
+      </button>
+      <button
+        className={activePanel === 'notifications' ? 'active' : undefined}
+        type="button"
+        onClick={() => openPanel('notifications')}
+        aria-label="Meldingen"
+        aria-pressed={activePanel === 'notifications'}
+      >
+        <Image
+          src="/img/icons_SNAAR/Bell_alerts/icons8-bell-50.png"
+          alt=""
+          width={22}
+          height={22}
+        />
+      </button>
+      <button
+        className={activePanel === 'account' ? 'active profile' : 'profile'}
+        type="button"
+        onClick={() => openPanel('account')}
+        aria-label="Mijn profiel"
+        aria-pressed={activePanel === 'account'}
+      >
+        <ProfileAvatar name={displayName} avatarUrl={avatarUrl} />
+        <ChevronDown size={14} aria-hidden />
+      </button>
+    </div>
+  );
 
   return (
     <aside
@@ -324,55 +395,7 @@ export function CommunityAccountDock({
       >
         <Grid3X3 size={20} aria-hidden />
       </button>
-      <div className="community-dock-actions" aria-label="Community snelmenu">
-        <button
-          className={activePanel === 'menu' ? 'active' : undefined}
-          type="button"
-          onClick={() => openPanel('menu')}
-          aria-label="Menu"
-          aria-pressed={activePanel === 'menu'}
-        >
-          <Grid3X3 size={21} aria-hidden />
-        </button>
-        <button
-          className={activePanel === 'chats' ? 'active' : undefined}
-          type="button"
-          onClick={() => openPanel('chats')}
-          aria-label="Berichten"
-          aria-pressed={activePanel === 'chats'}
-        >
-          <Image
-            src="/img/icons_SNAAR/chat_icon/icons8-chat-48.png"
-            alt=""
-            width={22}
-            height={22}
-          />
-        </button>
-        <button
-          className={activePanel === 'notifications' ? 'active' : undefined}
-          type="button"
-          onClick={() => openPanel('notifications')}
-          aria-label="Meldingen"
-          aria-pressed={activePanel === 'notifications'}
-        >
-          <Image
-            src="/img/icons_SNAAR/Bell_alerts/icons8-bell-50.png"
-            alt=""
-            width={22}
-            height={22}
-          />
-        </button>
-        <button
-          className={activePanel === 'account' ? 'active profile' : 'profile'}
-          type="button"
-          onClick={() => openPanel('account')}
-          aria-label="Mijn profiel"
-          aria-pressed={activePanel === 'account'}
-        >
-          <ProfileAvatar name={displayName} avatarUrl={avatarUrl} />
-          <ChevronDown size={14} aria-hidden />
-        </button>
-      </div>
+      {sidebarOpen ? null : dockActions}
 
       {activePanel ? (
         <div
@@ -673,6 +696,12 @@ export function CommunityAccountDock({
           ) : null}
         </div>
       ) : null}
+      {sidebarOpen
+        ? (() => {
+            const slot = document.getElementById('sidebar-dock-slot');
+            return slot ? createPortal(dockActions, slot) : null;
+          })()
+        : null}
     </aside>
   );
 }

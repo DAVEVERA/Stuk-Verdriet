@@ -122,6 +122,8 @@ export function Header(_props: HeaderProps) {
         </button>
       </div>
 
+      {isCommunityPage ? <div id="sidebar-dock-slot" className="sidebar-dock-slot" /> : null}
+
       <nav className="sidebar-nav" aria-label="Mobiele navigatie">
         {visibleNavLinks.map((link) => (
           <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={pathname === link.href ? "active" : undefined}>
