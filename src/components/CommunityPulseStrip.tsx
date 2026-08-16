@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Bookmark, Heart, Plus } from "lucide-react";
 import { reactToCommunityPulseMoment, saveCommunityPulseMomentBookmark } from "@/lib/actions";
+import { CommunityPulseViewer } from "@/components/CommunityPulseViewer";
 import type { CommunityProfile, CommunityPulseMoment } from "@/types/content";
 
 type CommunityPulseStripProps = {
@@ -16,6 +20,8 @@ function pulseProfile(moment: CommunityPulseMoment) {
 }
 
 export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: CommunityPulseStripProps) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   return (
     <section className="community-pulse-strip" aria-labelledby="community-pulse-title">
       <div className="community-pulse-heading">
@@ -32,18 +38,20 @@ export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: Community
           </span>
           <strong>Moment maken</strong>
         </Link>
-        {moments.map((moment) => {
+        {moments.map((moment, index) => {
           const profile = pulseProfile(moment);
           return (
             <article className={`community-pulse-card animation-${moment.animation}`} key={moment.id} role="listitem" style={{ backgroundColor: moment.background_color }}>
-              {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="120px" /> : null}
-              <span className="community-pulse-avatar">
-                {profile?.avatar_url ? <Image src={profile.avatar_url} alt="" fill sizes="42px" /> : <span>{(profile?.display_name ?? "S").slice(0, 1).toUpperCase()}</span>}
-              </span>
-              <div className="community-pulse-card-copy">
-                <strong>{moment.title}</strong>
-                <span>{profile?.display_name ?? "SNAAR"}</span>
-              </div>
+              <button className="community-pulse-card-open" type="button" onClick={() => setOpenIndex(index)} aria-label={`Bekijk moment: ${moment.title}`}>
+                {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="120px" /> : null}
+                <span className="community-pulse-avatar">
+                  {profile?.avatar_url ? <Image src={profile.avatar_url} alt="" fill sizes="42px" /> : <span>{(profile?.display_name ?? "S").slice(0, 1).toUpperCase()}</span>}
+                </span>
+                <span className="community-pulse-card-copy">
+                  <strong>{moment.title}</strong>
+                  <span>{profile?.display_name ?? "SNAAR"}</span>
+                </span>
+              </button>
               {isLoggedIn ? (
                 <div className="community-pulse-card-actions">
                   <form action={reactToCommunityPulseMoment}>
@@ -68,6 +76,14 @@ export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: Community
           </div>
         ) : null}
       </div>
+      {openIndex !== null ? (
+        <CommunityPulseViewer
+          moments={moments}
+          startIndex={openIndex}
+          isLoggedIn={isLoggedIn}
+          onClose={() => setOpenIndex(null)}
+        />
+      ) : null}
     </section>
   );
 }
