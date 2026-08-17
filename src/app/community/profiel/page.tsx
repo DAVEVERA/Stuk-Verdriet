@@ -15,6 +15,8 @@ import {
 import {
   addCommunityProfilePhoto,
   createCommunityProfileAlbum,
+  updateCommunityProfileAlbum,
+  deleteCommunityProfileAlbum,
   createCommunityProfileEvent,
   deleteCommunityConnection,
   deleteCommunityPost,
@@ -92,6 +94,8 @@ const successMessages: Record<string, string> = {
   "photo-updated": "De foto is bijgewerkt.",
   "photo-deleted": "De foto is verwijderd.",
   "album-saved": "Het album is aangemaakt.",
+  "album-updated": "Het album is bijgewerkt.",
+  "album-deleted": "Het album is verwijderd.",
   "event-saved": "Het moment is toegevoegd.",
   "moment-saved": "Het moment is toegevoegd.",
   "moment-updated": "Het moment is bijgewerkt.",
@@ -260,6 +264,27 @@ function ProfilePhotosSection({ photos, albums, profile, displayName, compact = 
                 <strong>{album.title}</strong>
                 <span>{count} {count === 1 ? "foto" : "foto's"} · {visibilityLabel(album.visibility)}</span>
                 {album.description ? <p>{album.description}</p> : null}
+                <details className="community-profile-album-edit">
+                  <summary>Beheren</summary>
+                  <form action={updateCommunityProfileAlbum}>
+                    <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
+                    <input type="hidden" name="album_id" value={album.id} readOnly />
+                    <label>Albumnaam<input name="title" maxLength={80} defaultValue={album.title} required /></label>
+                    <label>Omschrijving<textarea name="description" maxLength={300} rows={3} defaultValue={album.description ?? ""} /></label>
+                    <label>Zichtbaarheid<select name="visibility" defaultValue={album.visibility}><option value="private">Alleen ik</option><option value="connections">Alleen verbindingen</option><option value="community">Hele community</option></select></label>
+                    <button className="community-panel-button" type="submit">Album opslaan</button>
+                  </form>
+                  <form action={deleteCommunityProfileAlbum}>
+                    <input type="hidden" name="return_to" value={profileHref("photos")} readOnly />
+                    <input type="hidden" name="album_id" value={album.id} readOnly />
+                    <ConfirmDeleteButton
+                      className="text-link"
+                      confirmMessage="Dit album definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+                    >
+                      Album verwijderen
+                    </ConfirmDeleteButton>
+                  </form>
+                </details>
               </article>
             );
           })}

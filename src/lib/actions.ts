@@ -726,6 +726,57 @@ export async function createCommunityProfileAlbum(formData: FormData) {
   redirect(withReturnStatus(returnPath, "profile", "album-saved"));
 }
 
+export async function updateCommunityProfileAlbum(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community/profiel");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  const albumId = profileText(formData, "album_id", 64);
+  const title = profileText(formData, "title", 80);
+  if (!albumId || !title) redirect(withReturnStatus(returnPath, "error", "album"));
+
+  const { error } = await admin
+    .from("community_profile_albums")
+    .update({
+      title,
+      description: profileText(formData, "description", 300) || null,
+      visibility: normalizedCommunityVisibility(formData.get("visibility")),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", albumId)
+    .eq("user_id", user.id);
+
+  if (error) redirect(withReturnStatus(returnPath, "error", "album"));
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "album-updated"));
+}
+
+export async function deleteCommunityProfileAlbum(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community/profiel");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+
+  const albumId = profileText(formData, "album_id", 64);
+  if (!albumId) redirect(withReturnStatus(returnPath, "error", "album"));
+
+  const { error } = await admin
+    .from("community_profile_albums")
+    .delete()
+    .eq("id", albumId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Delete album error", error);
+    redirect(withReturnStatus(returnPath, "error", "album"));
+  }
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "album-deleted"));
+}
+
 export async function updateCommunityProfilePhoto(formData: FormData) {
   const returnPath = safeReturnPath(formData.get("return_to"), "/community");
   if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
