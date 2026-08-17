@@ -3159,25 +3159,47 @@ textarea {
 }
 
 .community-account-dock {
+  align-items: end;
   display: grid;
   gap: 12px;
   justify-items: end;
   max-width: min(420px, calc(100vw - 24px));
   position: fixed;
-  right: max(14px, calc(env(safe-area-inset-right) + 14px));
-  top: max(18px, calc(env(safe-area-inset-top) + 18px));
+  /* Sits flush beneath .site-side-nav (same right offset, same rail width)
+     so the two render as one continuous glass bar instead of two separate
+     floating pills. Offset = half the nav rail's own height (~50%) plus its
+     content height and the shared gap, so this pill starts right where the
+     nav rail's pill ends. */
+  right: clamp(10px, 2.4vw, 20px);
+  top: calc(50% + 96px);
   width: auto;
-  z-index: 120;
+  /* Above .site-side-nav (z-index: 130) so the dock's own fullscreen
+     mobile chat panel (z-index: 200, scoped to this stacking context)
+     can actually cover the nav rail instead of rendering beneath it. */
+  z-index: 140;
 }
 
 .community-dock-actions {
   align-items: center;
+  background: rgba(255, 253, 248, 0.14);
+  border: 1px solid rgba(255, 253, 248, 0.28);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(9, 14, 10, 0.18);
   display: grid;
-  gap: 9px;
-  grid-template-columns: repeat(3, 46px) minmax(58px, auto);
+  gap: 6px;
+  grid-template-columns: 40px;
   justify-content: end;
   justify-items: center;
-  padding: 0;
+  padding: 10px 7px;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.community-account-dock.is-on-light .community-dock-actions {
+  background: rgba(255, 253, 248, 0.78);
+  border-color: rgba(66, 86, 69, 0.16);
+  box-shadow: 0 8px 24px rgba(43, 49, 43, 0.12);
 }
 
 .community-dock-fab {
@@ -3186,29 +3208,39 @@ textarea {
 
 .community-dock-actions button {
   align-items: center;
-  background: #e8ece8;
+  background: transparent;
   border: 0;
   border-radius: 999px;
-  box-shadow: 0 8px 18px rgba(43, 49, 43, 0.08);
-  color: #101510;
+  box-shadow: none;
+  color: var(--white);
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
-  height: 46px;
+  height: 40px;
   justify-content: center;
   position: relative;
-  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-  width: 46px;
+  transition: background 160ms ease, color 220ms ease, transform 160ms ease;
+  width: 40px;
 }
 
 .community-dock-actions button.active,
 .community-dock-actions button:hover,
 .community-dock-actions button:focus-visible {
-  background: #dce8df;
-  box-shadow: 0 10px 24px rgba(43, 49, 43, 0.14);
-  outline: 2px solid rgba(66, 86, 69, 0.55);
-  outline-offset: 2px;
-  transform: translateY(-1px);
+  background: rgba(255, 253, 248, 0.22);
+  box-shadow: none;
+  outline: none;
+  transform: scale(1.06);
+}
+
+.community-account-dock.is-on-light .community-dock-actions button {
+  color: var(--sage);
+}
+
+.community-account-dock.is-on-light .community-dock-actions button.active,
+.community-account-dock.is-on-light .community-dock-actions button:hover,
+.community-account-dock.is-on-light .community-dock-actions button:focus-visible {
+  background: rgba(66, 86, 69, 0.1);
+  color: var(--pine);
 }
 
 .community-profile-avatar {
@@ -3418,15 +3450,31 @@ textarea {
 }
 
 .community-dock-actions button img {
-  height: 22px;
+  filter: brightness(0) invert(1);
+  height: 19px;
   object-fit: contain;
-  width: 22px;
+  transition: filter 220ms ease;
+  width: 19px;
+}
+
+.community-account-dock.is-on-light .community-dock-actions button img {
+  filter: none;
+  opacity: 0.75;
+}
+
+.community-account-dock.is-on-light .community-dock-actions button.active img,
+.community-account-dock.is-on-light .community-dock-actions button:hover img,
+.community-account-dock.is-on-light .community-dock-actions button:focus-visible img {
+  opacity: 1;
 }
 
 .community-dock-actions button.profile {
-  gap: 1px;
-  padding: 4px 3px 4px 4px;
-  width: auto;
+  gap: 0;
+  padding: 0;
+}
+
+.community-dock-actions button.profile svg:last-child {
+  display: none;
 }
 
 .community-chat-person.active {
@@ -3774,16 +3822,22 @@ textarea {
   }
 
   .community-account-dock {
+    align-items: center;
+    /* Stacked directly above .site-side-nav's mobile bottom bar (14px offset +
+       ~58px pill height + gap) so the two render as one continuous rail
+       instead of two independently-positioned bottom pills. */
+    bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
+    left: 0;
+    margin-inline: auto;
     max-width: calc(100vw - 20px);
-    right: max(10px, calc(env(safe-area-inset-right) + 10px));
-    top: max(132px, calc(env(safe-area-inset-top) + 132px));
-    transition: top 200ms ease;
+    right: 0;
+    top: auto;
+    transition: bottom 200ms ease, opacity 200ms ease;
+    width: fit-content;
   }
 
   .community-account-dock.collapsed {
-    bottom: max(18px, calc(env(safe-area-inset-bottom) + 18px));
-    max-width: none;
-    top: auto;
+    bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
   }
 
   .community-account-dock.collapsed .community-dock-actions {
@@ -3799,9 +3853,9 @@ textarea {
     color: var(--white);
     cursor: pointer;
     display: none;
-    height: 50px;
+    height: 46px;
     justify-content: center;
-    width: 50px;
+    width: 46px;
   }
 
   .community-account-dock.collapsed .community-dock-fab {
@@ -3809,9 +3863,9 @@ textarea {
   }
 
   .community-dock-actions {
-    gap: 7px;
-    grid-template-columns: repeat(3, 42px) minmax(54px, auto);
-    justify-content: end;
+    gap: 5px;
+    grid-template-columns: repeat(4, 38px);
+    justify-content: center;
   }
 
   .community-pulse-create-card,
@@ -3832,12 +3886,8 @@ textarea {
   }
 
   .community-dock-actions button {
-    height: 44px;
-    width: 44px;
-  }
-
-  .community-dock-actions button.profile {
-    min-width: 54px;
+    height: 38px;
+    width: 38px;
   }
 
   .community-dock-panel {
@@ -3907,11 +3957,6 @@ textarea {
   }
 }
 
-@media (max-width: 520px) {
-  .community-account-dock {
-    top: max(132px, calc(env(safe-area-inset-top) + 132px));
-  }
-}
 
 .community-pillar-grid {
   display: grid;
@@ -7635,6 +7680,155 @@ textarea {
   .social-sidebar-links a,
   .social-sidebar-links img {
     transition: none;
+  }
+}
+
+/* ===== UNIFIED SIDE NAVIGATION ===== */
+/*
+ * Single glass rail consolidating Home / Podcast / Community plus, on
+ * community routes, the account dock triggers (Menu / Berichten /
+ * Meldingen / Mijn profiel). The dock itself keeps rendering from
+ * CommunityAccountDock (see ui.tsx) with its panel logic untouched; here we
+ * only reposition and restyle its trigger row so it reads as a continuous
+ * extension of this rail, and reuse the same is-on-light color-shift class
+ * on both.
+ */
+.site-side-nav {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: fixed;
+  right: clamp(10px, 2.4vw, 20px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 130;
+}
+
+.site-side-nav-links {
+  background: rgba(255, 253, 248, 0.14);
+  border: 1px solid rgba(255, 253, 248, 0.28);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(9, 14, 10, 0.18);
+  display: grid;
+  gap: 6px;
+  padding: 10px 7px;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.site-side-nav-links a {
+  align-items: center;
+  border-radius: 999px;
+  color: var(--white);
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  position: relative;
+  transition: background 160ms ease, color 220ms ease, transform 160ms ease;
+  width: 40px;
+}
+
+.site-side-nav-links a:hover,
+.site-side-nav-links a:focus-visible {
+  background: rgba(255, 253, 248, 0.22);
+  transform: scale(1.06);
+}
+
+.site-side-nav-links a.active {
+  background: rgba(255, 253, 248, 0.26);
+}
+
+.site-side-nav-links a.active::after {
+  background: currentColor;
+  border-radius: 999px;
+  bottom: 4px;
+  content: "";
+  height: 3px;
+  position: absolute;
+  width: 3px;
+}
+
+.site-side-nav-tooltip {
+  background: rgba(43, 49, 43, 0.92);
+  border-radius: 6px;
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0;
+  padding: 5px 9px;
+  pointer-events: none;
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  white-space: nowrap;
+}
+
+.site-side-nav-links a:hover .site-side-nav-tooltip,
+.site-side-nav-links a:focus-visible .site-side-nav-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Color-shift: rail sits on a light section -> switch to sage-on-glass */
+.site-side-nav.is-on-light .site-side-nav-links {
+  background: rgba(255, 253, 248, 0.78);
+  border-color: rgba(66, 86, 69, 0.16);
+  box-shadow: 0 8px 24px rgba(43, 49, 43, 0.12);
+}
+
+.site-side-nav.is-on-light .site-side-nav-links a {
+  color: var(--sage);
+}
+
+.site-side-nav.is-on-light .site-side-nav-links a:hover,
+.site-side-nav.is-on-light .site-side-nav-links a:focus-visible {
+  background: rgba(66, 86, 69, 0.1);
+  color: var(--pine);
+}
+
+.site-side-nav.is-on-light .site-side-nav-links a.active {
+  background: rgba(66, 86, 69, 0.14);
+  color: var(--pine);
+}
+
+.site-side-nav.is-on-light .site-side-nav-tooltip {
+  background: var(--pine);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-side-nav-links a,
+  .site-side-nav-links,
+  .site-side-nav-tooltip {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-side-nav {
+    bottom: max(14px, calc(env(safe-area-inset-bottom) + 14px));
+    right: 50%;
+    top: auto;
+    transform: translateX(50%);
+  }
+
+  .site-side-nav-links {
+    border-radius: 999px;
+    display: flex;
+    gap: 4px;
+    padding: 8px 6px;
+  }
+
+  .site-side-nav-links a {
+    height: 42px;
+    width: 42px;
+  }
+
+  .site-side-nav-tooltip {
+    display: none;
   }
 }
 
