@@ -37,6 +37,7 @@ import { FamilyStoryPopout } from '@/components/FamilyStoryPopout';
 import { HeroSlider } from '@/components/HeroSlider';
 import { SusanStoryPopout } from '@/components/SusanStoryPopout';
 import { SocialFollowTrigger } from '@/components/SocialFollowTrigger';
+import { useSectionContrast } from '@/hooks/useSectionContrast';
 import {
   createCommunityPost,
   createCommunityReply,
@@ -241,6 +242,8 @@ export function CommunityAccountDock({
     selectedConversationId ? 'chats' : null
   );
   const [collapsed, setCollapsed] = useState(false);
+  const dockRef = useRef<HTMLElement | null>(null);
+  const isOnLight = useSectionContrast(dockRef);
   const [liveConversations, setLiveConversations] = useState<CommunityConversation[]>([]);
   const [liveDiscoverableProfiles, setLiveDiscoverableProfiles] = useState<CommunityProfile[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
@@ -377,11 +380,16 @@ export function CommunityAccountDock({
     </div>
   );
 
+  const dockClassName = [
+    'community-account-dock',
+    isDockCollapsed ? 'collapsed' : null,
+    isOnLight ? 'is-on-light' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <aside
-      className={isDockCollapsed ? 'community-account-dock collapsed' : 'community-account-dock'}
-      aria-label="Community account"
-    >
+    <aside ref={dockRef} className={dockClassName} aria-label="Community account">
       <button
         className="community-dock-fab"
         type="button"

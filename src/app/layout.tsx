@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
 import { CommunityAccountDockLoader } from "@/components/CommunityAccountDockLoader";
+import { SideNav } from "@/components/SideNav";
 import { SocialSidebar } from "@/components/SocialSidebar";
 import { Footer } from "@/components/ui";
 import { getSocialLinks } from "@/lib/content";
@@ -130,6 +131,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />
+          <Suspense fallback={null}>
+            <SideNav />
+          </Suspense>
           <Suspense fallback={null}>
             <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
           </Suspense>

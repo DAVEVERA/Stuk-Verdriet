@@ -11,20 +11,11 @@ type HeaderProps = {
   spotifyUrl?: string | null;
 };
 
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/podcast", label: "Podcast" },
-  { href: "/community", label: "Community" }
-];
-
 export function Header(_props: HeaderProps) {
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community";
   const headerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
   const headerLogoAlt = isCommunityPage ? "SNAAR logo" : "Stuk Verdriet logo";
-  const visibleNavLinks = isCommunityPage
-    ? navLinks.filter((link) => link.href !== "/podcast" && link.href !== "/community")
-    : navLinks;
 
   return (
     <header className="site-header">
@@ -36,14 +27,6 @@ export function Header(_props: HeaderProps) {
         >
           <Image src={headerLogo} alt={headerLogoAlt} width={70} height={88} priority />
         </Link>
-
-        <nav className="header-nav" aria-label="Hoofdnavigatie">
-          {visibleNavLinks.map((link) => (
-            <Link key={link.href} href={link.href} className={pathname === link.href ? "active" : undefined}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </header>
   );
