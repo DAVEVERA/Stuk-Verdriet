@@ -190,12 +190,19 @@ export async function getApprovedCommunityPosts(currentUserId?: string | null): 
       ? supabase.from("community_supports").select("post_id").eq("user_id", currentUserId).in("post_id", postIds)
       : Promise.resolve({ data: [] as Array<{ post_id: string }> }),
     postIds.length
-      ? supabase
-          .from("community_replies")
-          .select("*")
-          .in("post_id", postIds)
-          .eq("status", "approved")
-          .order("created_at", { ascending: true })
+      ? (currentUserId
+          ? supabase
+              .from("community_replies")
+              .select("*")
+              .in("post_id", postIds)
+              .or(`status.eq.approved,user_id.eq.${currentUserId}`)
+              .order("created_at", { ascending: true })
+          : supabase
+              .from("community_replies")
+              .select("*")
+              .in("post_id", postIds)
+              .eq("status", "approved")
+              .order("created_at", { ascending: true }))
       : Promise.resolve({ data: [] as CommunityReply[] })
   ]);
 
@@ -237,15 +244,13 @@ export async function getApprovedCommunityPostBySlug(slug: string) {
   return posts.find((post) => post.slug === slug) ?? null;
 }
 
-export async function getApprovedCommunityReplies(postId: string): Promise<CommunityReply[]> {
+export async function getApprovedCommunityReplies(postId: string, currentUserId?: string | null): Promise<CommunityReply[]> {
   const supabase = createSupabaseAdminClient() ?? createSupabasePublicClient();
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("community_replies")
-    .select("*")
-    .eq("post_id", postId)
-    .eq("status", "approved")
-    .order("created_at", { ascending: true });
+  const query = supabase.from("community_replies").select("*").eq("post_id", postId);
+  const { data, error } = await (currentUserId
+    ? query.or(`status.eq.approved,user_id.eq.${currentUserId}`).order("created_at", { ascending: true })
+    : query.eq("status", "approved").order("created_at", { ascending: true }));
   if (error || !data) return [];
   const replies = data as CommunityReply[];
   const userIds = [...new Set(replies.map((reply) => reply.user_id).filter((value): value is string => Boolean(value)))];

@@ -16,11 +16,12 @@ export default async function CommunityPostPage({ params }: CommunityPostPagePro
   const post = await getApprovedCommunityPostBySlug(slug);
   if (!post) notFound();
 
-  const [replies, supabase] = await Promise.all([getApprovedCommunityReplies(post.id), createSupabaseServerClient()]);
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
   const isLoggedIn = Boolean(user);
+  const replies = await getApprovedCommunityReplies(post.id, user?.id ?? null);
 
   return (
     <main className="content-band community-detail-page">

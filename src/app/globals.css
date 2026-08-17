@@ -8881,6 +8881,16 @@ textarea {
   line-height: 1.45;
 }
 
+.community-comment-pending {
+  background: rgba(66, 86, 69, 0.12);
+  border-radius: 999px;
+  color: var(--pine);
+  font-size: 0.76rem;
+  font-weight: 700;
+  justify-self: start;
+  padding: 3px 9px;
+}
+
 .community-comment-actions {
   align-items: center;
   display: flex;

@@ -1508,6 +1508,9 @@ function CommunityInlineReply({
       <div className="community-comment-bubble">
         <strong>{authorName}</strong>
         <p>{reply.body}</p>
+        {reply.status !== 'approved' ? (
+          <span className="community-comment-pending">Wacht op moderatie · alleen voor jou zichtbaar</span>
+        ) : null}
         <div className="community-comment-actions">
           <span>{formatDate(reply.created_at)}</span>
           {showActions ? (
