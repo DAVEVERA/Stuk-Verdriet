@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useRef, useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -213,11 +213,7 @@ type CommunityAccountDockProps = {
   email?: string | null;
   currentUserId?: string | null;
   currentProfile?: CommunityProfile | null;
-  discoverableProfiles?: CommunityProfile[];
-  conversations?: CommunityConversation[];
   hasSupabaseEnv: boolean;
-  selectedConversationId?: string | null;
-  chatError?: string | null;
 };
 
 type CommunityDockPanel = 'menu' | 'chats' | 'notifications' | 'account';
@@ -236,19 +232,19 @@ export function CommunityAccountDock({
   email,
   currentUserId,
   currentProfile,
-  discoverableProfiles = [],
-  conversations = [],
   hasSupabaseEnv,
-  selectedConversationId,
-  chatError,
 }: CommunityAccountDockProps) {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedConversationId = searchParams.get('conversation');
+  const chatError = searchParams.get('error');
   const [activePanel, setActivePanel] = useState<CommunityDockPanel | null>(
     selectedConversationId ? 'chats' : null
   );
   const [collapsed, setCollapsed] = useState(false);
+  const [liveConversations, setLiveConversations] = useState<CommunityConversation[]>([]);
+  const [liveDiscoverableProfiles, setLiveDiscoverableProfiles] = useState<CommunityProfile[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
-    selectedConversationId ?? conversations[0]?.id ?? null
+    selectedConversationId ?? null
   );
   const [chatSearch, setChatSearch] = useState('');
   const displayName = currentProfile?.display_name ?? email?.split('@')[0] ?? 'Gast';
@@ -256,7 +252,7 @@ export function CommunityAccountDock({
   const avatarUrl = currentProfile?.avatar_url ?? null;
   const loginHref = '/login?next=%2Fcommunity';
   const activeConversation = activeConversationId
-    ? (conversations.find((conversation) => conversation.id === activeConversationId) ?? null)
+    ? (liveConversations.find((conversation) => conversation.id === activeConversationId) ?? null)
     : null;
   const activeParticipant = activeConversation
     ? getConversationPeer(activeConversation, currentUserId)
@@ -267,11 +263,11 @@ export function CommunityAccountDock({
   const chatErrorMessage = chatError ? communityChatErrors[chatError] : null;
   const normalizedChatSearch = chatSearch.trim().toLocaleLowerCase('nl-NL');
   const conversationPeers = new Set(
-    conversations
+    liveConversations
       .map((conversation) => getConversationPeer(conversation, currentUserId)?.user_id)
       .filter((value): value is string => Boolean(value))
   );
-  const visibleConversations = conversations.filter((conversation) => {
+  const visibleConversations = liveConversations.filter((conversation) => {
     if (!normalizedChatSearch) return true;
     const peer = getConversationPeer(conversation, currentUserId);
     const lastMessage = conversation.community_messages?.at(-1)?.body ?? '';
@@ -279,17 +275,36 @@ export function CommunityAccountDock({
       .toLocaleLowerCase('nl-NL')
       .includes(normalizedChatSearch);
   });
-  const visibleProfiles = discoverableProfiles.filter((profile) => {
+  const visibleProfiles = liveDiscoverableProfiles.filter((profile) => {
     if (conversationPeers.has(profile.user_id)) return false;
     if (!normalizedChatSearch) return true;
     return profile.display_name.toLocaleLowerCase('nl-NL').includes(normalizedChatSearch);
   });
 
+  async function fetchDockData() {
+    if (!isLoggedIn) return;
+    try {
+      const response = await fetch('/api/community/dock-data');
+      if (!response.ok) return;
+      const data = (await response.json()) as {
+        discoverableProfiles?: CommunityProfile[];
+        conversations?: CommunityConversation[];
+      };
+      if (data.conversations) setLiveConversations(data.conversations);
+      if (data.discoverableProfiles) setLiveDiscoverableProfiles(data.discoverableProfiles);
+    } catch {
+      // stil falen; het paneel toont dan de laatst bekende (mogelijk lege) data
+    }
+  }
+
   useEffect(() => {
     if (!isLoggedIn || activePanel !== 'chats') return;
-    const refreshTimer = window.setInterval(() => router.refresh(), 12000);
+    const refreshTimer = window.setInterval(() => void fetchDockData(), 12000);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchDockData();
     return () => window.clearInterval(refreshTimer);
-  }, [activePanel, isLoggedIn, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePanel, isLoggedIn]);
 
   useEffect(() => {
     const isMobile = window.matchMedia('(max-width: 820px)').matches;
@@ -475,12 +490,12 @@ export function CommunityAccountDock({
                       </button>
                     );
                   })}
-                {isLoggedIn && !conversations.length ? (
+                {isLoggedIn && !liveConversations.length ? (
                   <p className="community-panel-empty">
                     Nog geen gesprekken. Kies hieronder iemand die openstaat voor contact.
                   </p>
                 ) : null}
-                {isLoggedIn && !discoverableProfiles.length ? (
+                {isLoggedIn && !liveDiscoverableProfiles.length ? (
                   <p className="community-panel-empty">
                     Er zijn nog geen andere vindbare profielen. Zet je eigen profiel op vindbaar en
                     nodig anderen uit om hetzelfde te doen.

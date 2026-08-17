@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
+import { CommunityAccountDockLoader } from "@/components/CommunityAccountDockLoader";
+import { SocialSidebar } from "@/components/SocialSidebar";
 import { Footer } from "@/components/ui";
 import { getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
+import { hasSupabaseEnv } from "@/lib/supabase";
 import "./globals.css";
 
 const jost = localFont({
@@ -126,6 +130,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />
+          <Suspense fallback={null}>
+            <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
+          </Suspense>
+          <SocialSidebar socialLinks={socialLinks} />
           <main className="main">{children}</main>
           <Footer socialLinks={socialLinks} />
         </div>

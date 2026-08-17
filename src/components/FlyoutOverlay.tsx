@@ -156,7 +156,7 @@ export function FlyoutOverlay({
           <section className="podcast-flyout-signup" id="podcast-signup" aria-labelledby="podcast-signup-title">
             <div>
               <p className="eyebrow">Mis het niet</p>
-              <h3 id="podcast-signup-title">Ontvang aflevering 2 als eerste.</h3>
+              <h3 id="podcast-signup-title">Ontvang een seintje</h3>
               <p>Laat je naam en e-mailadres achter. We sturen alleen een bericht wanneer er iets nieuws te luisteren is.</p>
             </div>
             <form className="podcast-flyout-signup-form" action={subscribeEpisodeSignup}>

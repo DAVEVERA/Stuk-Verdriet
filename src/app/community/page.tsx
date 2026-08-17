@@ -1,18 +1,9 @@
 import { getApprovedCommunityPosts, getCommunityCategories } from '@/lib/content';
 import type { Metadata } from 'next';
-import {
-  createSupabaseAdminClient,
-  createSupabaseServerClient,
-  hasSupabaseEnv,
-} from '@/lib/supabase';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase';
 import { CommunityPulseStrip } from '@/components/CommunityPulseStrip';
-import { CommunityAccountDock, CommunityPostCard, Icon } from '@/components/ui';
-import type {
-  CommunityConversation,
-  CommunityFriendship,
-  CommunityProfile,
-  CommunityPulseMoment,
-} from '@/types/content';
+import { CommunityPostCard, Icon } from '@/components/ui';
+import type { CommunityFriendship, CommunityProfile, CommunityPulseMoment } from '@/types/content';
 
 type CommunityPageProps = {
   searchParams?: Promise<{
@@ -47,32 +38,15 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
   const isLoggedIn = Boolean(user);
   const posts = await getApprovedCommunityPosts(user?.id ?? null);
   let currentProfile: CommunityProfile | null = null;
-  let discoverableProfiles: CommunityProfile[] = [];
-  let conversations: CommunityConversation[] = [];
   let pulseMoments: CommunityPulseMoment[] = [];
   if (supabase && user) {
     const admin = createSupabaseAdminClient();
-    const [profileResult, profilesResult, conversationsResult] = await Promise.all([
-      supabase.from('community_profiles').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase
-        .from('community_profiles')
-        .select('*')
-        .eq('is_discoverable', true)
-        .neq('user_id', user.id)
-        .limit(12),
-      supabase
-        .from('community_conversations')
-        .select(
-          'id,created_by,created_at,updated_at,community_conversation_participants(conversation_id,user_id,last_read_at,created_at,community_profiles(user_id,display_name,avatar_url,is_discoverable)),community_messages(id,conversation_id,sender_id,body,created_at)'
-        )
-        .order('updated_at', { ascending: false })
-        .order('created_at', { referencedTable: 'community_messages', ascending: true })
-        .limit(6, { referencedTable: 'community_messages' })
-        .limit(8),
-    ]);
+    const profileResult = await supabase
+      .from('community_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
     currentProfile = (profileResult.data as CommunityProfile | null) ?? null;
-    discoverableProfiles = (profilesResult.data as CommunityProfile[] | null) ?? [];
-    conversations = (conversationsResult.data as CommunityConversation[] | null) ?? [];
     const dataClient = admin ?? supabase;
     if (dataClient) {
       const [friendshipsResult, pulseResult] = await Promise.all([
@@ -148,17 +122,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
             </h1>
           </div>
         </div>
-        <CommunityAccountDock
-          isLoggedIn={isLoggedIn}
-          email={user?.email ?? null}
-          currentUserId={user?.id ?? null}
-          currentProfile={currentProfile}
-          discoverableProfiles={discoverableProfiles}
-          conversations={conversations}
-          hasSupabaseEnv={hasSupabaseEnv}
-          selectedConversationId={params.conversation ?? null}
-          chatError={params.error ?? null}
-        />
       </section>
 
       <section className="community-social-layout" aria-label="Community feed">
