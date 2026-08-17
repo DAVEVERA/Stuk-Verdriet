@@ -58,6 +58,7 @@ import type {
   ShopProduct,
   ShopSettings,
   SiteDesignSettings,
+  SiteSettings,
   AdminUser,
   LegalDocument,
   FAQ,
@@ -127,6 +128,7 @@ type AdminDashboardProps = {
   serviceQuestions: AdminServiceQuestion[];
   stripeConfigured: boolean;
   sectionDesign: SiteDesignSettings;
+  siteSettings?: SiteSettings;
   missingSupabase?: boolean;
   localPreview?: boolean;
   savedMessage?: string | null;
@@ -300,6 +302,7 @@ export function AdminDashboard({
   serviceQuestions,
   stripeConfigured,
   sectionDesign,
+  siteSettings,
   missingSupabase,
   localPreview,
   savedMessage,
@@ -646,7 +649,7 @@ export function AdminDashboard({
       {activeTab === "brand" ? <BrandLibrary /> : null}
       {activeTab === "automation" ? <AutomationHub /> : null}
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
-      {activeTab === "site" ? <SiteSettingsForm /> : null}
+      {activeTab === "site" ? <SiteSettingsForm siteSettings={siteSettings} /> : null}
       {activeTab === "sections" ? <SectionDesignEditor initialSettings={sectionDesign} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
       {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
@@ -2050,12 +2053,23 @@ function AdminReportCard({ report }: { report: AdminReport }) {
   );
 }
 
-function SiteSettingsForm() {
+function SiteSettingsForm({ siteSettings }: { siteSettings?: SiteSettings }) {
+  const currentLogoUrl = siteSettings?.logo_url || "/brand/sverdriet_logo.webp";
   return (
     <AdminForm title="Site instellingen" action={saveSiteSettings}>
       <input type="hidden" name="return_tab" value="site" readOnly />
-      <label>Logo URL<input name="logo_url" defaultValue="/brand/sverdriet_logo.webp" /></label>
-      <label>Homepage intro<textarea name="homepage_intro" placeholder="Intro voor de homepage" /></label>
+      {currentLogoUrl ? (
+        <div className="admin-current-logo">
+          <Image src={currentLogoUrl} alt="Huidig logo" width={64} height={64} />
+        </div>
+      ) : null}
+      <label className="upload-field">
+        <ImagePlus aria-hidden />
+        <span>Logo uploaden</span>
+        <input name="logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+      </label>
+      <label>Logo URL<input name="logo_url" defaultValue={currentLogoUrl} /></label>
+      <label>Homepage intro<textarea name="homepage_intro" defaultValue={siteSettings?.homepage_intro ?? ""} placeholder="Intro voor de homepage" /></label>
       <label>Instagram<input name="instagram_url" /></label>
       <label>Facebook<input name="facebook_url" /></label>
       <label>TikTok<input name="tiktok_url" /></label>

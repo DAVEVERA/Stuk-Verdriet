@@ -22,6 +22,7 @@ import type {
   PodcastEpisode,
   PodcastSeason,
   SiteDesignSettings,
+  SiteSettings,
   SocialLinks,
   SponsorLogo
 } from "@/types/content";
@@ -281,6 +282,15 @@ export async function getSocialLinks(): Promise<SocialLinks> {
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
   if (error || !data?.social_links) return fallbackSocialLinks;
   return data.social_links as SocialLinks;
+}
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  const fallback: SiteSettings = { logo_url: null, homepage_intro: null };
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return fallback;
+  const { data, error } = await supabase.from("site_settings").select("logo_url, homepage_intro").eq("id", "main").single();
+  if (error || !data) return fallback;
+  return { logo_url: data.logo_url ?? null, homepage_intro: data.homepage_intro ?? null };
 }
 
 export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {

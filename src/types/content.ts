@@ -285,6 +285,11 @@ export type SocialLinks = {
   apple_podcast_url: string | null;
 };
 
+export type SiteSettings = {
+  logo_url: string | null;
+  homepage_intro: string | null;
+};
+
 export type SectionDesignKey =
   | "hero"
   | "signup"

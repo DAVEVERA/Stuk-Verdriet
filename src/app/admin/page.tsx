@@ -1,7 +1,7 @@
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { CommunityChatWidget } from "@/components/CommunityChatWidget";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
-import { getSiteDesignSettings } from "@/lib/content";
+import { getSiteDesignSettings, getSiteSettings } from "@/lib/content";
 import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
@@ -74,6 +74,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const admin = createSupabaseAdminClient();
   const sectionDesign = await getSiteDesignSettings();
+  const siteSettings = await getSiteSettings();
   const [
     pendingPostsResult,
     reportsResult,
@@ -174,6 +175,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         serviceQuestions={serviceQuestions}
         stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
         sectionDesign={sectionDesign}
+        siteSettings={siteSettings}
         missingSupabase={!hasSupabaseEnv}
         localPreview={localAdminAllowed && !allowed && isLocalAdminEnabled()}
         savedMessage={saved ?? null}

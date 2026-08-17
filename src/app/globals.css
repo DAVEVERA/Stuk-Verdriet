@@ -5684,6 +5684,24 @@ textarea {
   color: var(--pine);
 }
 
+.admin-current-logo {
+  align-items: center;
+  background: rgba(231, 220, 200, 0.34);
+  border: 1px solid rgba(66, 86, 69, 0.2);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  width: fit-content;
+}
+
+.admin-current-logo img {
+  border-radius: 6px;
+  height: 64px;
+  object-fit: contain;
+  width: 64px;
+}
+
 .link-card-editor,
 .link-card-row {
   display: grid;

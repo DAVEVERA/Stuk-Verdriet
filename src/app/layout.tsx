@@ -6,7 +6,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { CommunityAccountDockLoader } from "@/components/CommunityAccountDockLoader";
 import { SocialSidebar } from "@/components/SocialSidebar";
 import { Footer } from "@/components/ui";
-import { getSocialLinks } from "@/lib/content";
+import { getSiteSettings, getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
 import { hasSupabaseEnv } from "@/lib/supabase";
 import "./globals.css";
@@ -99,7 +99,9 @@ export const viewport: Viewport = {
   themeColor: "#425645"
 };
 
-const websiteJsonLd = {
+function buildWebsiteJsonLd(logoUrl: string) {
+  const absoluteLogoUrl = logoUrl.startsWith("http") ? logoUrl : `${site.url}${logoUrl}`;
+  return {
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -107,7 +109,7 @@ const websiteJsonLd = {
       "@id": `${site.url}/#organization`,
       name: site.name,
       url: site.url,
-      logo: `${site.url}${site.logo}`,
+      logo: absoluteLogoUrl,
       email: site.email,
       sameAs: [
         "https://www.instagram.com/stukverdrietdepodcast/",
@@ -141,27 +143,29 @@ const websiteJsonLd = {
       }
     }
   ]
-};
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const socialLinks = await getSocialLinks();
+  const [socialLinks, siteSettings] = await Promise.all([getSocialLinks(), getSiteSettings()]);
+  const logoUrl = siteSettings.logo_url || site.logo;
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`} data-scroll-behavior="smooth">
       <body>
         <div className="site-shell">
-          <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} />
+          <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} logoUrl={logoUrl} />
           <Suspense fallback={null}>
             <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
           </Suspense>
           <SocialSidebar socialLinks={socialLinks} />
           <main className="main">{children}</main>
-          <Footer socialLinks={socialLinks} />
+          <Footer socialLinks={socialLinks} logoUrl={logoUrl} />
         </div>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildWebsiteJsonLd(logoUrl)) }}
         />
         <CookieConsent gaId={gaId} />
       </body>
