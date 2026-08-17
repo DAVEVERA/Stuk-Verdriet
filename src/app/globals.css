@@ -1714,8 +1714,17 @@ p {
   z-index: 8;
 }
 
-#over .section-heading h2 {
+#over .section-heading h2,
+#community-preview .section-heading h2,
+#community-preview .section-heading p:not(.eyebrow),
+#interviews .section-heading h2,
+#interviews .section-heading p:not(.eyebrow) {
   color: var(--white);
+}
+
+#community-preview .eyebrow,
+#interviews .eyebrow {
+  color: rgba(255, 253, 248, 0.78);
 }
 
 #over::before {
@@ -7593,14 +7602,14 @@ textarea {
 }
 
 .search-icon {
-  color: rgba(43, 49, 43, 0.55);
+  color: rgba(255, 253, 248, 0.72);
   flex-shrink: 0;
 }
 
 .search-input {
   background: transparent;
   border: 0;
-  color: var(--ink);
+  color: var(--white);
   flex: 1;
   font-size: 16px;
   outline: none;
@@ -7609,7 +7618,7 @@ textarea {
 }
 
 .search-input::placeholder {
-  color: rgba(43, 49, 43, 0.5);
+  color: rgba(255, 253, 248, 0.62);
 }
 
 .sort-filter {
@@ -7621,7 +7630,7 @@ textarea {
   background: rgba(255, 253, 248, 0.14);
   border: 1px solid rgba(255, 253, 248, 0.22);
   border-radius: 8px;
-  color: var(--ink);
+  color: var(--white);
   cursor: pointer;
   font-size: 15px;
   height: 100%;
@@ -7641,8 +7650,12 @@ textarea {
   border-color: rgba(255, 253, 248, 0.45);
 }
 
-.sort-chevron {
+.sort-select option {
   color: var(--ink);
+}
+
+.sort-chevron {
+  color: var(--white);
   pointer-events: none;
   position: absolute;
   right: 14px;
@@ -7660,7 +7673,7 @@ textarea {
 .interview-empty-state {
   padding: clamp(32px, 10vw, 60px) 20px;
   text-align: center;
-  color: rgba(66, 86, 69, 0.65);
+  color: rgba(255, 253, 248, 0.75);
 }
 
 /* Interview feed grid — Instagram-style: 1 kolom mobiel, 3 kolommen desktop */
