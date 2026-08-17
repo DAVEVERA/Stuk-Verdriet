@@ -10,6 +10,7 @@ import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import { canUsePulseMoment } from "@/lib/pulse-moments";
+import { sendPushToUser } from "@/lib/push";
 import type { CommunityPulseLayer, PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
@@ -1214,9 +1215,42 @@ export async function sendCommunityMessage(conversationId: string, formData: For
   });
   if (error) redirect(`${returnPath}?error=message-send`);
 
+  void notifyOtherParticipantsOfMessage(conversationId, user.id, body);
+
   revalidatePath("/community");
   revalidatePath("/community/profiel");
   redirect(`${returnPath}?conversation=${encodeURIComponent(conversationId)}`);
+}
+
+/**
+ * Push-notifies the other participant(s) in a conversation about a new message.
+ * Best-effort and fire-and-forget: failures here must never block message delivery,
+ * which is already committed to the database by the time this runs.
+ */
+async function notifyOtherParticipantsOfMessage(conversationId: string, senderId: string, body: string) {
+  try {
+    const admin = createSupabaseAdminClient();
+    if (!admin) return;
+    const [{ data: participants }, { data: senderProfile }] = await Promise.all([
+      admin.from("community_conversation_participants").select("user_id").eq("conversation_id", conversationId).neq("user_id", senderId),
+      admin.from("community_profiles").select("display_name").eq("user_id", senderId).maybeSingle()
+    ]);
+    if (!participants?.length) return;
+    const senderName = senderProfile?.display_name ?? "Iemand";
+    const preview = body.length > 120 ? `${body.slice(0, 117)}...` : body;
+    await Promise.all(
+      participants.map((participant) =>
+        sendPushToUser(participant.user_id, {
+          title: `Nieuw bericht van ${senderName}`,
+          body: preview,
+          url: "/community?panel=chat",
+          tag: `message-${conversationId}`
+        })
+      )
+    );
+  } catch (err) {
+    console.error("[push] failed to notify conversation participants", err);
+  }
 }
 
 export async function subscribeEpisodeSignup(formData: FormData) {
@@ -1890,4 +1924,111 @@ export async function saveSectionDesignSettings(formData: FormData) {
   revalidatePath("/community");
   revalidatePath("/admin");
   redirect(adminReturnTarget(formData, "saved", "section-design", "sections"));
+}
+
+type PushSubscriptionKeys = { p256dh: string; auth: string };
+type PushActionResult = { ok: boolean; error?: string };
+
+function isValidPushKeys(value: unknown): value is PushSubscriptionKeys {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).p256dh === "string" &&
+    typeof (value as Record<string, unknown>).auth === "string"
+  );
+}
+
+/** Saves (or refreshes) a browser push subscription for the signed-in user. */
+export async function saveCommunityPushSubscription(subscription: {
+  endpoint: string;
+  keys: PushSubscriptionKeys;
+}): Promise<PushActionResult> {
+  if (!(await assertSameOriginRequest())) return { ok: false, error: "invalid" };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "profile-storage" };
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "auth" };
+  if (!subscription?.endpoint || !isValidPushKeys(subscription.keys)) return { ok: false, error: "invalid" };
+
+  await ensureCommunityProfile(user);
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { ok: false, error: "profile-storage" };
+
+  const { error } = await admin.from("push_subscriptions").upsert(
+    {
+      user_id: user.id,
+      endpoint: subscription.endpoint,
+      keys: subscription.keys,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "user_id,endpoint" }
+  );
+  if (error) return { ok: false, error: "push-save" };
+  return { ok: true };
+}
+
+/** Removes a browser push subscription (called on unsubscribe / toggle off). */
+export async function deleteCommunityPushSubscription(endpoint: string): Promise<PushActionResult> {
+  if (!(await assertSameOriginRequest())) return { ok: false, error: "invalid" };
+  const { supabase, user } = await requireCommunityUserApi();
+  if (!supabase || !user) return { ok: false, error: "auth" };
+  if (!endpoint) return { ok: false, error: "invalid" };
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { ok: false, error: "profile-storage" };
+  const { error } = await admin.from("push_subscriptions").delete().eq("user_id", user.id).eq("endpoint", endpoint);
+  if (error) return { ok: false, error: "push-delete" };
+  return { ok: true };
+}
+
+/** Updates the sound_enabled toggle for one subscription, independent from push on/off. */
+export async function updateCommunityPushSoundPreference(endpoint: string, soundEnabled: boolean): Promise<PushActionResult> {
+  if (!(await assertSameOriginRequest())) return { ok: false, error: "invalid" };
+  const { supabase, user } = await requireCommunityUserApi();
+  if (!supabase || !user) return { ok: false, error: "auth" };
+  if (!endpoint) return { ok: false, error: "invalid" };
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { ok: false, error: "profile-storage" };
+  const { error } = await admin
+    .from("push_subscriptions")
+    .update({ sound_enabled: soundEnabled, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .eq("endpoint", endpoint);
+  if (error) return { ok: false, error: "push-sound" };
+  return { ok: true };
+}
+
+/** Reads whether the current user has any active push subscription, and its sound setting. */
+export async function getCommunityPushStatus(): Promise<{
+  isLoggedIn: boolean;
+  subscribed: boolean;
+  soundEnabled: boolean;
+}> {
+  const { supabase, user } = await requireCommunityUserApi();
+  if (!supabase || !user) return { isLoggedIn: false, subscribed: false, soundEnabled: true };
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { isLoggedIn: true, subscribed: false, soundEnabled: true };
+  const { data } = await admin
+    .from("push_subscriptions")
+    .select("sound_enabled")
+    .eq("user_id", user.id)
+    .eq("push_enabled", true)
+    .limit(1)
+    .maybeSingle();
+  return { isLoggedIn: true, subscribed: Boolean(data), soundEnabled: data?.sound_enabled ?? true };
+}
+
+/** Same shape as requireCommunityUser but returns nulls instead of redirecting, for JSON-returning actions. */
+async function requireCommunityUserApi() {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { supabase: null, user: null };
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) return { supabase: null, user: null };
+  return { supabase, user };
 }

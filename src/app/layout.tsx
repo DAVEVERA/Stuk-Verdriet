@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Header } from "@/components/Header";
@@ -64,6 +64,24 @@ export const metadata: Metadata = {
     template: "%s | Stuk Verdriet"
   },
   description: "Stuk Verdriet biedt herkenning, steun en verbinding voor iedereen die te maken heeft met rouw.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Stuk Verdriet",
+    statusBarStyle: "black-translucent"
+  },
+  other: {
+    // Next's appleWebApp.capable only emits the modern "mobile-web-app-capable" tag;
+    // older iOS Safari versions specifically look for the "apple-" prefixed one.
+    "apple-mobile-web-app-capable": "yes"
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" }
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
   openGraph: {
     title: "Stuk Verdriet",
     description: "Verdriet verdient een stem.",
@@ -75,6 +93,10 @@ export const metadata: Metadata = {
   verification: {
     google: "OFa22mraECpgkeSyodVbzq9wLtrXCJAXhZqthNt0Xps"
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#425645"
 };
 
 const websiteJsonLd = {
