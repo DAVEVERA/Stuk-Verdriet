@@ -16,6 +16,9 @@ const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "
 const communityImageMaxSize = 4 * 1024 * 1024;
 const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
+const siteLogoMaxSize = 5 * 1024 * 1024;
+const siteLogoTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+const siteLogoExtensions = new Set(["jpg", "jpeg", "png", "webp", "svg"]);
 const communityAvatarMaxSize = 3 * 1024 * 1024;
 const communityCoverMaxSize = 5 * 1024 * 1024;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -179,6 +182,11 @@ function isAllowedCommunityAvatar(file: File) {
 function isAllowedCommunityCover(file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   return file.size <= communityCoverMaxSize && communityImageTypes.has(file.type) && communityImageExtensions.has(extension);
+}
+
+function isAllowedSiteLogo(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return file.size <= siteLogoMaxSize && siteLogoTypes.has(file.type) && siteLogoExtensions.has(extension);
 }
 
 function profileText(formData: FormData, name: string, maxLength = 160) {
@@ -1826,15 +1834,23 @@ export async function saveShopSettings(formData: FormData) {
 
 export async function saveSiteSettings(formData: FormData) {
   const supabase = await requireAdminClient();
-  const { data } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
+  const { data } = await supabase.from("site_settings").select("social_links, logo_url").eq("id", "main").single();
   const currentSocialLinks =
     data?.social_links && typeof data.social_links === "object" && !Array.isArray(data.social_links)
       ? (data.social_links as Record<string, unknown>)
       : {};
+
+  const logoUpload = getUploadFile(formData, "logo_file");
+  let logoUrl = String(formData.get("logo_url") ?? "").trim() || data?.logo_url || "/brand/sverdriet_logo.webp";
+  if (logoUpload) {
+    if (!isAllowedSiteLogo(logoUpload)) redirect(adminReturnTarget(formData, "error", "site-logo", "site"));
+    logoUrl = await uploadPublicFile(supabase, "site-branding", "logo", logoUpload, "png", "/admin?tab=site");
+  }
+
   await supabase.from("site_settings").upsert(
     {
       id: "main",
-      logo_url: String(formData.get("logo_url") ?? "").trim() || "/brand/sverdriet_logo.webp",
+      logo_url: logoUrl,
       homepage_intro: String(formData.get("homepage_intro") ?? "").trim() || null,
       social_links: {
         section_styles: currentSocialLinks.section_styles ?? {},

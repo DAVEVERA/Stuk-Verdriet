@@ -9,6 +9,7 @@ import type { SocialLinks } from "@/types/content";
 type HeaderProps = {
   socialLinks: SocialLinks;
   spotifyUrl?: string | null;
+  logoUrl?: string;
 };
 
 const navLinks = [
@@ -17,10 +18,10 @@ const navLinks = [
   { href: "/community", label: "Community" }
 ];
 
-export function Header(_props: HeaderProps) {
+export function Header({ logoUrl }: HeaderProps) {
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community";
-  const headerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : site.logo;
+  const headerLogo = isCommunityPage ? "/img/icons_SNAAR/snaar_cirkel.png" : logoUrl || site.logo;
   const headerLogoAlt = isCommunityPage ? "SNAAR logo" : "Stuk Verdriet logo";
   const visibleNavLinks = isCommunityPage
     ? navLinks.filter((link) => link.href !== "/podcast" && link.href !== "/community")

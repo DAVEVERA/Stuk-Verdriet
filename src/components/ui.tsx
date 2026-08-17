@@ -72,10 +72,10 @@ const gofundmeGoalBarUrl =
 const gofundmeQrCodeUrl =
   'https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-qr-code?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3';
 
-export function Footer({ socialLinks: _socialLinks }: { socialLinks: SocialLinks }) {
+export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: SocialLinks; logoUrl?: string }) {
   const pathname = usePathname();
   const isCommunityPage = pathname === '/community';
-  const footerLogo = isCommunityPage ? '/img/icons_SNAAR/snaar_cirkel.png' : site.logo;
+  const footerLogo = isCommunityPage ? '/img/icons_SNAAR/snaar_cirkel.png' : logoUrl || site.logo;
   const footerNavigation = isCommunityPage
     ? navigation.filter((item) => item.href !== '/podcast' && item.href !== '/community')
     : navigation;
