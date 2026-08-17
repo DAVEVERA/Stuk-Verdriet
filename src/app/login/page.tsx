@@ -63,16 +63,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </label>
               <button className="text-link" type="submit">Stuur magic link</button>
             </form>
-            {process.env.NODE_ENV === "development" ? (
-              <form className="local-admin-login-form" action="/api/dev/magic-link" method="post">
-                <input type="hidden" name="next" value={next} readOnly />
-                <label>
-                  Dev demo e-mail
-                  <input name="email" type="email" defaultValue="demo@stukverdriet.test" required />
-                </label>
-                <button className="button" type="submit">Dev login zonder e-mail</button>
-              </form>
-            ) : null}
             {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
             {params.sent ? <p className="notice">Magic link verzonden. Controleer je inbox.</p> : null}
           </div>
