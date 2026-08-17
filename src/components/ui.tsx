@@ -990,18 +990,24 @@ export function SocialEmbedSection() {
   );
 }
 
-export function SpotifyEmbedPlayer({ episode }: { episode: PodcastEpisode }) {
+export function SpotifyEmbedPlayer({
+  episode,
+  compact = false,
+}: {
+  episode: PodcastEpisode;
+  compact?: boolean;
+}) {
   const spotifyEmbedUrl = episode.spotify_url ? getSpotifyEmbedUrl(episode.spotify_url) : null;
   if (!spotifyEmbedUrl) return null;
 
   return (
     <iframe
-      className="spotify-embed-player"
+      className={compact ? 'spotify-embed-player is-compact' : 'spotify-embed-player'}
       title={`Spotify-player: ${episode.title}`}
       style={{ borderRadius: '12px' }}
       src={spotifyEmbedUrl}
       width="100%"
-      height="152"
+      height={compact ? '110' : '152'}
       frameBorder={0}
       allowFullScreen
       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

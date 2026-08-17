@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CommunityAccountDock } from "@/components/ui";
 import type { CommunityProfile } from "@/types/content";
@@ -19,9 +20,12 @@ const emptySession: SessionState = {
 };
 
 export function CommunityAccountDockLoader({ hasSupabaseEnv }: { hasSupabaseEnv: boolean }) {
+  const pathname = usePathname();
+  const isCommunityRoute = pathname === "/community" || pathname.startsWith("/community/");
   const [session, setSession] = useState<SessionState>(emptySession);
 
   useEffect(() => {
+    if (!isCommunityRoute) return;
     let cancelled = false;
     async function loadSession() {
       try {
@@ -37,7 +41,9 @@ export function CommunityAccountDockLoader({ hasSupabaseEnv }: { hasSupabaseEnv:
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isCommunityRoute]);
+
+  if (!isCommunityRoute) return null;
 
   return (
     <CommunityAccountDock

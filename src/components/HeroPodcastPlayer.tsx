@@ -14,7 +14,7 @@ export function HeroPodcastPlayer({ latest, episodes }: { latest: PodcastEpisode
 
       <div className="hero-player-audio">
         {episode.spotify_url ? (
-          <SpotifyEmbedPlayer episode={episode} />
+          <SpotifyEmbedPlayer episode={episode} compact />
         ) : (
           <audio
             className="hero-player-audio-control"

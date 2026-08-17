@@ -87,6 +87,8 @@ textarea {
 
 .site-header {
   --header-logo-size: clamp(62px, 5.8vw, 82px);
+  display: flex;
+  justify-content: center;
   left: 0;
   padding: 12px clamp(12px, 3vw, 32px);
   pointer-events: none;
@@ -198,17 +200,6 @@ textarea {
 
 .main {
   overflow: hidden;
-  transition: padding-left 260ms ease;
-}
-
-body:has(.social-sidebar.open) .main {
-  padding-left: clamp(44px, 10vw, 68px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .main {
-    transition: none;
-  }
 }
 
 .hero {
@@ -1372,6 +1363,27 @@ p {
 .post-grid.compact {
   grid-template-columns: minmax(0, 1fr);
   margin-top: 10px;
+}
+
+.community-preview-section {
+  display: grid;
+  gap: 24px;
+  justify-items: start;
+}
+
+.community-preview-grid {
+  gap: 18px;
+  width: 100%;
+}
+
+.community-preview-cta {
+  justify-self: center;
+}
+
+@media (min-width: 760px) {
+  .post-grid.compact.community-preview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .share-section {
@@ -7445,20 +7457,28 @@ textarea {
 
 .social-sidebar-toggle {
   align-items: center;
-  background: var(--pine);
+  background: rgba(66, 86, 69, 0.55);
   border: 0;
   border-radius: 0 999px 999px 0;
   color: var(--white);
   cursor: pointer;
   display: inline-flex;
-  height: 40px;
+  height: 30px;
   justify-content: center;
-  transition: transform 200ms ease;
-  width: 28px;
+  opacity: 0.7;
+  transition: background 160ms ease, opacity 160ms ease;
+  width: 20px;
+}
+
+.social-sidebar-toggle:hover,
+.social-sidebar-toggle:focus-visible {
+  background: var(--pine);
+  opacity: 1;
 }
 
 .social-sidebar.open .social-sidebar-toggle {
-  transform: rotate(180deg);
+  background: var(--pine);
+  opacity: 0.9;
 }
 
 .social-sidebar-links {
@@ -7506,8 +7526,8 @@ textarea {
 
 @media (max-width: 640px) {
   .social-sidebar-toggle {
-    height: 36px;
-    width: 24px;
+    height: 26px;
+    width: 18px;
   }
 
   .social-sidebar.open .social-sidebar-links {

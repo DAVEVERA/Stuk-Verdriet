@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { Share2 } from "lucide-react";
 import type { SocialLinks } from "@/types/content";
 
 type SocialSidebarProps = {
@@ -60,7 +60,7 @@ function SocialSidebarInner({ pathname, socialLinks }: { pathname: string; socia
         aria-expanded={isOpen}
         aria-label={isOpen ? "Social media inklappen" : "Social media uitklappen"}
       >
-        <ChevronRight size={16} aria-hidden />
+        <Share2 size={13} aria-hidden />
       </button>
       <div className="social-sidebar-links">
         {links.map((link) => (

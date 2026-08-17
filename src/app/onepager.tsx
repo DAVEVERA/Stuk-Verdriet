@@ -3,7 +3,8 @@ import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { InterviewGrid } from "@/components/InterviewGrid";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityStoryForm, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
+import Link from "next/link";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getInterviewsWithComments, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
 import { likeInterview, shareInterview, submitInterviewComment, likeComment } from "@/lib/interview-actions";
 import { type OnepagerPanel } from "@/lib/site";
@@ -56,6 +57,24 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
             </div>
           </section>
         ) : null}
+
+        <section className="content-band community-preview-section" id="community-preview" aria-labelledby="community-preview-title">
+          <div className="section-heading">
+            <p className="eyebrow">SNAAR community</p>
+            <h2 id="community-preview-title">Je hoeft het niet alleen te doen.</h2>
+            <p>Lees hoe anderen omgaan met verlies, deel je eigen verhaal of lees rustig mee. SNAAR is de community van Stuk Verdriet.</p>
+          </div>
+          {posts.length ? (
+            <div className="post-grid compact community-preview-grid">
+              {posts.slice(0, 3).map((post) => (
+                <CommunityPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : null}
+          <Link className="button community-preview-cta" href="/community">
+            Word deel van de community
+          </Link>
+        </section>
 
         <section className="aya-support-banner" aria-labelledby="aya-support-title">
           <div className="aya-banner-inner">
