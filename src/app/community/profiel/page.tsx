@@ -36,6 +36,7 @@ import { CommunityInviteTools } from "@/components/CommunityInviteTools";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
+import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
 import type {
   CommunityFriendship,
@@ -729,7 +730,17 @@ function ProfilePulseSection({ moments, displayName }: { moments: CommunityPulse
   );
 }
 
-function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfile | null; displayName: string }) {
+function ProfileInfoSection({
+  profile,
+  displayName,
+  vapidPublicKey,
+  pushSoundEnabled
+}: {
+  profile: CommunityProfile | null;
+  displayName: string;
+  vapidPublicKey: string | null;
+  pushSoundEnabled: boolean;
+}) {
   const details = profile?.profile_details ?? {};
   return (
     <section className="community-profile-section community-profile-info" id="info">
@@ -738,7 +749,7 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
         {[
           ["intro", "Intro"], ["persoonlijk", "Persoonlijke gegevens"], ["werk", "Werk"], ["onderwijs", "Onderwijs"],
           ["hobbys", "Hobby's en interesses"], ["reizen", "Reizen"], ["links", "Links"], ["contact", "Contactgegevens"],
-          ["privacy", "Privacy"], ["namen", "Namen"], ["account", "Account"]
+          ["privacy", "Privacy"], ["meldingen", "Meldingen"], ["namen", "Namen"], ["account", "Account"]
         ].map(([id, label], index) => <a key={id} className={index === 0 ? "active" : ""} href={`#info-${id}`}>{label}</a>)}
       </aside>
       <form className="community-profile-info-form" action={updateCommunityProfileInfo}>
@@ -805,6 +816,11 @@ function ProfileInfoSection({ profile, displayName }: { profile: CommunityProfil
         <fieldset id="info-namen"><legend>Namen</legend><label>Weergavenaam<input name="display_name" maxLength={80} required defaultValue={displayName} /></label></fieldset>
         <div className="community-profile-savebar"><p>Je bepaalt zelf wat je invult. Lege velden worden niet op je profiel getoond.</p><button className="community-panel-button" type="submit">Informatie opslaan</button></div>
       </form>
+      <fieldset id="info-meldingen" className="community-profile-account-fieldset">
+        <legend>Meldingen</legend>
+        <p>Ontvang een melding bij een nieuwe verbinding, bericht of reactie op je post.</p>
+        <PushNotificationSettings vapidPublicKey={vapidPublicKey} initialSoundEnabled={pushSoundEnabled} />
+      </fieldset>
       <fieldset id="info-account" className="community-profile-account-fieldset">
         <legend>Account</legend>
         <p>Download een kopie van je gegevens of beheer je account.</p>
@@ -836,7 +852,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
     friendshipsResult,
     discoverableResult,
     ownPostsResult,
-    ownRepliesResult
+    ownRepliesResult,
+    pushSubscriptionResult
   ] = await Promise.all([
     dataClient.from("community_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     dataClient.from("community_profile_albums").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(40),
@@ -851,7 +868,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
       .select("*,community_posts(title,slug)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(50)
+      .limit(50),
+    dataClient.from("push_subscriptions").select("sound_enabled").eq("user_id", user.id).eq("push_enabled", true).limit(1).maybeSingle()
   ]);
 
   const profile = profileResult.error ? null : profileResult.data as CommunityProfile | null;
@@ -864,6 +882,8 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
   const discoverable = discoverableResult.error ? [] : (discoverableResult.data as CommunityProfile[] | null) ?? [];
   const ownPosts = ownPostsResult.error ? [] : (ownPostsResult.data as CommunityPost[] | null) ?? [];
   const ownReplies = ownRepliesResult.error ? [] : (ownRepliesResult.data as CommunityProfileReply[] | null) ?? [];
+  const pushSoundEnabled = pushSubscriptionResult.error ? true : (pushSubscriptionResult.data as { sound_enabled: boolean } | null)?.sound_enabled ?? true;
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
   const fallbackName = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "SNAAR gebruiker";
   const displayName = profile?.display_name ?? fallbackName;
   if (profileResult.error) console.error("[community-profile] profile read failed", { code: profileResult.error.code });
@@ -950,7 +970,14 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
         {activeTab === "all" || activeTab === "events" ? <ProfileEventsSection events={events} filter={eventFilter} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "friends" ? <ProfileConnectionsSection activeTab={activeTab === "all" ? "connections" : connectionsTab} connections={connections} incoming={incoming} acceptedConnections={acceptedConnections} outgoingIds={outgoingIds} suggestions={suggestions} connectionMoments={connectionEvents} searchQuery={searchQuery} profilesById={profilesById} compact={activeTab === "all"} /> : null}
         {activeTab === "all" || activeTab === "activity" ? <ProfileActivitySection posts={ownPosts} replies={ownReplies} compact={activeTab === "all"} /> : null}
-        {activeTab === "info" ? <ProfileInfoSection profile={profile} displayName={displayName} /> : null}
+        {activeTab === "info" ? (
+          <ProfileInfoSection
+            profile={profile}
+            displayName={displayName}
+            vapidPublicKey={vapidPublicKey}
+            pushSoundEnabled={pushSoundEnabled}
+          />
+        ) : null}
         {activeTab === "pulse" ? (
           pulseReady ? (
             <ProfilePulseSection moments={pulseMoments} displayName={displayName} />
