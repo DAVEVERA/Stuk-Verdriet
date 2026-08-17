@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { Mail } from "lucide-react";
 import type { SocialLinks } from "@/types/content";
 
@@ -19,7 +20,76 @@ function SpotifyIcon() {
   );
 }
 
+// Parses an rgb()/rgba() color string into perceptual luminance (0 = black, 1 = white).
+// Returns null when the color can't be parsed or is fully transparent.
+function luminanceFromColor(color: string): number | null {
+  const match = color.match(/rgba?\(([^)]+)\)/);
+  if (!match) return null;
+  const parts = match[1].split(",").map((part) => parseFloat(part.trim()));
+  const [r, g, b, a = 1] = parts;
+  if ([r, g, b].some((value) => Number.isNaN(value))) return null;
+  if (a === 0) return null;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+// Walks up from the element under the sidebar until it finds a non-transparent
+// background, then reports whether that background reads as "light".
+function isPointOverLightBackground(x: number, y: number): boolean | null {
+  let el = document.elementFromPoint(x, y) as Element | null;
+  while (el) {
+    const bg = window.getComputedStyle(el).backgroundColor;
+    const luminance = luminanceFromColor(bg);
+    if (luminance !== null) {
+      return luminance > 0.6;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
 export function SocialSidebar({ socialLinks }: SocialSidebarProps) {
+  const asideRef = useRef<HTMLElement>(null);
+  const [isOnLight, setIsOnLight] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const checkBackground = () => {
+      frame = 0;
+      const node = asideRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const x = Math.min(Math.max(rect.left - 1, 1), window.innerWidth - 1);
+      const y = rect.top + rect.height / 2;
+      const previousPointerEvents = node.style.pointerEvents;
+      node.style.pointerEvents = "none";
+      const onLight = isPointOverLightBackground(x, y);
+      node.style.pointerEvents = previousPointerEvents;
+      if (onLight !== null) {
+        setIsOnLight(onLight);
+      }
+    };
+
+    const scheduleCheck = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(checkBackground);
+    };
+
+    checkBackground();
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
+
+    const resizeObserver = new ResizeObserver(scheduleCheck);
+    resizeObserver.observe(document.body);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const links = [
     {
       href: socialLinks.instagram_url ?? "https://www.instagram.com/stukverdrietdepodcast/",
@@ -44,7 +114,11 @@ export function SocialSidebar({ socialLinks }: SocialSidebarProps) {
   ];
 
   return (
-    <aside className="social-sidebar" aria-label="Social media">
+    <aside
+      ref={asideRef}
+      className={`social-sidebar${isOnLight ? " is-on-light" : ""}`}
+      aria-label="Social media"
+    >
       <div className="social-sidebar-links">
         {links.map((link) => (
           <a

@@ -3463,6 +3463,7 @@ textarea {
 }
 
 .community-message-thread p {
+  align-self: start;
   background: var(--white);
   border-radius: 12px;
   color: var(--ink);
@@ -3890,6 +3891,7 @@ textarea {
   }
 
   .community-dock-panel-chat .community-message-thread {
+    align-content: start;
     flex: 1;
     max-height: none;
     min-height: 0;
@@ -7542,6 +7544,7 @@ textarea {
   padding: 10px 7px;
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   backdrop-filter: blur(14px) saturate(140%);
+  transition: background 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
 }
 
 .social-sidebar-links a {
@@ -7552,7 +7555,7 @@ textarea {
   height: 34px;
   justify-content: center;
   opacity: 0.9;
-  transition: background 160ms ease, opacity 160ms ease, transform 160ms ease;
+  transition: background 160ms ease, opacity 160ms ease, transform 160ms ease, color 260ms ease;
   width: 34px;
 }
 
@@ -7568,6 +7571,27 @@ textarea {
   height: 19px;
   object-fit: contain;
   width: 19px;
+  transition: filter 260ms ease;
+}
+
+/* Sidebar drifts over a light/white section: swap white-on-glass for sage-on-glass. */
+.social-sidebar.is-on-light .social-sidebar-links {
+  background: rgba(66, 86, 69, 0.08);
+  border-color: rgba(138, 157, 139, 0.35);
+  box-shadow: 0 8px 28px rgba(66, 86, 69, 0.12);
+}
+
+.social-sidebar.is-on-light .social-sidebar-links a {
+  color: var(--sage);
+}
+
+.social-sidebar.is-on-light .social-sidebar-links a:hover,
+.social-sidebar.is-on-light .social-sidebar-links a:focus-visible {
+  background: rgba(138, 157, 139, 0.18);
+}
+
+.social-sidebar.is-on-light .social-sidebar-links img {
+  filter: brightness(0) saturate(100%) invert(63%) sepia(9%) saturate(825%) hue-rotate(43deg) brightness(93%) contrast(87%);
 }
 
 @media (max-width: 640px) {
@@ -7589,7 +7613,9 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .social-sidebar-links a {
+  .social-sidebar-links,
+  .social-sidebar-links a,
+  .social-sidebar-links img {
     transition: none;
   }
 }
