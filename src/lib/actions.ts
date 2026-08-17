@@ -78,7 +78,7 @@ function fileExtension(file: File, fallback: string) {
   return fromType && /^[a-z0-9]{2,8}$/.test(fromType) ? fromType : fallback;
 }
 
-function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community" | "/bijsluiter") {
+function safeReturnPath(value: FormDataEntryValue | null, fallback: "/community" | "/community/profiel" | "/bijsluiter") {
   const path = String(value ?? "").trim();
   return path === "/bijsluiter" || path === "/community" || path.startsWith("/community/") ? path : fallback;
 }
