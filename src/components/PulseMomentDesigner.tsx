@@ -110,7 +110,6 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
         </div>
         <div className="pulse-story-footer">
           <strong>{displayName}</strong>
-          <span>{previewText}</span>
         </div>
       </div>
 
