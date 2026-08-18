@@ -59,7 +59,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = (await searchParams) ?? {};
   const saved = Array.isArray(params.saved) ? params.saved[0] : params.saved;
   const error = Array.isArray(params.error) ? params.error[0] : params.error;
-  const sent = Array.isArray(params.sent) ? params.sent[0] : params.sent;
   const tab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const server = await createSupabaseServerClient();
   const {
@@ -69,7 +68,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const localAdminAllowed = await hasLocalAdminSession();
 
   if (hasSupabaseEnv && !allowed && !localAdminAllowed) {
-    return <AdminAccessGate sent={sent === "1"} error={error ?? null} signedInEmail={user?.email ?? null} />;
+    return <AdminAccessGate error={error ?? null} signedInEmail={user?.email ?? null} />;
   }
 
   const admin = createSupabaseAdminClient();
@@ -342,18 +341,13 @@ function formatAdminNumber(value: number) {
 }
 
 function AdminAccessGate({
-  sent,
   error,
   signedInEmail
 }: {
-  sent: boolean;
   error: string | null;
   signedInEmail: string | null;
 }) {
   const messages: Record<string, string> = {
-    callback: "De loginlink kon niet worden verwerkt. Vraag een nieuwe link aan.",
-    email: "Vul een geldig e-mailadres in.",
-    "email-login": "De magic link kon niet worden verzonden. Controleer Supabase Auth.",
     "local-admin": "Controleer de gebruikersnaam en het wachtwoord.",
     "missing-supabase": "Supabase Auth is nog niet geconfigureerd voor deze omgeving.",
     "missing-secret": "De beveiligde beheerlogin is in deze omgeving nog niet geconfigureerd.",
@@ -383,24 +377,10 @@ function AdminAccessGate({
           <button className="button" type="submit">Inloggen</button>
         </form>
 
-        {sent ? (
-          <p className="notice">
-            Als dit e-mailadres beheerrechten heeft, is er een loginlink verzonden. Controleer ook spam of ongewenste
-            mail.
-          </p>
-        ) : null}
-        {error ? <p className="notice">{messages[error] ?? "Inloggen lukte niet. Vraag een nieuwe link aan."}</p> : null}
+        {error ? <p className="notice">{messages[error] ?? "Inloggen lukte niet."}</p> : null}
         {signedInEmail ? (
           <p className="small-note">Je bent ingelogd als {signedInEmail}, maar dit account staat niet in `ADMIN_EMAILS`.</p>
         ) : null}
-        <form className="admin-magic-link-form admin-magic-link-fallback" action="/api/admin/magic-link" method="post">
-          <input type="hidden" name="next" value="/admin" readOnly />
-          <label>
-            Fallback via e-mail
-            <input name="email" type="email" autoComplete="email" placeholder="naam@domein.nl" required />
-          </label>
-          <button className="text-link" type="submit">Stuur magic link als fallback</button>
-        </form>
       </div>
     </section>
   );

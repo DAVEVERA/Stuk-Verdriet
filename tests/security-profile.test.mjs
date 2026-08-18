@@ -72,7 +72,6 @@ globalThis.__securityProfileMocks = {
 const localAdmin = await import("../src/lib/local-admin.ts");
 const actions = await import("../src/lib/actions.ts");
 const localAdminRoute = await import("../src/app/api/local-admin-login/route.ts");
-const nextConfig = (await import("../next.config.ts")).default;
 
 function withAdminEnvironment(values, callback) {
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
@@ -323,16 +322,4 @@ test("profile media database error results are logged safely and redirected", as
   assert.equal(logged.length, 1);
   assert.match(JSON.stringify(logged), /PGRST500/);
   assert.equal(JSON.stringify(logged).includes("do-not-log"), false);
-});
-
-test("a maximum-size cover including multipart overhead fits the Server Action request limit", async () => {
-  const formData = new FormData();
-  formData.set("return_to", "/community/profiel");
-  formData.set("cover_file", new File([new Uint8Array(5 * 1024 * 1024)], "cover.jpg", { type: "image/jpeg" }));
-  const multipartBytes = (await new Response(formData).arrayBuffer()).byteLength;
-  const configured = nextConfig.experimental?.serverActions?.bodySizeLimit;
-  const match = typeof configured === "string" ? /^(\d+(?:\.\d+)?)mb$/i.exec(configured) : null;
-  assert.ok(match, "test expects a Server Action limit expressed in MB");
-  const configuredBytes = Number(match[1]) * 1024 * 1024;
-  assert.ok(configuredBytes >= multipartBytes, `${multipartBytes} multipart bytes exceed ${configuredBytes} configured bytes`);
 });

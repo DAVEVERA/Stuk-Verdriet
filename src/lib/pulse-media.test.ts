@@ -75,8 +75,20 @@ test("upload descriptors enforce media-specific type and size limits", () => {
     { ok: false, error: "type" }
   );
   assert.deepEqual(
-    validatePulseUploadDescriptor({ name: "film.mp4", type: "video/mp4", size: 31_457_281, kind: "video" }),
+    validatePulseUploadDescriptor({ name: "film.mp4", type: "video/mp4", size: 50 * 1024 * 1024, kind: "video" }),
+    { ok: true, extension: "mp4" }
+  );
+  assert.deepEqual(
+    validatePulseUploadDescriptor({ name: "film.mp4", type: "video/mp4", size: 50 * 1024 * 1024 + 1, kind: "video" }),
     { ok: false, error: "size" }
+  );
+  assert.deepEqual(
+    validatePulseUploadDescriptor({ name: "beeld.webp", type: "image/webp", size: 15 * 1024 * 1024, kind: "image" }),
+    { ok: true, extension: "webp" }
+  );
+  assert.deepEqual(
+    validatePulseUploadDescriptor({ name: "geluid.mp3", type: "audio/mpeg", size: 25 * 1024 * 1024, kind: "audio" }),
+    { ok: true, extension: "mp3" }
   );
 });
 

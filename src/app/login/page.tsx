@@ -1,16 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { signInWithEmail } from "@/lib/actions";
 
 type LoginPageProps = {
-  searchParams?: Promise<{ error?: string; next?: string; sent?: string; missing?: string }>;
+  searchParams?: Promise<{ error?: string; next?: string; missing?: string }>;
 };
 
 const errorMessages: Record<string, string> = {
   "local-admin": "Controleer de gebruikersnaam en het wachtwoord.",
   oauth: "Inloggen via Google lukte niet.",
-  email: "Vul een geldig e-mailadres in.",
-  "email-login": "De magic link kon niet worden verzonden.",
   callback: "De loginlink kon niet worden verwerkt.",
   "missing-supabase": "De inlogservice is nog niet geconfigureerd voor deze omgeving.",
   "missing-secret": "De beveiligde login is in deze omgeving nog niet geconfigureerd.",
@@ -55,16 +52,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         ) : (
           <div className="community-login-options">
             <Link className="button" href={googleLoginHref} prefetch={false}>Verder met Google</Link>
-            <form className="local-admin-login-form" action={signInWithEmail}>
-              <input type="hidden" name="next" value={next} readOnly />
-              <label>
-                E-mailadres
-                <input name="email" type="email" autoComplete="email" required />
-              </label>
-              <button className="text-link" type="submit">Stuur magic link</button>
-            </form>
             {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
-            {params.sent ? <p className="notice">Magic link verzonden. Controleer je inbox.</p> : null}
           </div>
         )}
 

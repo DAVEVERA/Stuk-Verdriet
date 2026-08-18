@@ -37,7 +37,7 @@ values (
   'community-pulse-media',
   'community-pulse-media',
   true,
-  31457280,
+  52428800,
   array[
     'image/jpeg',
     'image/png',

@@ -383,6 +383,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
             <label className="pulse-file-button"><Music size={19} aria-hidden="true" /> Audio kiezen<input key={audioInputKey} className="sr-only" name="pulse_audio" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav" onChange={(event) => addSingleFile(event, "audio")} /></label>
           </div>
           <span className="pulse-file-count" aria-live="polite">{photoCount} van {MAX_PHOTOS} foto&apos;s gekozen</span>
+          <span className="pulse-file-count">Per foto maximaal 15 MB · video 50 MB · audio 25 MB</span>
           {media.length ? (
             <ul className="pulse-media-list" aria-label="Gekozen media">
               {media.map((item, index) => (

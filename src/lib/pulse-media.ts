@@ -51,7 +51,7 @@ export const pulseBackgroundStyles = [
 
 const pulseUploadRules = {
   image: {
-    maxSize: 6 * 1024 * 1024,
+    maxSize: 15 * 1024 * 1024,
     mimeToExtension: new Map([
       ["image/jpeg", "jpg"],
       ["image/png", "png"],
@@ -60,14 +60,14 @@ const pulseUploadRules = {
     ])
   },
   video: {
-    maxSize: 30 * 1024 * 1024,
+    maxSize: 50 * 1024 * 1024,
     mimeToExtension: new Map([
       ["video/mp4", "mp4"],
       ["video/webm", "webm"]
     ])
   },
   audio: {
-    maxSize: 15 * 1024 * 1024,
+    maxSize: 25 * 1024 * 1024,
     mimeToExtension: new Map([
       ["audio/mpeg", "mp3"],
       ["audio/mp4", "m4a"],

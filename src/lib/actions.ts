@@ -11,6 +11,11 @@ import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpA
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import { canUsePulseMoment } from "@/lib/pulse-moments";
 import {
+  COMMUNITY_MEDIA_BUCKET,
+  isCommunityMediaKind,
+  isOwnedCommunityMediaPath
+} from "@/lib/community-media";
+import {
   derivePulseTitle,
   isPulseComposerSchemaError,
   sanitizePulseBackgroundStyle,
@@ -319,6 +324,25 @@ async function uploadCommunityProfileMediaFile(
   }
 }
 
+async function ownedCommunityMediaPublicUrl(
+  admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
+  userId: string,
+  kind: "profile-avatar" | "profile-cover" | "feed-image",
+  path: string
+) {
+  if (!isOwnedCommunityMediaPath(userId, kind, path)) return null;
+  const separator = path.lastIndexOf("/");
+  const folder = path.slice(0, separator);
+  const fileName = path.slice(separator + 1);
+  try {
+    const { data, error } = await admin.storage.from(COMMUNITY_MEDIA_BUCKET).list(folder, { search: fileName, limit: 2 });
+    if (error || !data?.some((entry) => entry.name === fileName)) return null;
+    return admin.storage.from(COMMUNITY_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl || null;
+  } catch {
+    return null;
+  }
+}
+
 async function requireAdminClient() {
   const server = await createSupabaseServerClient();
   const {
@@ -526,25 +550,6 @@ export async function signInWithProvider(provider: "google", formData?: FormData
   redirect(data.url);
 }
 
-export async function signInWithEmail(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/login?missing=supabase");
-  const siteUrl = await getRequestOrigin();
-  const next = safeReturnPath(formData.get("next"), "/community");
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!emailPattern.test(email)) redirect(`/login?next=${encodeURIComponent(next)}&error=email`);
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(encodeAuthNext(next))}`
-    }
-  });
-
-  if (error) redirect(`/login?next=${encodeURIComponent(next)}&error=email-login`);
-  redirect(`/login?next=${encodeURIComponent(next)}&sent=1`);
-}
-
 export async function signOut(formData?: FormData) {
   const supabase = await createSupabaseServerClient();
   const next = safeReturnPath(formData?.get("next") ?? null, "/community");
@@ -659,6 +664,65 @@ export async function updateCommunityProfileMedia(formData: FormData) {
       display_name: existingProfile?.display_name ?? fallbackName,
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       ...(coverUrl ? { cover_url: coverUrl } : {}),
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id", ignoreDuplicates: false });
+    profileWriteFailure = error;
+  } catch (failure) {
+    profileWriteFailure = failure;
+  }
+  if (profileWriteFailure) {
+    logProfileMediaFailure("profile-write", profileWriteFailure);
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
+
+  revalidatePath("/community");
+  revalidatePath("/community/profiel");
+  redirect(withReturnStatus(returnPath, "profile", "media-saved"));
+}
+
+export async function finalizeCommunityProfileMedia(formData: FormData) {
+  const returnPath = safeReturnPath(formData.get("return_to"), "/community/profiel");
+  if (!(await assertSameOriginRequest())) redirect(withReturnStatus(returnPath, "error", "invalid"));
+  const { user } = await requireCommunityUser(returnPath);
+  const kind = String(formData.get("media_kind") ?? "");
+  const path = String(formData.get("media_path") ?? "").trim();
+  if (!isCommunityMediaKind(kind) || (kind !== "profile-avatar" && kind !== "profile-cover")) {
+    redirect(withReturnStatus(returnPath, "error", "invalid"));
+  }
+  if (!isOwnedCommunityMediaPath(user.id, kind, path)) {
+    redirect(withReturnStatus(returnPath, "error", "invalid"));
+  }
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  const publicUrl = await ownedCommunityMediaPublicUrl(admin, user.id, kind, path);
+  if (!publicUrl) {
+    logProfileMediaFailure(kind === "profile-avatar" ? "avatar-upload" : "cover-upload", { code: "missing_object" });
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
+  let existingProfile: { display_name: string | null } | null = null;
+  let profileReadFailure: unknown = null;
+  try {
+    const result = await admin.from("community_profiles").select("display_name").eq("user_id", user.id).maybeSingle();
+    existingProfile = result.data;
+    profileReadFailure = result.error;
+  } catch (failure) {
+    profileReadFailure = failure;
+  }
+  if (profileReadFailure) {
+    logProfileMediaFailure("profile-read", profileReadFailure);
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
+
+  const fallbackName = typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()
+    ? user.user_metadata.full_name.trim()
+    : user.email?.split("@")[0] ?? "SNAAR gebruiker";
+  let profileWriteFailure: unknown = null;
+  try {
+    const { error } = await admin.from("community_profiles").upsert({
+      user_id: user.id,
+      display_name: existingProfile?.display_name ?? fallbackName,
+      ...(kind === "profile-avatar" ? { avatar_url: publicUrl } : { cover_url: publicUrl }),
       updated_at: new Date().toISOString()
     }, { onConflict: "user_id", ignoreDuplicates: false });
     profileWriteFailure = error;
@@ -1418,9 +1482,13 @@ export async function createCommunityPost(formData: FormData) {
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(`${returnPath}?error=storage`);
   const image = getUploadFile(formData, "image_file");
+  const uploadedImagePath = String(formData.get("image_path") ?? "").trim();
   let imageUrl: string | null = null;
   let imageHash: string | null = null;
-  if (image) {
+  if (uploadedImagePath) {
+    imageUrl = await ownedCommunityMediaPublicUrl(admin, user.id, "feed-image", uploadedImagePath);
+    if (!imageUrl) redirect(`${returnPath}?error=image`);
+  } else if (image) {
     if (!isAllowedCommunityImage(image)) redirect(`${returnPath}?error=image`);
     imageHash = await fileSha256(image);
     imageUrl = await uploadPublicFile(admin, "community-images", `community/${user.id}/${postSlug}`, image, "jpg", returnPath);

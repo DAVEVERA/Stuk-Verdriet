@@ -28,11 +28,11 @@ import {
   sendCommunityFriendRequest,
   signOut,
   updateCommunityProfileInfo,
-  updateCommunityProfileMedia,
   updateCommunityProfilePhoto,
   updateCommunityProfileEvent
 } from "@/lib/actions";
 import { CommunityInviteTools } from "@/components/CommunityInviteTools";
+import { CommunityProfileMediaUploader } from "@/components/CommunityProfileMediaUploader";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
@@ -67,8 +67,8 @@ type CommunityProfilePageProps = {
 };
 
 const profileMessages: Record<string, string> = {
-  avatar: "Kies een jpg, png of webp van maximaal 3 MB.",
-  cover: "Kies een jpg, png of webp van maximaal 5 MB.",
+  avatar: "Kies een jpg, png of webp van maximaal 15 MB.",
+  cover: "Kies een jpg, png of webp van maximaal 15 MB.",
   photo: "Kies een geldige foto van maximaal 4 MB.",
   album: "Dit album kon niet worden opgeslagen of gevonden.",
   event: "Vul voor het moment minimaal een titel en datum in.",
@@ -925,26 +925,12 @@ export default async function CommunityProfilePage({ searchParams }: CommunityPr
       <section className="community-profile-cover" aria-label="Mijn SNAAR profiel">
         <div className="community-profile-cover-art">
           {profile?.cover_url ? <Image src={profile.cover_url} alt={`Omslagfoto van ${displayName}`} fill priority sizes="(max-width: 1100px) 100vw, 1040px" /> : null}
-          <details className="community-profile-media-control is-cover">
-            <summary><Camera size={18} /> Omslagfoto wijzigen</summary>
-            <form action={updateCommunityProfileMedia} encType="multipart/form-data">
-              <input type="hidden" name="return_to" value={profileHref(activeTab)} readOnly />
-              <input name="cover_file" type="file" accept="image/png,image/jpeg,image/webp" required />
-              <button type="submit">Opslaan</button>
-            </form>
-          </details>
+          <CommunityProfileMediaUploader kind="profile-cover" returnTo={profileHref(activeTab)} />
         </div>
         <div className="community-profile-identity">
           <div className="community-profile-photo-wrap">
             <ProfilePicture profile={profile} displayName={displayName} />
-            <details className="community-profile-media-control is-avatar">
-              <summary aria-label="Profielfoto wijzigen"><Camera size={18} /></summary>
-              <form action={updateCommunityProfileMedia} encType="multipart/form-data">
-                <input type="hidden" name="return_to" value={profileHref(activeTab)} readOnly />
-                <input name="avatar_file" type="file" accept="image/png,image/jpeg,image/webp" required />
-                <button type="submit">Opslaan</button>
-              </form>
-            </details>
+            <CommunityProfileMediaUploader kind="profile-avatar" returnTo={profileHref(activeTab)} />
           </div>
           <div className="community-profile-name">
             <p className="eyebrow">Mijn profiel</p>

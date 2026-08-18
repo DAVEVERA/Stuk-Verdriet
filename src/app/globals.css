@@ -4712,6 +4712,12 @@ textarea {
   padding: 9px 11px;
 }
 
+.community-feed-composer-progress {
+  accent-color: var(--pine);
+  height: 8px;
+  width: 100%;
+}
+
 .community-feed-composer-details {
   border-top: 1px solid rgba(66, 86, 69, 0.13);
   padding-top: 10px;
@@ -9628,8 +9634,8 @@ textarea {
 }
 
 .community-profile-media-control.is-avatar > form {
-  left: 0;
-  right: auto;
+  left: auto;
+  right: 0;
 }
 
 .community-profile-media-control form button {
@@ -9638,6 +9644,44 @@ textarea {
   color: var(--white);
   font-weight: 800;
   min-height: 42px;
+}
+
+.community-profile-media-control form small {
+  color: rgba(35, 55, 42, 0.72);
+  font-size: 0.75rem;
+}
+
+.community-profile-media-preview {
+  aspect-ratio: 16 / 7;
+  background: #eef1eb;
+  border-radius: 7px;
+  display: block;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.community-profile-media-preview.is-avatar {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  justify-self: center;
+  width: 72px;
+}
+
+.community-profile-media-preview img {
+  object-fit: cover;
+}
+
+.community-profile-media-control progress {
+  accent-color: var(--pine);
+  height: 8px;
+  width: 100%;
+}
+
+.community-profile-media-error {
+  color: #8b2e27;
+  font-size: 0.8rem;
+  margin: 0;
 }
 
 .community-profile-photo-grid {

@@ -6,11 +6,9 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, MessageCircleQuestion, Settings2, Sparkles, X } from "lucide-react";
 import { createCommunityPost } from "@/lib/actions";
+import { COMMUNITY_IMAGE_MAX_BYTES, validateCommunityImageDescriptor } from "@/lib/community-media";
+import { uploadCommunityImageFile } from "@/lib/community-media-upload-client";
 import type { CommunityCategory } from "@/types/content";
-
-const communityImageMaxSize = 4 * 1024 * 1024;
-const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 
 function formatFileSize(size: number) {
   return size >= 1024 * 1024
@@ -42,6 +40,7 @@ export function CommunityStoryForm({
   const [postType, setPostType] = useState("story");
   const [imagePreview, setImagePreview] = useState<{ name: string; size: number; url: string } | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
   const initial = (displayName?.trim() || "Jij").slice(0, 1).toUpperCase();
@@ -60,19 +59,18 @@ export function CommunityStoryForm({
       return;
     }
 
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (
-      file.size > communityImageMaxSize ||
-      !communityImageTypes.has(file.type) ||
-      !communityImageExtensions.has(extension)
-    ) {
+    const validation = validateCommunityImageDescriptor(file);
+    if (!validation.ok) {
       event.currentTarget.value = "";
       setImagePreview(null);
-      setImageError("Kies een JPG-, PNG- of WebP-afbeelding van maximaal 4 MB.");
+      setImageError(validation.error === "size"
+        ? "Kies een afbeelding van maximaal 15 MB."
+        : "Kies een JPG-, PNG- of WebP-afbeelding.");
       return;
     }
 
     setImageError(null);
+    setUploadProgress(null);
     setImagePreview({ name: file.name, size: file.size, url: URL.createObjectURL(file) });
   }
 
@@ -80,6 +78,23 @@ export function CommunityStoryForm({
     if (imageInputRef.current) imageInputRef.current.value = "";
     setImagePreview(null);
     setImageError(null);
+    setUploadProgress(null);
+  }
+
+  async function submitPost(formData: FormData) {
+    const image = formData.get("image_file");
+    if (image instanceof File && image.size > 0) {
+      try {
+        const uploaded = await uploadCommunityImageFile(image, "feed-image", setUploadProgress);
+        formData.set("image_path", uploaded.path);
+      } catch (failure) {
+        setImageError(failure instanceof Error ? failure.message : "De foto kon niet worden geüpload.");
+        return;
+      } finally {
+        formData.delete("image_file");
+      }
+    }
+    await createCommunityPost(formData);
   }
 
   if (!isLoggedIn) {
@@ -99,7 +114,7 @@ export function CommunityStoryForm({
   }
 
   return (
-    <form className="community-feed-composer" action={createCommunityPost}>
+    <form className="community-feed-composer" action={submitPost}>
       <input type="hidden" name="return_to" value={returnTo} readOnly />
       <input type="hidden" name="post_type" value={postType} readOnly />
       <div className="community-feed-composer-row">
@@ -144,6 +159,7 @@ export function CommunityStoryForm({
       ) : null}
 
       {imageError ? <p id="community-feed-image-error" className="community-feed-composer-image-error" role="alert">{imageError}</p> : null}
+      {uploadProgress !== null ? <progress className="community-feed-composer-progress" max={100} value={uploadProgress} aria-label={`Upload ${uploadProgress}%`} /> : null}
 
       <details className="community-feed-composer-details">
         <summary><Settings2 size={17} aria-hidden /> Extra opties</summary>
@@ -161,7 +177,7 @@ export function CommunityStoryForm({
       </details>
 
       <div className="community-feed-composer-footer">
-        <small>Berichten worden kort gecontroleerd volgens de <Link href="/communityrichtlijnen">communityrichtlijnen</Link>.</small>
+        <small>Foto&apos;s mogen maximaal {COMMUNITY_IMAGE_MAX_BYTES / (1024 * 1024)} MB zijn. Berichten worden kort gecontroleerd volgens de <Link href="/communityrichtlijnen">communityrichtlijnen</Link>.</small>
         <CommunitySubmitButton />
       </div>
     </form>

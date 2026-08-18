@@ -645,7 +645,6 @@ export function CommunityAccountDock({
                   <form
                     className="community-profile-form"
                     action={updateCommunityProfile}
-                    encType="multipart/form-data"
                   >
                     <input type="hidden" name="return_to" value="/community" readOnly />
                     <label>
@@ -657,14 +656,7 @@ export function CommunityAccountDock({
                         required
                       />
                     </label>
-                    <label>
-                      Profielfoto
-                      <input
-                        name="avatar_file"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                      />
-                    </label>
+                    <p className="small-note">Je profielfoto wijzig je op je profielpagina; daar zie je eerst een voorbeeld en de uploadvoortgang.</p>
                     <label className="community-checkbox-row">
                       <input
                         name="is_discoverable"
