@@ -9,6 +9,7 @@ import { encodeAuthNext } from "@/lib/auth-redirect";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
+import { hasLocalAdminSession } from "@/lib/local-admin";
 import { canUsePulseMoment } from "@/lib/pulse-moments";
 import { sendPushToUser } from "@/lib/push";
 import type { CommunityPulseLayer, PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
@@ -302,14 +303,14 @@ async function uploadPublicFile(
 }
 
 async function requireAdminClient() {
+  const localAdminAllowed = await hasLocalAdminSession();
   const server = await createSupabaseServerClient();
-  if (!server) redirect("/admin?missing=supabase");
-
   const {
     data: { user }
-  } = await server.auth.getUser();
+  } = server ? await server.auth.getUser() : { data: { user: null } };
   const email = user?.email?.toLowerCase();
-  if (!email || !(await isEmailAdmin(email))) redirect("/admin?error=unauthorized");
+  const supabaseAdminAllowed = email ? await isEmailAdmin(email) : false;
+  if (!localAdminAllowed && !supabaseAdminAllowed) redirect("/admin?error=unauthorized");
 
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/admin?missing=service-role");
@@ -1302,10 +1303,14 @@ export async function createCommunityPost(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(returnPath)}`);
 
-  const title = String(formData.get("title") ?? "").trim();
+  const requestedTitle = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  const title = requestedTitle || body.split(/\r?\n/).find((line) => line.trim())?.trim().slice(0, 140) || "Nieuw bericht";
   const category = String(formData.get("category") ?? "").trim();
-  const authorDisplayType = String(formData.get("author_display_type") ?? "first_name");
+  const requestedDisplayType = String(formData.get("author_display_type") ?? "first_name");
+  const authorDisplayType = ["real_name", "first_name", "anonymous"].includes(requestedDisplayType)
+    ? requestedDisplayType
+    : "first_name";
   const targetGroup = String(formData.get("target_group") ?? "").trim() || null;
   const postType = normalizePostType(formData.get("post_type"));
   const resourceUrl = optionalUrl(formData.get("resource_url"));
@@ -1316,23 +1321,24 @@ export async function createCommunityPost(formData: FormData) {
     .filter(Boolean)
     .slice(0, 6);
 
-  if (!title || title.length > 140 || !body || body.length > 5000 || !category || category.length > 120) {
+  if (title.length > 140 || !body || body.length > 5000 || !category || category.length > 120) {
     redirect(`${returnPath}?error=missing-fields`);
   }
 
   const postSlug = `${slugify(title)}-${Date.now()}`;
+  await ensureCommunityProfile(user);
+  const admin = createSupabaseAdminClient();
+  if (!admin) redirect(`${returnPath}?error=storage`);
   const image = getUploadFile(formData, "image_file");
   let imageUrl: string | null = null;
   let imageHash: string | null = null;
   if (image) {
     if (!isAllowedCommunityImage(image)) redirect(`${returnPath}?error=image`);
-    const admin = createSupabaseAdminClient();
-    if (!admin) redirect(`${returnPath}?error=storage`);
     imageHash = await fileSha256(image);
     imageUrl = await uploadPublicFile(admin, "community-images", `community/${user.id}/${postSlug}`, image, "jpg", returnPath);
   }
 
-  const { error: postError } = await supabase.from("community_posts").insert({
+  const { error: postError } = await admin.from("community_posts").insert({
     user_id: user.id,
     author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
     author_display_type: authorDisplayType,

@@ -42,10 +42,11 @@ function cssForSection(selector: string, settings: SectionDesignSettings) {
   ].filter(Boolean);
 
   const contentWidth = widthMap[settings.maxWidth];
+  const childSelector = selector === ".hero" ? `${selector} > :not(.hero-visual)` : `${selector} > *`;
   const childWidthRule =
     contentWidth === "none"
-      ? `${selector} > * { max-width: none !important; }`
-      : `${selector} > * { max-width: ${contentWidth} !important; }`;
+      ? `${childSelector} { max-width: none !important; }`
+      : `${childSelector} { max-width: ${contentWidth} !important; }`;
   const centeredRule = settings.layout === "centered" ? `${selector} { text-align: center; }` : "";
   const denseRule = settings.layout === "dense" ? `${selector} { gap: 12px; }` : "";
   const accentRule = settings.accentColor

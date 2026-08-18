@@ -28,6 +28,7 @@ export function CommunityPulseStrip({ moments, isLoggedIn, returnTo }: Community
         <div>
           <p className="eyebrow">Aan de Pols</p>
           <h2 id="community-pulse-title">Korte momentjes</h2>
+          <span>Open een moment en tik of swipe door.</span>
         </div>
       </div>
       <div className="community-pulse-rail" role="list" aria-label="Aan de Pols momenten">

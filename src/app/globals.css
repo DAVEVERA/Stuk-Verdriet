@@ -2648,6 +2648,13 @@ textarea {
   line-height: 1.12;
 }
 
+.community-pulse-heading span {
+  color: var(--eucalyptus);
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 3px;
+}
+
 .community-pulse-rail {
   display: flex;
   gap: 8px;
@@ -2718,6 +2725,7 @@ textarea {
   background: linear-gradient(180deg, rgba(7, 12, 9, 0.05), rgba(7, 12, 9, 0.76));
   content: "";
   inset: 0;
+  pointer-events: none;
   position: absolute;
   z-index: 1;
 }
@@ -2967,7 +2975,8 @@ textarea {
   opacity: 0.86;
 }
 
-.pulse-viewer-close {
+.pulse-viewer-close,
+.pulse-viewer-pause {
   align-items: center;
   background: rgba(7, 12, 9, 0.32);
   border: 0;
@@ -3052,6 +3061,25 @@ textarea {
 .pulse-viewer-action:nth-child(2).active {
   background: #1f7aff;
   border-color: #1f7aff;
+}
+
+.pulse-viewer-action:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.pulse-viewer-feedback {
+  background: rgba(104, 20, 37, 0.9);
+  border-radius: 8px;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 58px);
+  color: var(--white);
+  font-size: 0.78rem;
+  left: 18px;
+  padding: 8px 10px;
+  position: absolute;
+  right: 18px;
+  text-align: center;
+  z-index: 4;
 }
 
 @media (min-width: 640px) {
@@ -3165,18 +3193,11 @@ textarea {
   justify-items: end;
   max-width: min(420px, calc(100vw - 24px));
   position: fixed;
-  /* Sits flush beneath .site-side-nav (same right offset, same rail width)
-     so the two render as one continuous glass bar instead of two separate
-     floating pills. Offset = half the nav rail's own height (~50%) plus its
-     content height and the shared gap, so this pill starts right where the
-     nav rail's pill ends. */
   right: clamp(10px, 2.4vw, 20px);
-  top: calc(50% + 96px);
+  top: 50%;
+  transform: translateY(-50%);
   width: auto;
-  /* Above .site-side-nav (z-index: 130) so the dock's own fullscreen
-     mobile chat panel (z-index: 200, scoped to this stacking context)
-     can actually cover the nav rail instead of rendering beneath it. */
-  z-index: 140;
+  z-index: 80;
 }
 
 .community-dock-actions {
@@ -4409,6 +4430,222 @@ textarea {
 
 .community-composer-card textarea {
   min-height: 132px;
+}
+
+.community-feed-composer {
+  background: rgba(255, 253, 248, 0.98);
+  border: 1px solid rgba(66, 86, 69, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(43, 49, 43, 0.08);
+  display: grid;
+  gap: 12px;
+  padding: clamp(12px, 3vw, 16px);
+}
+
+.community-feed-composer-row {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.community-feed-composer-avatar {
+  align-items: center;
+  background: var(--pine);
+  border-radius: 50%;
+  color: var(--white);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  font-weight: 850;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.community-feed-composer-login,
+.community-feed-composer-message textarea {
+  background: #f3f5f1;
+  border: 1px solid rgba(66, 86, 69, 0.2);
+  border-radius: 22px;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+  width: 100%;
+}
+
+.community-feed-composer-login {
+  align-items: center;
+  color: var(--eucalyptus);
+  display: flex;
+  min-height: 44px;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.community-feed-composer-message textarea {
+  min-height: 88px;
+  padding: 12px 16px;
+  resize: vertical;
+}
+
+.community-feed-composer-login:hover,
+.community-feed-composer-login:focus-visible,
+.community-feed-composer-message textarea:focus {
+  background: var(--white);
+  border-color: rgba(66, 86, 69, 0.52);
+  outline: 3px solid rgba(66, 86, 69, 0.13);
+}
+
+.community-feed-composer-actions {
+  border-top: 1px solid rgba(66, 86, 69, 0.13);
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: 8px;
+}
+
+.community-feed-composer-actions a,
+.community-feed-composer-actions button,
+.community-feed-composer-file {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--pine);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  gap: 6px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 5px;
+  text-decoration: none;
+}
+
+.community-feed-composer-actions a:hover,
+.community-feed-composer-actions a:focus-visible,
+.community-feed-composer-actions button:hover,
+.community-feed-composer-actions button:focus-visible,
+.community-feed-composer-actions button.active,
+.community-feed-composer-file:hover,
+.community-feed-composer-file:focus-within {
+  background: rgba(66, 86, 69, 0.09);
+  border-color: rgba(66, 86, 69, 0.2);
+  outline: none;
+}
+
+.community-feed-composer-file input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.community-feed-composer-details {
+  border-top: 1px solid rgba(66, 86, 69, 0.13);
+  padding-top: 10px;
+}
+
+.community-feed-composer-details summary {
+  align-items: center;
+  color: var(--pine);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 800;
+  gap: 7px;
+  min-height: 40px;
+}
+
+.community-feed-composer-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.community-feed-composer-fields label {
+  color: var(--pine);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.community-feed-composer-fields label > span {
+  color: var(--eucalyptus);
+  font-weight: 650;
+}
+
+.community-feed-composer-fields input,
+.community-feed-composer-fields select {
+  background: #f7f8f5;
+  border: 1px solid rgba(66, 86, 69, 0.26);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 44px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.community-feed-composer-footer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.community-feed-composer-footer small {
+  color: var(--eucalyptus);
+  line-height: 1.4;
+}
+
+.community-feed-composer-footer a {
+  color: var(--pine);
+}
+
+.community-feed-composer-submit {
+  background: var(--pine);
+  border: 0;
+  border-radius: 999px;
+  color: var(--white);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 850;
+  min-height: 44px;
+  padding: 10px 18px;
+}
+
+.community-feed-composer-submit:disabled {
+  cursor: wait;
+  opacity: 0.64;
+}
+
+@media (min-width: 640px) {
+  .community-feed-composer-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .community-feed-composer-wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .community-feed-composer-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .community-feed-composer-submit {
+    width: 100%;
+  }
 }
 
 .community-feed .post-grid,
@@ -7680,155 +7917,6 @@ textarea {
   .social-sidebar-links a,
   .social-sidebar-links img {
     transition: none;
-  }
-}
-
-/* ===== UNIFIED SIDE NAVIGATION ===== */
-/*
- * Single glass rail consolidating Home / Podcast / Community plus, on
- * community routes, the account dock triggers (Menu / Berichten /
- * Meldingen / Mijn profiel). The dock itself keeps rendering from
- * CommunityAccountDock (see ui.tsx) with its panel logic untouched; here we
- * only reposition and restyle its trigger row so it reads as a continuous
- * extension of this rail, and reuse the same is-on-light color-shift class
- * on both.
- */
-.site-side-nav {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: fixed;
-  right: clamp(10px, 2.4vw, 20px);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 130;
-}
-
-.site-side-nav-links {
-  background: rgba(255, 253, 248, 0.14);
-  border: 1px solid rgba(255, 253, 248, 0.28);
-  border-radius: 999px;
-  box-shadow: 0 8px 28px rgba(9, 14, 10, 0.18);
-  display: grid;
-  gap: 6px;
-  padding: 10px 7px;
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  backdrop-filter: blur(14px) saturate(140%);
-  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
-}
-
-.site-side-nav-links a {
-  align-items: center;
-  border-radius: 999px;
-  color: var(--white);
-  display: flex;
-  height: 40px;
-  justify-content: center;
-  position: relative;
-  transition: background 160ms ease, color 220ms ease, transform 160ms ease;
-  width: 40px;
-}
-
-.site-side-nav-links a:hover,
-.site-side-nav-links a:focus-visible {
-  background: rgba(255, 253, 248, 0.22);
-  transform: scale(1.06);
-}
-
-.site-side-nav-links a.active {
-  background: rgba(255, 253, 248, 0.26);
-}
-
-.site-side-nav-links a.active::after {
-  background: currentColor;
-  border-radius: 999px;
-  bottom: 4px;
-  content: "";
-  height: 3px;
-  position: absolute;
-  width: 3px;
-}
-
-.site-side-nav-tooltip {
-  background: rgba(43, 49, 43, 0.92);
-  border-radius: 6px;
-  color: var(--white);
-  font-size: 0.78rem;
-  font-weight: 700;
-  opacity: 0;
-  padding: 5px 9px;
-  pointer-events: none;
-  position: absolute;
-  right: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%) translateX(4px);
-  transition: opacity 160ms ease, transform 160ms ease;
-  white-space: nowrap;
-}
-
-.site-side-nav-links a:hover .site-side-nav-tooltip,
-.site-side-nav-links a:focus-visible .site-side-nav-tooltip {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
-}
-
-/* Color-shift: rail sits on a light section -> switch to sage-on-glass */
-.site-side-nav.is-on-light .site-side-nav-links {
-  background: rgba(255, 253, 248, 0.78);
-  border-color: rgba(66, 86, 69, 0.16);
-  box-shadow: 0 8px 24px rgba(43, 49, 43, 0.12);
-}
-
-.site-side-nav.is-on-light .site-side-nav-links a {
-  color: var(--sage);
-}
-
-.site-side-nav.is-on-light .site-side-nav-links a:hover,
-.site-side-nav.is-on-light .site-side-nav-links a:focus-visible {
-  background: rgba(66, 86, 69, 0.1);
-  color: var(--pine);
-}
-
-.site-side-nav.is-on-light .site-side-nav-links a.active {
-  background: rgba(66, 86, 69, 0.14);
-  color: var(--pine);
-}
-
-.site-side-nav.is-on-light .site-side-nav-tooltip {
-  background: var(--pine);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-side-nav-links a,
-  .site-side-nav-links,
-  .site-side-nav-tooltip {
-    transition: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .site-side-nav {
-    bottom: max(14px, calc(env(safe-area-inset-bottom) + 14px));
-    right: 50%;
-    top: auto;
-    transform: translateX(50%);
-  }
-
-  .site-side-nav-links {
-    border-radius: 999px;
-    display: flex;
-    gap: 4px;
-    padding: 8px 6px;
-  }
-
-  .site-side-nav-links a {
-    height: 42px;
-    width: 42px;
-  }
-
-  .site-side-nav-tooltip {
-    display: none;
   }
 }
 

@@ -414,7 +414,7 @@ export function AdminDashboard({
   return (
     <section className="admin-shell admin-console">
       {missingSupabase ? <p className="notice">Supabase env vars ontbreken. Je ziet de beheerinterface, maar live opslaan en uploads vereisen Supabase-configuratie.</p> : null}
-      {localPreview ? <p className="notice">Lokale admin-preview actief. Je kunt het portaal beoordelen; live opslaan en modereren vereisen een Supabase admin-sessie en service-role configuratie.</p> : null}
+      {localPreview ? <p className="notice">Beveiligde lokale beheersessie actief. Opslaan en modereren gebruiken de server-side Supabase-koppeling.</p> : null}
       {savedMessage ? <p className="notice">Opgeslagen: {feedbackLabels[savedMessage] ?? savedMessage}.</p> : null}
       {errorMessage ? <p className="notice">Fout: {feedbackLabels[errorMessage] ?? errorMessage}. Controleer Supabase-configuratie, velden of storage buckets.</p> : null}
 

@@ -5,12 +5,12 @@ import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
 import { CommunityAccountDockLoader } from "@/components/CommunityAccountDockLoader";
 import { SideNav } from "@/components/SideNav";
-import { SocialSidebar } from "@/components/SocialSidebar";
 import { Footer } from "@/components/ui";
 import { getSiteSettings, getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
 import { hasSupabaseEnv } from "@/lib/supabase";
 import "./globals.css";
+import "./navigation.css";
 
 const jost = localFont({
   src: [
@@ -158,12 +158,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div className="site-shell">
           <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} logoUrl={logoUrl} />
           <Suspense fallback={null}>
-            <SideNav />
+            <SideNav socialLinks={socialLinks} />
           </Suspense>
           <Suspense fallback={null}>
             <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
           </Suspense>
-          <SocialSidebar socialLinks={socialLinks} />
           <main className="main">{children}</main>
           <Footer socialLinks={socialLinks} logoUrl={logoUrl} />
         </div>

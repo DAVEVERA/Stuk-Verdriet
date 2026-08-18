@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 import Image from "next/image";
 import Script from "next/script";
 import { ImagePlus, Sparkles, Trash2 } from "lucide-react";
@@ -38,6 +39,16 @@ function newLayer(text = "Wat raakt je vandaag?"): CommunityPulseLayer {
   };
 }
 
+function PulseSubmitButton({ aiAssist }: { aiAssist: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="community-panel-button" type="submit" disabled={pending} aria-disabled={pending}>
+      <Sparkles size={17} /> {pending ? "Moment wordt opgeslagen..." : aiAssist ? "Ontwerpaanvraag bewaren" : "Nieuw moment plaatsen"}
+    </button>
+  );
+}
+
 export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesignerProps) {
   const [selectedId, setSelectedId] = useState("");
   const selectedMoment = moments.find((moment) => moment.id === selectedId) ?? null;
@@ -49,7 +60,12 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
   const [status, setStatus] = useState(selectedMoment?.status ?? "published");
   const [aiAssist, setAiAssist] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [layers, setLayers] = useState<CommunityPulseLayer[]>(selectedMoment?.layers?.length ? selectedMoment.layers : [newLayer()]);
+
+  useEffect(() => () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+  }, [imagePreview]);
 
   function loadMoment(momentId: string) {
     const moment = moments.find((item) => item.id === momentId) ?? null;
@@ -61,6 +77,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
     setVisibility(moment?.visibility ?? "connections");
     setStatus(moment?.status ?? "published");
     setAiAssist(false);
+    setImagePreview(null);
     setLayers(moment?.layers?.length ? moment.layers : [newLayer()]);
   }
 
@@ -73,7 +90,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
   return (
     <div className="pulse-designer">
       <div className="pulse-designer-preview" style={{ backgroundColor }}>
-        {selectedMoment?.image_url ? <Image src={selectedMoment.image_url} alt="" fill sizes="280px" /> : null}
+        {imagePreview || selectedMoment?.image_url ? <Image src={imagePreview ?? selectedMoment?.image_url ?? ""} alt="Voorbeeld van je moment" fill sizes="280px" unoptimized={Boolean(imagePreview)} /> : null}
         <div className={`pulse-story-canvas animation-${animation}`}>
           {layers.map((layer) => (
             <span
@@ -97,7 +114,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
         </div>
       </div>
 
-      <form className="pulse-designer-form" action={saveCommunityPulseMoment} encType="multipart/form-data">
+      <form className="pulse-designer-form" action={saveCommunityPulseMoment}>
         <input type="hidden" name="return_to" value="/community/profiel?tab=pulse" readOnly />
         <input type="hidden" name="moment_id" value={selectedMoment?.id ?? ""} readOnly />
         <input type="hidden" name="existing_image_url" value={selectedMoment?.image_url ?? ""} readOnly />
@@ -116,7 +133,10 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
 
         <div className="community-profile-field-grid">
           <label>Titel<input name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required placeholder="Aan de Pols" /></label>
-          <label>Afbeelding toevoegen<input name="pulse_image" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+          <label>Afbeelding toevoegen<input name="pulse_image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => {
+            const file = event.target.files?.[0];
+            setImagePreview(file ? URL.createObjectURL(file) : null);
+          }} /></label>
         </div>
         <label>Tekst toevoegen<textarea name="body" value={body} onChange={(event) => setBody(event.target.value)} maxLength={1000} rows={4} placeholder="Deel een kort moment, een gedachte of iets dat je niet alleen wilt dragen." /></label>
 
@@ -174,7 +194,7 @@ export function PulseMomentDesigner({ moments, displayName }: PulseMomentDesigne
           ) : null}
         </section>
 
-        <button className="community-panel-button" type="submit"><Sparkles size={17} /> {aiAssist ? "Ontwerpaanvraag bewaren" : "Nieuw moment plaatsen"}</button>
+        <PulseSubmitButton aiAssist={aiAssist} />
       </form>
     </div>
   );

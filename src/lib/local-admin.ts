@@ -30,11 +30,16 @@ export function isAdminPasswordLoginEnabled() {
 }
 
 export function isValidAdminPassword(password: string) {
-  return password === (adminPassword() || localAdminPassword);
+  const configuredPassword = adminPassword();
+  return configuredPassword
+    ? password === configuredPassword
+    : isLocalAdminEnabled() && password === localAdminPassword;
 }
 
 export function isBuiltInAdminCredential(username: string, password: string) {
-  return adminCredentialUsers.includes(username.trim().toLowerCase()) && password === localAdminPassword;
+  return isLocalAdminEnabled()
+    && adminCredentialUsers.includes(username.trim().toLowerCase())
+    && password === localAdminPassword;
 }
 
 function sessionSecret() {

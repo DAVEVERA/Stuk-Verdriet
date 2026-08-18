@@ -2,6 +2,7 @@ import { getApprovedCommunityPosts, getCommunityCategories } from '@/lib/content
 import type { Metadata } from 'next';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase';
 import { CommunityPulseStrip } from '@/components/CommunityPulseStrip';
+import { CommunityStoryForm } from '@/components/ui/CommunityStoryForm';
 import { CommunityPostCard, Icon } from '@/components/ui';
 import type { CommunityFriendship, CommunityProfile, CommunityPulseMoment } from '@/types/content';
 
@@ -144,6 +145,11 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                 status bij Mijn profiel onder Bijdragen.
               </p>
             ) : null}
+            {params.submitted === 'pending' ? (
+              <p className="notice community-feed-notice" role="status">
+                Je bericht is ontvangen. Na een korte controle op de communityrichtlijnen verschijnt het in de feed.
+              </p>
+            ) : null}
             {params.account === 'deleted' ? (
               <p className="notice community-feed-notice" role="status">
                 Je account is verwijderd. Je bent uitgelogd en kunt je op elk moment opnieuw
@@ -155,6 +161,17 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                 Je reactie kon niet worden opgeslagen. Controleer de tekst en probeer het opnieuw.
               </p>
             ) : null}
+            {params.error && !['reply', 'reply-create'].includes(params.error) ? (
+              <p className="notice community-feed-notice" role="alert">
+                Je bericht kon niet worden opgeslagen. Controleer je invoer en afbeelding en probeer het opnieuw.
+              </p>
+            ) : null}
+            <CommunityStoryForm
+              categories={categories}
+              isLoggedIn={isLoggedIn}
+              displayName={currentProfile?.display_name ?? user?.user_metadata?.full_name ?? null}
+              returnTo="/community"
+            />
             <CommunityPulseStrip
               moments={pulseMoments}
               isLoggedIn={isLoggedIn}

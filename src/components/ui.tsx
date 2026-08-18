@@ -242,7 +242,7 @@ export function CommunityAccountDock({
     selectedConversationId ? 'chats' : null
   );
   const [collapsed, setCollapsed] = useState(false);
-  const dockRef = useRef<HTMLElement | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
   const isOnLight = useSectionContrast(dockRef);
   const [liveConversations, setLiveConversations] = useState<CommunityConversation[]>([]);
   const [liveDiscoverableProfiles, setLiveDiscoverableProfiles] = useState<CommunityProfile[]>([]);
@@ -331,27 +331,14 @@ export function CommunityAccountDock({
   const dockActions = (
     <div className="community-dock-actions" aria-label="Community snelmenu">
       <button
-        className={activePanel === 'menu' ? 'active' : undefined}
+        className={activePanel === 'account' ? 'active profile' : 'profile'}
         type="button"
-        onClick={() => openPanel('menu')}
-        aria-label="Menu"
-        aria-pressed={activePanel === 'menu'}
+        onClick={() => openPanel('account')}
+        aria-label="Mijn profiel"
+        aria-pressed={activePanel === 'account'}
       >
-        <Grid3X3 size={21} aria-hidden />
-      </button>
-      <button
-        className={activePanel === 'chats' ? 'active' : undefined}
-        type="button"
-        onClick={() => openPanel('chats')}
-        aria-label="Berichten"
-        aria-pressed={activePanel === 'chats'}
-      >
-        <Image
-          src="/img/icons_SNAAR/chat_icon/icons8-chat-48.png"
-          alt=""
-          width={22}
-          height={22}
-        />
+        <User size={21} aria-hidden />
+        <ChevronDown size={14} aria-hidden />
       </button>
       <button
         className={activePanel === 'notifications' ? 'active' : undefined}
@@ -368,14 +355,27 @@ export function CommunityAccountDock({
         />
       </button>
       <button
-        className={activePanel === 'account' ? 'active profile' : 'profile'}
+        className={activePanel === 'chats' ? 'active' : undefined}
         type="button"
-        onClick={() => openPanel('account')}
-        aria-label="Mijn profiel"
-        aria-pressed={activePanel === 'account'}
+        onClick={() => openPanel('chats')}
+        aria-label="Messenger"
+        aria-pressed={activePanel === 'chats'}
       >
-        <User size={21} aria-hidden />
-        <ChevronDown size={14} aria-hidden />
+        <Image
+          src="/img/icons_SNAAR/chat_icon/icons8-chat-48.png"
+          alt=""
+          width={22}
+          height={22}
+        />
+      </button>
+      <button
+        className={activePanel === 'menu' ? 'active' : undefined}
+        type="button"
+        onClick={() => openPanel('menu')}
+        aria-label="Mijn feed"
+        aria-pressed={activePanel === 'menu'}
+      >
+        <Grid3X3 size={21} aria-hidden />
       </button>
     </div>
   );
@@ -389,7 +389,7 @@ export function CommunityAccountDock({
     .join(' ');
 
   return (
-    <aside ref={dockRef} className={dockClassName} aria-label="Community account">
+    <div ref={dockRef} className={dockClassName} role="group" aria-label="Community account">
       <button
         className="community-dock-fab"
         type="button"
@@ -699,7 +699,7 @@ export function CommunityAccountDock({
           ) : null}
         </div>
       ) : null}
-    </aside>
+    </div>
   );
 }
 

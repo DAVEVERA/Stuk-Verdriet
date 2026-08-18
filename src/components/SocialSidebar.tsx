@@ -107,7 +107,7 @@ export function SocialSidebar({ socialLinks }: SocialSidebarProps) {
       icon: <SpotifyIcon />
     },
     {
-      href: "mailto:info@stukverdriet.com",
+      href: "mailto:info@stukverdriet.nl",
       label: "E-mail",
       icon: <Mail size={20} strokeWidth={1.75} aria-hidden />
     }

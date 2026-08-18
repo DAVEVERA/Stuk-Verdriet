@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Bookmark, Heart, X } from "lucide-react";
+import { Bookmark, Heart, Pause, Play, X } from "lucide-react";
 import type { CommunityProfile, CommunityPulseMoment } from "@/types/content";
 
 type CommunityPulseViewerProps = {
@@ -13,7 +13,7 @@ type CommunityPulseViewerProps = {
   onClose: () => void;
 };
 
-const STORY_DURATION_MS = 5500;
+const STORY_DURATION_MS = 8000;
 
 function pulseProfile(moment: CommunityPulseMoment) {
   const profile = Array.isArray(moment.community_profiles) ? moment.community_profiles[0] : moment.community_profiles;
@@ -39,10 +39,13 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
   const [progress, setProgress] = useState(0);
   const [reactedState, setReactedState] = useState<Record<string, boolean>>({});
   const [savedState, setSavedState] = useState<Record<string, boolean>>({});
+  const [busyAction, setBusyAction] = useState<"react" | "save" | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const titleId = useId();
   const frameRef = useRef<number | null>(null);
   const startedAtRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
+  const pointerStartXRef = useRef<number | null>(null);
 
   const moment = moments[index] ?? null;
   const profile = moment ? pulseProfile(moment) : null;
@@ -60,6 +63,7 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
     }
     setIndex(next);
     setProgress(0);
+    setFeedback(null);
     elapsedRef.current = 0;
   }, [moments.length, onClose]);
 
@@ -107,18 +111,50 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
 
   if (!moment) return null;
 
-  function handleReact() {
-    if (!isLoggedIn || !moment) return;
+  async function handleReact() {
+    if (!isLoggedIn || !moment || busyAction) return;
     const next = !hasReacted;
+    setBusyAction("react");
+    setFeedback(null);
     setReactedState((current) => ({ ...current, [moment.id]: next }));
-    void callPulseAction(moment.id, next ? "react" : "unreact");
+    const succeeded = await callPulseAction(moment.id, next ? "react" : "unreact");
+    if (!succeeded) {
+      setReactedState((current) => ({ ...current, [moment.id]: !next }));
+      setFeedback("Reageren lukte niet. Probeer het opnieuw.");
+    }
+    setBusyAction(null);
   }
 
-  function handleSave() {
-    if (!isLoggedIn || !moment) return;
+  async function handleSave() {
+    if (!isLoggedIn || !moment || busyAction) return;
     const next = !hasSaved;
+    setBusyAction("save");
+    setFeedback(null);
     setSavedState((current) => ({ ...current, [moment.id]: next }));
-    void callPulseAction(moment.id, next ? "save" : "unsave");
+    const succeeded = await callPulseAction(moment.id, next ? "save" : "unsave");
+    if (!succeeded) {
+      setSavedState((current) => ({ ...current, [moment.id]: !next }));
+      setFeedback("Bewaren lukte niet. Probeer het opnieuw.");
+    }
+    setBusyAction(null);
+  }
+
+  function handlePointerDown(event: React.PointerEvent<HTMLElement>) {
+    setPaused(true);
+    pointerStartXRef.current = event.pointerType === "touch" ? event.clientX : null;
+  }
+
+  function handlePointerUp(event: React.PointerEvent<HTMLElement>) {
+    const startX = pointerStartXRef.current;
+    pointerStartXRef.current = null;
+    if (startX !== null) {
+      const distance = event.clientX - startX;
+      if (Math.abs(distance) > 54) {
+        goTo(distance < 0 ? index + 1 : index - 1);
+        return;
+      }
+    }
+    setPaused(false);
   }
 
   const previewText = moment.layers.find((layer) => layer.kind === "text")?.text || moment.body || moment.title;
@@ -130,8 +166,9 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
         <article
           className="pulse-viewer-card"
           style={{ backgroundColor: moment.background_color }}
-          onPointerDown={() => setPaused(true)}
-          onPointerUp={() => setPaused(false)}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => { pointerStartXRef.current = null; setPaused(false); }}
           onPointerLeave={() => setPaused(false)}
         >
           <div className="pulse-viewer-progress-row">
@@ -157,8 +194,11 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
             </span>
             <div className="pulse-viewer-header-copy">
               <strong>{profile?.display_name ?? "SNAAR"}</strong>
-              <span id={titleId}>{moment.title}</span>
+              <span id={titleId}>{moment.title} · {index + 1} van {moments.length}</span>
             </div>
+            <button className="pulse-viewer-pause" type="button" aria-label={paused ? "Moment afspelen" : "Moment pauzeren"} aria-pressed={paused} onClick={() => setPaused((current) => !current)}>
+              {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
+            </button>
             <button className="pulse-viewer-close" type="button" aria-label="Sluit verhaal" onClick={onClose}>
               <X size={20} aria-hidden />
             </button>
@@ -197,6 +237,8 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
                 className={`pulse-viewer-action${hasReacted ? " active" : ""}`}
                 type="button"
                 onClick={handleReact}
+                disabled={busyAction !== null}
+                aria-pressed={hasReacted}
               >
                 <Heart size={20} aria-hidden fill={hasReacted ? "currentColor" : "none"} />
                 Dit raakte mij
@@ -205,12 +247,15 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
                 className={`pulse-viewer-action${hasSaved ? " active" : ""}`}
                 type="button"
                 onClick={handleSave}
+                disabled={busyAction !== null}
+                aria-pressed={hasSaved}
               >
                 <Bookmark size={20} aria-hidden fill={hasSaved ? "currentColor" : "none"} />
                 Bewaar dit moment
               </button>
             </div>
           ) : null}
+          {feedback ? <p className="pulse-viewer-feedback" role="alert">{feedback}</p> : null}
         </article>
       </div>
     </div>,
