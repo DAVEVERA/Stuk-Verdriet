@@ -1,11 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useFormStatus } from "react-dom";
-import { ImagePlus, MessageCircleQuestion, Settings2, Sparkles } from "lucide-react";
+import { ImagePlus, MessageCircleQuestion, Settings2, Sparkles, X } from "lucide-react";
 import { createCommunityPost } from "@/lib/actions";
 import type { CommunityCategory } from "@/types/content";
+
+const communityImageMaxSize = 4 * 1024 * 1024;
+const communityImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const communityImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
+
+function formatFileSize(size: number) {
+  return size >= 1024 * 1024
+    ? `${(size / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(size / 1024))} kB`;
+}
 
 function CommunitySubmitButton() {
   const { pending } = useFormStatus();
@@ -29,8 +40,47 @@ export function CommunityStoryForm({
   returnTo?: "/community" | "/bijsluiter";
 }) {
   const [postType, setPostType] = useState("story");
+  const [imagePreview, setImagePreview] = useState<{ name: string; size: number; url: string } | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
   const initial = (displayName?.trim() || "Jij").slice(0, 1).toUpperCase();
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.url) URL.revokeObjectURL(imagePreview.url);
+    };
+  }, [imagePreview]);
+
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (!file) {
+      setImagePreview(null);
+      setImageError(null);
+      return;
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (
+      file.size > communityImageMaxSize ||
+      !communityImageTypes.has(file.type) ||
+      !communityImageExtensions.has(extension)
+    ) {
+      event.currentTarget.value = "";
+      setImagePreview(null);
+      setImageError("Kies een JPG-, PNG- of WebP-afbeelding van maximaal 4 MB.");
+      return;
+    }
+
+    setImageError(null);
+    setImagePreview({ name: file.name, size: file.size, url: URL.createObjectURL(file) });
+  }
+
+  function removeImage() {
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    setImagePreview(null);
+    setImageError(null);
+  }
 
   if (!isLoggedIn) {
     return (
@@ -61,15 +111,39 @@ export function CommunityStoryForm({
       </div>
 
       <div className="community-feed-composer-actions" aria-label="Soort bericht">
-        <label className="community-feed-composer-file">
-          <ImagePlus size={18} aria-hidden /> Foto
-          <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" />
+        <label className={`community-feed-composer-file${imagePreview ? " selected" : ""}`}>
+          <ImagePlus size={18} aria-hidden /> {imagePreview ? "Foto gekozen" : "Foto"}
+          <input
+            ref={imageInputRef}
+            name="image_file"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-describedby={imageError ? "community-feed-image-error" : undefined}
+            onChange={handleImageChange}
+          />
         </label>
         <button type="button" className={postType === "question" ? "active" : ""} onClick={() => setPostType(postType === "question" ? "story" : "question")} aria-pressed={postType === "question"}>
           <MessageCircleQuestion size={18} aria-hidden /> Vraag
         </button>
         <Link href="/community/profiel?tab=pulse"><Sparkles size={18} aria-hidden /> Moment</Link>
       </div>
+
+      {imagePreview ? (
+        <figure className="community-feed-composer-preview" aria-live="polite">
+          <span className="community-feed-composer-preview-image">
+            <Image src={imagePreview.url} alt={`Voorvertoning van ${imagePreview.name}`} fill sizes="88px" unoptimized />
+          </span>
+          <figcaption>
+            <strong>Foto toegevoegd</strong>
+            <span title={imagePreview.name}>{imagePreview.name} · {formatFileSize(imagePreview.size)}</span>
+          </figcaption>
+          <button type="button" onClick={removeImage} aria-label={`Verwijder ${imagePreview.name}`}>
+            <X size={19} aria-hidden />
+          </button>
+        </figure>
+      ) : null}
+
+      {imageError ? <p id="community-feed-image-error" className="community-feed-composer-image-error" role="alert">{imageError}</p> : null}
 
       <details className="community-feed-composer-details">
         <summary><Settings2 size={17} aria-hidden /> Extra opties</summary>
