@@ -4368,13 +4368,9 @@ textarea {
 }
 
 .community-post-card h3 {
+  color: var(--pine);
   font-size: clamp(1.13rem, 4vw, 1.55rem);
   line-height: 1.16;
-}
-
-.community-post-card h3 a {
-  color: var(--pine);
-  text-decoration: none;
 }
 
 .community-post-body {
@@ -4385,8 +4381,51 @@ textarea {
   line-clamp: 6;
   -webkit-box-orient: vertical;
   line-height: 1.55;
+  min-width: 0;
   overflow: hidden;
+  overflow-wrap: anywhere;
   padding-left: 12px;
+}
+
+.community-post-body.is-clipped {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.community-post-body.is-expanded {
+  -webkit-box-orient: initial;
+  -webkit-line-clamp: unset;
+  display: block;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+.community-post-expand-toggle {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--pine);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  justify-self: start;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  touch-action: manipulation;
+}
+
+.community-post-expand-toggle:hover,
+.community-post-expand-toggle:focus-visible {
+  background: rgba(66, 86, 69, 0.1);
+  outline: 2px solid rgba(66, 86, 69, 0.28);
+  outline-offset: 1px;
 }
 
 .community-engagement-row {

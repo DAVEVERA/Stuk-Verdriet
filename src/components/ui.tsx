@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { useRef, useState, useEffect } from 'react';
+import { useId, useRef, useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Calendar,
@@ -31,6 +31,10 @@ import {
   Youtube,
 } from 'lucide-react';
 import { CategoryCarousel } from '@/components/CategoryCarousel';
+import {
+  communityPostBodyOverflows,
+  getCommunityPostBodyViewState,
+} from '@/components/community-post-body';
 import { ConsentScript } from '@/components/ConsentScript';
 import { DanielaStoryPopout } from '@/components/DanielaStoryPopout';
 import { FamilyStoryPopout } from '@/components/FamilyStoryPopout';
@@ -1323,6 +1327,60 @@ const snaarIcons = {
   comment: '/img/icons_SNAAR/comment/icons8-comment-48.png',
 };
 
+function CommunityPostBody({ body }: { body: string }) {
+  const bodyRef = useRef<HTMLParagraphElement>(null);
+  const [canExpand, setCanExpand] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const bodyId = useId();
+  const viewState = getCommunityPostBodyViewState(canExpand, expanded);
+
+  useEffect(() => {
+    const bodyElement = bodyRef.current;
+    if (!bodyElement || expanded) return;
+
+    const measureOverflow = () => {
+      setCanExpand(
+        communityPostBodyOverflows(bodyElement.scrollHeight, bodyElement.clientHeight),
+      );
+    };
+
+    measureOverflow();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measureOverflow);
+      return () => window.removeEventListener('resize', measureOverflow);
+    }
+
+    const resizeObserver = new ResizeObserver(measureOverflow);
+    resizeObserver.observe(bodyElement);
+    return () => resizeObserver.disconnect();
+  }, [body, expanded]);
+
+  return (
+    <>
+      <p
+        ref={bodyRef}
+        id={bodyId}
+        className={viewState.bodyClassName}
+        onClick={viewState.bodyExpandsOnClick ? () => setExpanded(true) : undefined}
+      >
+        {body}
+      </p>
+      {viewState.toggleVisible ? (
+        <button
+          className="community-post-expand-toggle"
+          type="button"
+          onClick={() => setExpanded((isExpanded) => !isExpanded)}
+          aria-expanded={expanded}
+          aria-controls={bodyId}
+        >
+          {viewState.toggleLabel}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 export function CommunityPostCard({
   post,
   showActions = false,
@@ -1359,10 +1417,8 @@ export function CommunityPostCard({
           height={420}
         />
       ) : null}
-      <h3>
-        <Link href={`/community/${post.slug}`}>{post.title}</Link>
-      </h3>
-      <p className="community-post-body">{post.body}</p>
+      <h3>{post.title}</h3>
+      <CommunityPostBody body={post.body} />
       {post.resource_url ? (
         <a
           className="community-resource-link"

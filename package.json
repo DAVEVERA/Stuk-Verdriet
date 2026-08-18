@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/pulse-media.test.ts src/lib/pulse-media-providers.test.ts src/lib/pulse-media-upload-client.test.ts src/components/communityPulseViewerGestures.test.ts tests/community-upload-contract.test.mjs tests/security-profile.test.mjs",
+    "test": "node --experimental-strip-types --test src/lib/pulse-media.test.ts src/lib/pulse-media-providers.test.ts src/lib/pulse-media-upload-client.test.ts src/components/communityPulseViewerGestures.test.ts tests/auth-entry-points.test.mjs tests/community-post-inline-expansion.test.mjs tests/community-upload-contract.test.mjs tests/security-profile.test.mjs",
     "site:live": "node scripts/set-site-mode.mjs live",
     "site:coming-soon": "node scripts/set-site-mode.mjs coming-soon"
   },

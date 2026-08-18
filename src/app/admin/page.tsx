@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { CommunityChatWidget } from "@/components/CommunityChatWidget";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
@@ -361,8 +362,10 @@ function AdminAccessGate({
         <p className="eyebrow">Stuk Verdriet beheer</p>
         <h1 id="admin-access-title">Beheeromgeving</h1>
         <p>
-          Log direct in met een toegestaan beheeraccount. Geen OTP of mailboxronde nodig.
+          Log in met Google of een toegestaan lokaal beheeraccount. Geen OTP of mailboxronde nodig.
         </p>
+
+        <Link className="button" href="/auth/google?next=%2Fadmin" prefetch={false}>Verder met Google</Link>
 
         <form className="admin-magic-link-form" action="/api/local-admin-login" method="post">
           <input type="hidden" name="next" value="/admin" readOnly />

@@ -29,26 +29,29 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <h1>{isAdminLogin ? "Beheer login" : isShopLogin ? "Log in voor de shop" : "Log in op SNAAR"}</h1>
         <p>
           {isAdminLogin
-            ? "Log lokaal in om het adminportaal te bekijken en de beheerflow te controleren."
+            ? "Log in met Google of een toegestaan lokaal beheeraccount."
             : isShopLogin
               ? "De shop staat nog afgeschermd. Log in om deze pagina te bekijken."
             : "Lees verhalen zonder account. Log in als je wilt reageren, steun geven of zelf iets wilt delen."}
         </p>
 
         {isAdminLogin ? (
-          <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
-            <input type="hidden" name="next" value={next} readOnly />
-            <label>
-              Gebruikersnaam
-              <input name="username" autoComplete="username" placeholder="susan of daniela" required />
-            </label>
-            <label>
-              Wachtwoord
-              <input name="password" type="password" autoComplete="current-password" required />
-            </label>
-            <button className="button" type="submit">Inloggen</button>
+          <div className="community-login-options">
+            <Link className="button" href={googleLoginHref} prefetch={false}>Verder met Google</Link>
+            <form className="local-admin-login-form" action="/api/local-admin-login" method="post">
+              <input type="hidden" name="next" value={next} readOnly />
+              <label>
+                Gebruikersnaam
+                <input name="username" autoComplete="username" placeholder="susan of daniela" required />
+              </label>
+              <label>
+                Wachtwoord
+                <input name="password" type="password" autoComplete="current-password" required />
+              </label>
+              <button className="button" type="submit">Inloggen</button>
+            </form>
             {error ? <p className="notice">{errorMessages[error] ?? "Inloggen lukte niet."}</p> : null}
-          </form>
+          </div>
         ) : (
           <div className="community-login-options">
             <Link className="button" href={googleLoginHref} prefetch={false}>Verder met Google</Link>
