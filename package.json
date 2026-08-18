@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/lib/pulse-media.test.ts src/lib/pulse-media-providers.test.ts src/lib/pulse-media-upload-client.test.ts src/components/communityPulseViewerGestures.test.ts tests/security-profile.test.mjs",
     "site:live": "node scripts/set-site-mode.mjs live",
     "site:coming-soon": "node scripts/set-site-mode.mjs coming-soon"
   },
@@ -21,6 +22,7 @@
     "next": "^16.2.9",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "tus-js-client": "4.3.1",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

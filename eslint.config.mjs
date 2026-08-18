@@ -4,6 +4,7 @@ const eslintConfig = [
   {
     ignores: [
       ".next/**",
+      ".claude/worktrees/**",
       ".playwright-cli/**",
       "output/**",
       "node_modules/**"

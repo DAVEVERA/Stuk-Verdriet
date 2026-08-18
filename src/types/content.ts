@@ -191,6 +191,27 @@ export type CommunityPulseLayer = {
   color: string;
   rotation: number;
   animation: "fade" | "float" | "pulse" | "rise" | "still";
+  align?: "left" | "center" | "right";
+  fontFamily?: "brand" | "display" | "serif" | "mono";
+};
+
+export type CommunityPulseMediaItem = {
+  id: string;
+  type: "image" | "video" | "audio" | "gif" | "icon";
+  url: string;
+  provider: "upload" | "unsplash" | "giphy" | "icons8";
+  cropX: number;
+  cropY: number;
+  zoom: number;
+  alt: string;
+  attributionName?: string;
+  attributionUrl?: string;
+  downloadLocation?: string;
+};
+
+export type CommunityPulseMediaManifest = {
+  layout: "single" | "split" | "grid";
+  items: CommunityPulseMediaItem[];
 };
 
 export type CommunityPulseMoment = {
@@ -200,10 +221,12 @@ export type CommunityPulseMoment = {
   body: string | null;
   image_url: string | null;
   background_color: string;
+  background_style?: "solid-pine" | "solid-sage" | "solid-sand" | "solid-gold" | "gradient-sage-dusk" | "gradient-pine-light" | "gradient-sand-glow" | "gradient-evening";
   animation: "fade" | "float" | "pulse" | "rise" | "still";
   visibility: "private" | "connections" | "community";
   status: "draft" | "published" | "archived";
   layers: CommunityPulseLayer[];
+  media_manifest?: CommunityPulseMediaManifest;
   ai_prompt: string | null;
   ai_generation_id: string | null;
   ai_generation_status: "not_requested" | "requested" | "draft_ready" | "complete" | "failed";

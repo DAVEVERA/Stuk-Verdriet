@@ -7,11 +7,7 @@ import {
   createAdminSessionValue,
   isAdminPasswordLoginEnabled,
   isBuiltInAdminCredential,
-  isLocalAdminEnabled,
   isValidAdminPassword,
-  localAdminCookie,
-  localAdminPassword,
-  localAdminUser
 } from "@/lib/local-admin";
 
 type LoginAttempt = {
@@ -71,11 +67,11 @@ export async function POST(request: Request) {
     return NextResponse.redirect(loginErrorUrl("missing-secret"), 303);
   }
   const isBuiltInAdmin = isBuiltInAdminCredential(username, password);
-  const isDevFallback = isLocalAdminEnabled() && username === localAdminUser && password === localAdminPassword;
-  const isDevPasswordLogin = isLocalAdminEnabled() && !process.env.ADMIN_PASSWORD && password === localAdminPassword;
-  const adminAllowed = isBuiltInAdmin || isDevPasswordLogin || adminEmailList().includes(username) || (await isEmailAdmin(username));
+  const passwordAllowed = isValidAdminPassword(password);
+  const adminAllowed = passwordAllowed
+    && (isBuiltInAdmin || adminEmailList().includes(username) || (await isEmailAdmin(username)));
 
-  if (!isBuiltInAdmin && !isDevFallback && !isDevPasswordLogin && (!isValidAdminPassword(password) || !adminAllowed)) {
+  if (!adminAllowed) {
     recordFailedAttempt(attemptKey);
     return NextResponse.redirect(loginErrorUrl("local-admin"), 303);
   }
@@ -83,22 +79,12 @@ export async function POST(request: Request) {
   loginAttempts.delete(attemptKey);
 
   const response = NextResponse.redirect(new URL(next, requestUrl.origin), 303);
-  if (isDevFallback) {
-    response.cookies.set(localAdminCookie, "1", {
-      httpOnly: true,
-      maxAge: adminSessionMaxAge,
-      path: "/",
-      sameSite: "lax",
-      secure: false
-    });
-  } else {
-    response.cookies.set(adminSessionCookie, createAdminSessionValue(username), {
-      httpOnly: true,
-      maxAge: adminSessionMaxAge,
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production"
-    });
-  }
+  response.cookies.set(adminSessionCookie, createAdminSessionValue(username), {
+    httpOnly: true,
+    maxAge: adminSessionMaxAge,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production"
+  });
   return response;
 }

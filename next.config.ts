@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   experimental: {
     serverActions: {
-      bodySizeLimit: "5mb"
+      bodySizeLimit: "5.1mb"
     }
   },
   turbopack: {
@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com"
+      },
+      {
+        protocol: "https",
+        hostname: "*.giphy.com"
+      },
+      {
+        protocol: "https",
+        hostname: "img.icons8.com"
+      },
+      {
+        protocol: "https",
+        hostname: "maxst.icons8.com"
       },
       {
         protocol: "https",

@@ -9,10 +9,18 @@ import { encodeAuthNext } from "@/lib/auth-redirect";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
-import { hasLocalAdminSession } from "@/lib/local-admin";
 import { canUsePulseMoment } from "@/lib/pulse-moments";
+import {
+  derivePulseTitle,
+  isPulseComposerSchemaError,
+  sanitizePulseBackgroundStyle,
+  sanitizePulseLayers,
+  sanitizePulseMediaManifest,
+  type PulseAnimation,
+  type PulseMediaItem
+} from "@/lib/pulse-media";
 import { sendPushToUser } from "@/lib/push";
-import type { CommunityPulseLayer, PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
+import type { PodcastEpisode, PodcastLinkCard, PodcastTranscriptSegment } from "@/types/content";
 
 const linkCardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
 const communityImageMaxSize = 4 * 1024 * 1024;
@@ -28,8 +36,6 @@ const signupRateLimitWindowMs = 10 * 60 * 1000;
 const signupRateLimitMax = 5;
 const communityReportTypes = new Set(["post", "reply", "image", "language"]);
 const communityReportCategories = new Set(["ongepast", "taalgebruik", "afbeelding", "spam", "veiligheid", "anders"]);
-const pulseAiStripePaymentLink = "https://buy.stripe.com/aFa6oId6R7kob0S54Ed3i00";
-const pulseAiStripeBuyButtonId = "buy_btn_1Tua2PK4ScKc9e3qb6YfbBfb";
 
 type EpisodeSignupPayload = {
   name: string;
@@ -195,9 +201,9 @@ function profileText(formData: FormData, name: string, maxLength = 160) {
   return String(formData.get(name) ?? "").trim().slice(0, maxLength);
 }
 
-function normalizedPulseAnimation(value: FormDataEntryValue | null): CommunityPulseLayer["animation"] {
+function normalizedPulseAnimation(value: FormDataEntryValue | null): PulseAnimation {
   const animation = String(value ?? "fade").trim();
-  return ["fade", "float", "pulse", "rise", "still"].includes(animation) ? animation as CommunityPulseLayer["animation"] : "fade";
+  return ["fade", "float", "pulse", "rise", "still"].includes(animation) ? animation as PulseAnimation : "fade";
 }
 
 function normalizedPulseVisibility(value: FormDataEntryValue | null) {
@@ -231,56 +237,6 @@ function normalizedHexColor(value: FormDataEntryValue | null, fallback = "#2f4b3
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
 }
 
-function clampNumber(value: unknown, fallback: number, min: number, max: number) {
-  const number = Number(value);
-  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
-}
-
-function parsePulseLayers(formData: FormData, fallbackText: string, animation: CommunityPulseLayer["animation"]) {
-  const raw = String(formData.get("layers_json") ?? "").trim();
-  let parsed: unknown = [];
-  if (raw) {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = [];
-    }
-  }
-  const source = Array.isArray(parsed) ? parsed : [];
-  const layers: CommunityPulseLayer[] = source.slice(0, 8).map((layer, index) => {
-    const item = layer && typeof layer === "object" ? layer as Record<string, unknown> : {};
-    const kind = item.kind === "image" ? "image" : "text";
-    return {
-      id: String(item.id ?? `layer-${index + 1}`).slice(0, 48),
-      kind,
-      text: String(item.text ?? "").trim().slice(0, 160),
-      image_url: typeof item.image_url === "string" ? item.image_url.slice(0, 600) : undefined,
-      x: clampNumber(item.x, 50, 0, 100),
-      y: clampNumber(item.y, 58, 0, 100),
-      size: clampNumber(item.size, 24, 12, 56),
-      color: normalizedHexColor(typeof item.color === "string" ? item.color : null, "#ffffff"),
-      rotation: clampNumber(item.rotation, 0, -18, 18),
-      animation: normalizedPulseAnimation(typeof item.animation === "string" ? item.animation : animation)
-    } satisfies CommunityPulseLayer;
-  }).filter((layer) => layer.kind === "image" ? layer.image_url : layer.text);
-
-  if (!layers.length && fallbackText) {
-    layers.push({
-      id: "layer-default",
-      kind: "text",
-      text: fallbackText.slice(0, 160),
-      image_url: undefined,
-      x: 50,
-      y: 58,
-      size: 24,
-      color: "#ffffff",
-      rotation: 0,
-      animation
-    });
-  }
-  return layers;
-}
-
 async function uploadPublicFile(
   admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
   bucket: string,
@@ -290,11 +246,23 @@ async function uploadPublicFile(
   errorPath = "/admin"
 ) {
   const path = `${folder}/${Date.now()}-${safePathPart(file.name)}.${fileExtension(file, fallbackExtension)}`;
-  const { error } = await admin.storage.from(bucket).upload(path, file, {
-    cacheControl: "31536000",
-    contentType: file.type || undefined,
-    upsert: true
-  });
+  let error: unknown = null;
+  try {
+    const result = await admin.storage.from(bucket).upload(path, file, {
+      cacheControl: "31536000",
+      contentType: file.type || undefined,
+      upsert: true
+    });
+    error = result.error;
+  } catch (failure) {
+    const record = failure && typeof failure === "object" ? failure as Record<string, unknown> : null;
+    console.error("[storage] public upload failed", {
+      bucket,
+      name: failure instanceof Error ? failure.name : "OperationError",
+      ...(typeof record?.status === "number" ? { status: record.status } : {})
+    });
+    redirect(withReturnStatus(errorPath, "error", bucket));
+  }
   if (error) redirect(withReturnStatus(errorPath, "error", bucket));
   const {
     data: { publicUrl }
@@ -302,15 +270,63 @@ async function uploadPublicFile(
   return publicUrl;
 }
 
+type ProfileMediaFailureStage = "avatar-upload" | "cover-upload" | "profile-read" | "profile-write";
+
+function profileMediaFailureDetails(stage: ProfileMediaFailureStage, failure: unknown) {
+  const record = failure && typeof failure === "object" ? failure as Record<string, unknown> : null;
+  const rawCode = record?.code;
+  const rawStatus = record?.status ?? record?.statusCode;
+  return {
+    stage,
+    name: failure instanceof Error ? failure.name : "OperationError",
+    ...(typeof rawCode === "string" && /^[a-z0-9_-]{1,40}$/i.test(rawCode) ? { code: rawCode } : {}),
+    ...(typeof rawStatus === "number" && Number.isFinite(rawStatus) ? { status: rawStatus } : {})
+  };
+}
+
+function logProfileMediaFailure(stage: ProfileMediaFailureStage, failure: unknown) {
+  console.error("[profile-media] operation failed", profileMediaFailureDetails(stage, failure));
+}
+
+async function uploadCommunityProfileMediaFile(
+  admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
+  folder: string,
+  file: File,
+  stage: "avatar-upload" | "cover-upload"
+) {
+  const path = `${folder}/${Date.now()}-${safePathPart(file.name)}.${fileExtension(file, "jpg")}`;
+  try {
+    const { error } = await admin.storage.from("community-profile-media").upload(path, file, {
+      cacheControl: "31536000",
+      contentType: file.type || undefined,
+      upsert: true
+    });
+    if (error) {
+      logProfileMediaFailure(stage, error);
+      return null;
+    }
+    const {
+      data: { publicUrl }
+    } = admin.storage.from("community-profile-media").getPublicUrl(path);
+    if (!publicUrl) {
+      logProfileMediaFailure(stage, { code: "missing_public_url" });
+      return null;
+    }
+    return publicUrl;
+  } catch (failure) {
+    logProfileMediaFailure(stage, failure);
+    return null;
+  }
+}
+
 async function requireAdminClient() {
-  const localAdminAllowed = await hasLocalAdminSession();
   const server = await createSupabaseServerClient();
   const {
     data: { user }
   } = server ? await server.auth.getUser() : { data: { user: null } };
   const email = user?.email?.toLowerCase();
   const supabaseAdminAllowed = email ? await isEmailAdmin(email) : false;
-  if (!localAdminAllowed && !supabaseAdminAllowed) redirect("/admin?error=unauthorized");
+  if (!supabaseAdminAllowed) redirect("/admin?error=unauthorized");
 
   const admin = createSupabaseAdminClient();
   if (!admin) redirect("/admin?missing=service-role");
@@ -609,25 +625,50 @@ export async function updateCommunityProfileMedia(formData: FormData) {
   if (cover && !isAllowedCommunityCover(cover)) redirect(withReturnStatus(returnPath, "error", "cover"));
 
   const [avatarUrl, coverUrl] = await Promise.all([
-    avatar ? uploadPublicFile(admin, "community-profile-media", `${user.id}/avatar`, avatar, "jpg", returnPath) : Promise.resolve(undefined),
-    cover ? uploadPublicFile(admin, "community-profile-media", `${user.id}/cover`, cover, "jpg", returnPath) : Promise.resolve(undefined)
+    avatar ? uploadCommunityProfileMediaFile(admin, `${user.id}/avatar`, avatar, "avatar-upload") : Promise.resolve(undefined),
+    cover ? uploadCommunityProfileMediaFile(admin, `${user.id}/cover`, cover, "cover-upload") : Promise.resolve(undefined)
   ]);
-  const { data: existingProfile } = await admin
-    .from("community_profiles")
-    .select("display_name")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  if ((avatar && !avatarUrl) || (cover && !coverUrl)) {
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
+
+  let existingProfile: { display_name: string | null } | null = null;
+  let profileReadFailure: unknown = null;
+  try {
+    const result = await admin
+      .from("community_profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    existingProfile = result.data;
+    profileReadFailure = result.error;
+  } catch (failure) {
+    profileReadFailure = failure;
+  }
+  if (profileReadFailure) {
+    logProfileMediaFailure("profile-read", profileReadFailure);
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
   const fallbackName = typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()
     ? user.user_metadata.full_name.trim()
     : user.email?.split("@")[0] ?? "SNAAR gebruiker";
-  const { error } = await admin.from("community_profiles").upsert({
-    user_id: user.id,
-    display_name: existingProfile?.display_name ?? fallbackName,
-    ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
-    ...(coverUrl ? { cover_url: coverUrl } : {}),
-    updated_at: new Date().toISOString()
-  }, { onConflict: "user_id", ignoreDuplicates: false });
-  if (error) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  let profileWriteFailure: unknown = null;
+  try {
+    const { error } = await admin.from("community_profiles").upsert({
+      user_id: user.id,
+      display_name: existingProfile?.display_name ?? fallbackName,
+      ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+      ...(coverUrl ? { cover_url: coverUrl } : {}),
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id", ignoreDuplicates: false });
+    profileWriteFailure = error;
+  } catch (failure) {
+    profileWriteFailure = failure;
+  }
+  if (profileWriteFailure) {
+    logProfileMediaFailure("profile-write", profileWriteFailure);
+    redirect(withReturnStatus(returnPath, "error", "profile-storage"));
+  }
 
   revalidatePath("/community");
   revalidatePath("/community/profiel");
@@ -984,55 +1025,97 @@ export async function saveCommunityPulseMoment(formData: FormData) {
   const { user } = await requireCommunityUser(returnPath);
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(withReturnStatus(returnPath, "error", "profile-storage"));
-  await ensureCommunityProfile(user);
+  try {
+    await ensureCommunityProfile(user);
+  } catch (failure) {
+    console.error("[pulse] profile preparation failed", { name: failure instanceof Error ? failure.name : "OperationError" });
+    redirect(withReturnStatus(returnPath, "error", "pulse"));
+  }
 
-  const title = profileText(formData, "title", 120);
+  const requestedTitle = profileText(formData, "title", 120);
   const body = profileText(formData, "body", 1000);
-  if (!title) redirect(withReturnStatus(returnPath, "error", "pulse"));
   const animation = normalizedPulseAnimation(formData.get("animation"));
   const visibility = normalizedPulseVisibility(formData.get("visibility"));
   const status = normalizedPulseStatus(formData.get("status"));
   const backgroundColor = normalizedHexColor(formData.get("background_color"));
+  const backgroundStyle = sanitizePulseBackgroundStyle(profileText(formData, "background_style", 60));
   const image = getUploadFile(formData, "pulse_image");
   if (image && !isAllowedCommunityImage(image)) redirect(withReturnStatus(returnPath, "error", "photo"));
   const existingImageUrl = profileText(formData, "existing_image_url", 600);
   const imageUrl = image
     ? await uploadPublicFile(admin, "community-profile-media", `${user.id}/aan-de-pols`, image, "jpg", returnPath)
     : existingImageUrl || null;
-  const layers = parsePulseLayers(formData, body || title, animation);
-  const wantsAi = formData.get("ai_assist") === "on";
-  const aiPrompt = profileText(formData, "ai_prompt", 1000);
+  const layers = sanitizePulseLayers(String(formData.get("layers_json") ?? ""), animation);
+  const mediaManifest = sanitizePulseMediaManifest(String(formData.get("media_manifest_json") ?? ""));
+  if (imageUrl && !mediaManifest.items.some((item) => item.url === imageUrl)) {
+    const legacyItem: PulseMediaItem = {
+      id: "legacy-image",
+      type: "image",
+      url: imageUrl,
+      provider: "upload",
+      cropX: 50,
+      cropY: 50,
+      zoom: 1,
+      alt: requestedTitle || body || "Momentfoto"
+    };
+    mediaManifest.items.unshift(legacyItem);
+    mediaManifest.items = mediaManifest.items.slice(0, 8);
+  }
+  const visualImageUrl = mediaManifest.items.find((item) => ["image", "gif", "icon"].includes(item.type))?.url ?? imageUrl;
+  const title = derivePulseTitle(requestedTitle, body, layers, mediaManifest.items.length > 0);
   const momentId = profileText(formData, "moment_id", 64);
-  const aiGenerationId = wantsAi ? (profileText(formData, "ai_generation_id", 80) || randomUUID()) : null;
 
-  const payload = {
+  const legacyPayload = {
     user_id: user.id,
     title,
     body: body || null,
-    image_url: imageUrl,
+    image_url: visualImageUrl,
     background_color: backgroundColor,
     animation,
     visibility,
     status,
     layers,
-    ai_prompt: wantsAi ? aiPrompt || body || title : null,
-    ai_generation_id: aiGenerationId,
-    ai_generation_status: wantsAi ? "requested" : "not_requested",
-    ai_estimated_price_cents: wantsAi ? 199 : 0,
-    ai_payment_status: wantsAi ? "pending" : "not_required",
-    ai_render_orientation: wantsAi ? "vertical_reel" : null,
-    stripe_payment_link: wantsAi ? pulseAiStripePaymentLink : null,
-    stripe_buy_button_id: wantsAi ? pulseAiStripeBuyButtonId : null,
+    ai_prompt: null,
+    ai_generation_id: null,
+    ai_generation_status: "not_requested",
+    ai_estimated_price_cents: 0,
+    ai_payment_status: "not_required",
+    ai_render_orientation: null,
+    stripe_payment_link: null,
+    stripe_buy_button_id: null,
     updated_at: new Date().toISOString()
   };
+  const payload = { ...legacyPayload, background_style: backgroundStyle, media_manifest: mediaManifest };
+  const pulseAdmin = admin;
 
-  const result = momentId
-    ? await admin.from("community_pulse_moments").update(payload).eq("id", momentId).eq("user_id", user.id)
-    : await admin.from("community_pulse_moments").insert(payload);
+  async function writeMoment(writePayload: typeof payload | typeof legacyPayload) {
+    return momentId
+      ? pulseAdmin.from("community_pulse_moments").update(writePayload).eq("id", momentId).eq("user_id", user.id)
+      : pulseAdmin.from("community_pulse_moments").insert(writePayload);
+  }
+  let result: Awaited<ReturnType<typeof writeMoment>>;
+  try {
+    result = await writeMoment(payload);
+  } catch (failure) {
+    console.error("[pulse] save failed", { name: failure instanceof Error ? failure.name : "OperationError" });
+    redirect(withReturnStatus(returnPath, "error", "pulse"));
+  }
+  if (isPulseComposerSchemaError(result.error)) {
+    console.warn("Pulse composer schema is not deployed; saving the legacy fields", {
+      code: result.error?.code,
+      operation: momentId ? "update" : "insert"
+    });
+    try {
+      result = await writeMoment(legacyPayload);
+    } catch (failure) {
+      console.error("[pulse] legacy save failed", { name: failure instanceof Error ? failure.name : "OperationError" });
+      redirect(withReturnStatus(returnPath, "error", "pulse"));
+    }
+  }
   if (result.error) redirect(withReturnStatus(returnPath, "error", "pulse"));
   revalidatePath("/community");
   revalidatePath("/community/profiel");
-  redirect(withReturnStatus(returnPath, "profile", wantsAi ? "pulse-ai-requested" : "pulse-saved"));
+  redirect(withReturnStatus(returnPath, "profile", "pulse-saved"));
 }
 
 export async function deleteCommunityPulseMoment(formData: FormData) {
@@ -1326,7 +1409,12 @@ export async function createCommunityPost(formData: FormData) {
   }
 
   const postSlug = `${slugify(title)}-${Date.now()}`;
-  await ensureCommunityProfile(user);
+  try {
+    await ensureCommunityProfile(user);
+  } catch (failure) {
+    console.error("[community-post] profile preparation failed", { name: failure instanceof Error ? failure.name : "OperationError" });
+    redirect(`${returnPath}?error=supabase`);
+  }
   const admin = createSupabaseAdminClient();
   if (!admin) redirect(`${returnPath}?error=storage`);
   const image = getUploadFile(formData, "image_file");
@@ -1338,23 +1426,30 @@ export async function createCommunityPost(formData: FormData) {
     imageUrl = await uploadPublicFile(admin, "community-images", `community/${user.id}/${postSlug}`, image, "jpg", returnPath);
   }
 
-  const { error: postError } = await admin.from("community_posts").insert({
-    user_id: user.id,
-    author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
-    author_display_type: authorDisplayType,
-    title,
-    slug: postSlug,
-    body,
-    image_url: imageUrl,
-    image_hash: imageHash,
-    category,
-    post_type: postType,
-    resource_url: resourceUrl,
-    resource_label: resourceUrl ? resourceLabel ?? new URL(resourceUrl).hostname.replace(/^www\./, "") : null,
-    tags,
-    target_group: targetGroup,
-    status: "pending"
-  });
+  let postError: { code?: string; message?: string } | null = null;
+  try {
+    const result = await admin.from("community_posts").insert({
+      user_id: user.id,
+      author_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
+      author_display_type: authorDisplayType,
+      title,
+      slug: postSlug,
+      body,
+      image_url: imageUrl,
+      image_hash: imageHash,
+      category,
+      post_type: postType,
+      resource_url: resourceUrl,
+      resource_label: resourceUrl ? resourceLabel ?? new URL(resourceUrl).hostname.replace(/^www\./, "") : null,
+      tags,
+      target_group: targetGroup,
+      status: "pending"
+    });
+    postError = result.error;
+  } catch (failure) {
+    console.error("[community-post] insert failed", { name: failure instanceof Error ? failure.name : "OperationError" });
+    redirect(`${returnPath}?error=supabase`);
+  }
   if (postError) redirect(`${returnPath}?error=post-create`);
 
   revalidatePath("/");

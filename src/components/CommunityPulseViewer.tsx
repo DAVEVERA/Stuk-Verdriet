@@ -4,6 +4,12 @@ import Image from "next/image";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Bookmark, Heart, Pause, Play, X } from "lucide-react";
+import {
+  beginPulsePointerSession,
+  cancelPulsePointerSession,
+  finishPulsePointerSession,
+  type PulsePointerSession
+} from "@/components/communityPulseViewerGestures";
 import type { CommunityProfile, CommunityPulseMoment } from "@/types/content";
 
 type CommunityPulseViewerProps = {
@@ -14,6 +20,16 @@ type CommunityPulseViewerProps = {
 };
 
 const STORY_DURATION_MS = 8000;
+const pulseBackgrounds: Record<string, string> = {
+  "solid-pine": "#2f4f4f",
+  "solid-sage": "#7a9a7a",
+  "solid-sand": "#cbb899",
+  "solid-gold": "#daa520",
+  "gradient-sage-dusk": "linear-gradient(145deg, #2f4f4f 0%, #5e7665 48%, #cbb899 100%)",
+  "gradient-pine-light": "linear-gradient(155deg, #2f4f4f 0%, #7a9a7a 66%, #f7f3ec 100%)",
+  "gradient-sand-glow": "linear-gradient(150deg, #f7f3ec 0%, #cbb899 64%, #7a9a7a 100%)",
+  "gradient-evening": "linear-gradient(160deg, #2f4f4f 0%, #4b665a 48%, #cbb899 88%, #daa520 120%)"
+};
 
 function pulseProfile(moment: CommunityPulseMoment) {
   const profile = Array.isArray(moment.community_profiles) ? moment.community_profiles[0] : moment.community_profiles;
@@ -45,12 +61,19 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
   const frameRef = useRef<number | null>(null);
   const startedAtRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
-  const pointerStartXRef = useRef<number | null>(null);
+  const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const pointerSessionRef = useRef<PulsePointerSession | null>(null);
+  const suppressNavigationClickRef = useRef(false);
+  const videoRefs = useRef(new Map<string, HTMLVideoElement>());
 
   const moment = moments[index] ?? null;
   const profile = moment ? pulseProfile(moment) : null;
   const hasReacted = moment ? reactedState[moment.id] ?? Boolean(moment.has_reacted) : false;
   const hasSaved = moment ? savedState[moment.id] ?? Boolean(moment.has_saved) : false;
+  const mediaItems = moment?.media_manifest?.items ?? [];
+  const visibleMediaCount = moment?.media_manifest?.layout === "grid" ? 4 : moment?.media_manifest?.layout === "split" ? 2 : 1;
+  const visualMedia = mediaItems.filter((item) => item.type !== "audio").slice(0, visibleMediaCount);
+  const audioMedia = mediaItems.filter((item) => item.type === "audio").slice(0, 1);
 
   const goTo = useCallback((next: number) => {
     if (next < 0) {
@@ -85,6 +108,13 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
   }, [goTo, index, onClose]);
 
   useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    pauseButtonRef.current?.focus();
+
+    return () => previouslyFocused?.focus();
+  }, []);
+
+  useEffect(() => {
     if (paused) {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       return;
@@ -108,6 +138,13 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
   }, [index, paused, goTo]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video) => {
+      if (paused) video.pause();
+      else void video.play().catch(() => undefined);
+    });
+  }, [index, paused]);
 
   if (!moment) return null;
 
@@ -140,24 +177,58 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLElement>) {
+    const target = event.target;
+    if (target instanceof Element && target.closest("[data-pulse-control]")) return;
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (pointerSessionRef.current) return;
+
+    pointerSessionRef.current = beginPulsePointerSession(
+      event.pointerId,
+      event.pointerType,
+      event.clientX,
+      paused
+    );
+    suppressNavigationClickRef.current = false;
     setPaused(true);
-    pointerStartXRef.current = event.pointerType === "touch" ? event.clientX : null;
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLElement>) {
-    const startX = pointerStartXRef.current;
-    pointerStartXRef.current = null;
-    if (startX !== null) {
-      const distance = event.clientX - startX;
-      if (Math.abs(distance) > 54) {
-        goTo(distance < 0 ? index + 1 : index - 1);
-        return;
-      }
+    const session = pointerSessionRef.current;
+    if (!session) return;
+
+    const result = finishPulsePointerSession(session, event.pointerId, event.clientX);
+    if (!result) return;
+
+    pointerSessionRef.current = null;
+    setPaused(result.paused);
+    if (result.navigationDelta !== 0) {
+      event.preventDefault();
+      suppressNavigationClickRef.current = true;
+      window.setTimeout(() => {
+        suppressNavigationClickRef.current = false;
+      }, 0);
+      goTo(index + result.navigationDelta);
     }
-    setPaused(false);
   }
 
-  const previewText = moment.layers.find((layer) => layer.kind === "text")?.text || moment.body || moment.title;
+  function restorePointerPlayback(event: React.PointerEvent<HTMLElement>) {
+    const session = pointerSessionRef.current;
+    if (!session) return;
+
+    const restoredPaused = cancelPulsePointerSession(session, event.pointerId);
+    if (restoredPaused === null) return;
+
+    pointerSessionRef.current = null;
+    setPaused(restoredPaused);
+  }
+
+  function handleNavigationClick(next: number) {
+    if (suppressNavigationClickRef.current) {
+      suppressNavigationClickRef.current = false;
+      return;
+    }
+    goTo(next);
+  }
 
   return createPortal(
     <div className="pulse-viewer-layer" role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -165,11 +236,11 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
       <div className="pulse-viewer-stage">
         <article
           className="pulse-viewer-card"
-          style={{ backgroundColor: moment.background_color }}
+          style={{ background: pulseBackgrounds[moment.background_style ?? ""] ?? moment.background_color }}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          onPointerCancel={() => { pointerStartXRef.current = null; setPaused(false); }}
-          onPointerLeave={() => setPaused(false)}
+          onPointerCancel={restorePointerPlayback}
+          onPointerLeave={restorePointerPlayback}
         >
           <div className="pulse-viewer-progress-row">
             {moments.map((item, itemIndex) => (
@@ -184,7 +255,7 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
             ))}
           </div>
 
-          <header className="pulse-viewer-header">
+          <header className="pulse-viewer-header" data-pulse-control>
             <span className="pulse-viewer-avatar">
               {profile?.avatar_url ? (
                 <Image src={profile.avatar_url} alt="" fill sizes="36px" />
@@ -196,7 +267,15 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
               <strong>{profile?.display_name ?? "SNAAR"}</strong>
               <span id={titleId}>{moment.title} · {index + 1} van {moments.length}</span>
             </div>
-            <button className="pulse-viewer-pause" type="button" aria-label={paused ? "Moment afspelen" : "Moment pauzeren"} aria-pressed={paused} onClick={() => setPaused((current) => !current)}>
+            <button
+              ref={pauseButtonRef}
+              className="pulse-viewer-pause"
+              type="button"
+              aria-label={paused ? "Moment afspelen" : "Moment pauzeren"}
+              aria-pressed={paused}
+              aria-keyshortcuts="Space"
+              onClick={() => setPaused((current) => !current)}
+            >
               {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
             </button>
             <button className="pulse-viewer-close" type="button" aria-label="Sluit verhaal" onClick={onClose}>
@@ -204,7 +283,45 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
             </button>
           </header>
 
-          {moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="(max-width: 640px) 100vw, 430px" /> : null}
+          {visualMedia.length ? (
+            <div className={`pulse-viewer-media is-layout-${moment.media_manifest?.layout ?? "single"}`}>
+              {visualMedia.map((item) => (
+                <figure className="pulse-viewer-media-frame" key={item.id} data-pulse-control={item.type === "video" ? "true" : undefined}>
+                  {item.type === "video" ? (
+                    <video
+                      ref={(node) => {
+                        if (node) videoRefs.current.set(item.id, node);
+                        else videoRefs.current.delete(item.id);
+                      }}
+                      src={item.url}
+                      aria-label={item.alt || "Momentvideo"}
+                      muted
+                      loop
+                      playsInline
+                      controls
+                      preload="metadata"
+                      style={{ objectPosition: `${item.cropX}% ${item.cropY}%`, transform: `scale(${item.zoom})` }}
+                    />
+                  ) : (
+                    <Image
+                      loader={({ src }) => src}
+                      unoptimized
+                      src={item.url}
+                      alt={item.alt}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 430px"
+                      style={{ objectPosition: `${item.cropX}% ${item.cropY}%`, transform: `scale(${item.zoom})` }}
+                    />
+                  )}
+                  {item.attributionUrl ? (
+                    <a className="pulse-viewer-attribution" href={item.attributionUrl} target="_blank" rel="noreferrer sponsored" data-pulse-control>
+                      {item.provider === "giphy" ? "Powered by GIPHY" : item.provider === "icons8" ? "Icons8" : `Foto: ${item.attributionName ?? "Unsplash"}`}
+                    </a>
+                  ) : null}
+                </figure>
+              ))}
+            </div>
+          ) : moment.image_url ? <Image src={moment.image_url} alt="" fill sizes="(max-width: 640px) 100vw, 430px" /> : null}
 
           <div className={`pulse-story-canvas animation-${moment.animation}`}>
             {moment.layers.map((layer) => (
@@ -216,6 +333,8 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
                   fontSize: `${layer.size}px`,
                   left: `${layer.x}%`,
                   top: `${layer.y}%`,
+                  textAlign: layer.align ?? "center",
+                  fontFamily: layer.fontFamily === "display" ? "var(--font-slogan), cursive" : layer.fontFamily === "serif" ? "Georgia, serif" : layer.fontFamily === "mono" ? "Courier New, monospace" : "var(--font-jost), sans-serif",
                   transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`
                 }}
               >
@@ -224,15 +343,20 @@ export function CommunityPulseViewer({ moments, startIndex, isLoggedIn, onClose 
             ))}
           </div>
 
-          {!moment.layers.length && previewText ? (
-            <p className="pulse-viewer-fallback-text">{previewText}</p>
-          ) : null}
+          {audioMedia.map((item) => (
+            <div className="pulse-viewer-audio" key={item.id} data-pulse-control>
+              <span>{item.alt || "Geluid bij dit moment"}</span>
+              <audio controls preload="metadata" src={item.url} onPlay={() => setPaused(true)} onEnded={() => setPaused(false)}>
+                Je browser ondersteunt dit audiobestand niet.
+              </audio>
+            </div>
+          ))}
 
-          <button className="pulse-viewer-nav-zone prev" type="button" aria-label="Vorig verhaal" onClick={() => goTo(index - 1)} />
-          <button className="pulse-viewer-nav-zone next" type="button" aria-label="Volgend verhaal" onClick={() => goTo(index + 1)} />
+          <button className="pulse-viewer-nav-zone prev" type="button" aria-label="Vorig verhaal" onClick={() => handleNavigationClick(index - 1)} />
+          <button className="pulse-viewer-nav-zone next" type="button" aria-label="Volgend verhaal" onClick={() => handleNavigationClick(index + 1)} />
 
           {isLoggedIn ? (
-            <div className="pulse-viewer-actions">
+            <div className="pulse-viewer-actions" data-pulse-control>
               <button
                 className={`pulse-viewer-action${hasReacted ? " active" : ""}`}
                 type="button"

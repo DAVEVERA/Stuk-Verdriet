@@ -4,8 +4,6 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { safeAuthNext } from "@/lib/auth-redirect";
 
 export const localAdminCookie = "stukverdriet-local-admin";
-export const localAdminUser = "admin";
-export const localAdminPassword = "admin123";
 export const adminCredentialUsers = ["susan", "daniela"];
 export const adminSessionCookie = "stukverdriet-admin-session";
 
@@ -16,9 +14,7 @@ function adminPassword() {
 }
 
 function adminSessionSecret() {
-  const configuredSecret = process.env.ADMIN_SESSION_SECRET || process.env.STUK_VERDRIET_ROUTE_SECRET;
-  if (configuredSecret) return configuredSecret;
-  return process.env.NODE_ENV === "production" ? "" : `${localAdminPassword}:stukverdriet-admin-session`;
+  return process.env.ADMIN_SESSION_SECRET ?? "";
 }
 
 export function isLocalAdminEnabled() {
@@ -26,20 +22,16 @@ export function isLocalAdminEnabled() {
 }
 
 export function isAdminPasswordLoginEnabled() {
-  return Boolean(adminSessionSecret());
+  return Boolean(adminPassword() && adminSessionSecret());
 }
 
 export function isValidAdminPassword(password: string) {
   const configuredPassword = adminPassword();
-  return configuredPassword
-    ? password === configuredPassword
-    : isLocalAdminEnabled() && password === localAdminPassword;
+  return isAdminPasswordLoginEnabled() && constantTimeEqual(password, configuredPassword);
 }
 
 export function isBuiltInAdminCredential(username: string, password: string) {
-  return isLocalAdminEnabled()
-    && adminCredentialUsers.includes(username.trim().toLowerCase())
-    && password === localAdminPassword;
+  return adminCredentialUsers.includes(username.trim().toLowerCase()) && isValidAdminPassword(password);
 }
 
 function sessionSecret() {
@@ -47,7 +39,9 @@ function sessionSecret() {
 }
 
 function signSessionPayload(payload: string) {
-  return createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  const secret = sessionSecret();
+  if (!secret) throw new Error("Admin session secret is not configured");
+  return createHmac("sha256", secret).update(payload).digest("base64url");
 }
 
 function constantTimeEqual(left: string, right: string) {
@@ -57,6 +51,7 @@ function constantTimeEqual(left: string, right: string) {
 }
 
 export function createAdminSessionValue(email: string) {
+  if (!isAdminPasswordLoginEnabled()) throw new Error("Admin password login is not configured");
   const normalizedEmail = email.trim().toLowerCase();
   const expiresAt = String(Math.floor(Date.now() / 1000) + sessionMaxAge);
   const payload = `v1.${Buffer.from(normalizedEmail, "utf8").toString("base64url")}.${expiresAt}`;
@@ -76,8 +71,7 @@ export function verifyAdminSessionValue(value: string | undefined) {
 
 export async function hasLocalAdminSession() {
   const cookieStore = await cookies();
-  if (verifyAdminSessionValue(cookieStore.get(adminSessionCookie)?.value)) return true;
-  return isLocalAdminEnabled() && cookieStore.get(localAdminCookie)?.value === "1";
+  return verifyAdminSessionValue(cookieStore.get(adminSessionCookie)?.value);
 }
 
 export async function signOutLocalAdmin(formData?: FormData) {

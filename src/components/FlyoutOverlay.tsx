@@ -8,7 +8,8 @@ import { site, type OnepagerPanel } from "@/lib/site";
 import { subscribeEpisodeSignup } from "@/lib/actions";
 import { fallbackThemeImage, themeImages } from "@/lib/theme-images";
 import type { CommunityCategory, CommunityPost, HostProfile, PodcastEpisode, PodcastSeason, SocialLinks, ThemeArticle, ThemeArticleBlock } from "@/types/content";
-import { CommunityFeedback, CommunityPostCard, CommunityStoryForm, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList, SpotifyEmbedPlayer } from "@/components/ui";
+import { CommunityFeedback, CommunityPostCard, EpisodeMeta, HostCard, ModernAudioPlayer, PlatformLinks, SocialLinksList, SpotifyEmbedPlayer } from "@/components/ui";
+import { CommunityStoryForm } from "@/components/ui/CommunityStoryForm";
 
 type FlyoutOverlayProps = {
   initialPanel?: OnepagerPanel | null;
