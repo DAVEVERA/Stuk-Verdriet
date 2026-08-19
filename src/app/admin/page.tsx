@@ -2,11 +2,13 @@ import Link from "next/link";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { CommunityChatWidget } from "@/components/CommunityChatWidget";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
+import { canAccessAdminPortal } from "@/lib/admin-access";
 import { getSiteDesignSettings, getSiteSettings } from "@/lib/content";
 import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
+import { buildRegistrationAnalyticsRows, getAmsterdamDayRange, summarizeAuthUsers, type AuthUserTiming } from "@/lib/registration-analytics";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
-import { isEmailAdmin, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
+import { getAdminRole, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
@@ -65,10 +67,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const {
     data: { user }
   } = server ? await server.auth.getUser() : { data: { user: null } };
-  const allowed = user?.email ? await isEmailAdmin(user.email) : false;
+  const adminRole = user?.email ? await getAdminRole(user.email) : null;
   const localAdminAllowed = await hasLocalAdminSession();
 
-  if (hasSupabaseEnv && !allowed && !localAdminAllowed) {
+  if (!canAccessAdminPortal(adminRole, localAdminAllowed)) {
     return <AdminAccessGate error={error ?? null} signedInEmail={user?.email ?? null} />;
   }
 
@@ -177,7 +179,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         sectionDesign={sectionDesign}
         siteSettings={siteSettings}
         missingSupabase={!hasSupabaseEnv}
-        localPreview={localAdminAllowed && !allowed && isLocalAdminEnabled()}
+        localPreview={localAdminAllowed && !adminRole && isLocalAdminEnabled()}
         savedMessage={saved ?? null}
         errorMessage={error ?? null}
         initialTab={tab ?? null}
@@ -202,6 +204,108 @@ async function getSupabaseCount(admin: AdminDataClient, table: string, label: st
   return { label, count: count ?? 0, error: null };
 }
 
+async function getFilteredSupabaseCount(
+  admin: AdminDataClient,
+  table: string,
+  label: string,
+  filters: { timestampColumn: string; start: string; end: string; intent?: "admin" | "community" }
+) {
+  let query = admin
+    .from(table)
+    .select("*", { count: "exact", head: true })
+    .gte(filters.timestampColumn, filters.start)
+    .lt(filters.timestampColumn, filters.end);
+
+  if (filters.intent) query = query.eq("intent", filters.intent);
+  const { count, error } = await query;
+  if (error) return { label, count: null, error: error.message };
+  return { label, count: count ?? 0, error: null };
+}
+
+async function getAllAuthUserTimings(admin: AdminDataClient) {
+  const users: AuthUserTiming[] = [];
+  const perPage = 1000;
+
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) return { users: [], error: error.message };
+
+    users.push(
+      ...data.users.map((user) => ({
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at
+      }))
+    );
+
+    if (data.users.length < perPage) return { users, error: null };
+  }
+}
+
+async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
+  const range = getAmsterdamDayRange();
+  const today = (timestampColumn: string, intent?: "admin" | "community") => ({
+    timestampColumn,
+    start: range.start,
+    end: range.end,
+    intent
+  });
+
+  const [
+    authUsers,
+    profilesTotal,
+    profilesToday,
+    podcastTotal,
+    podcastToday,
+    interviewTotal,
+    interviewToday,
+    adminLoginsToday,
+    communityLoginsToday
+  ] = await Promise.all([
+    getAllAuthUserTimings(admin),
+    getSupabaseCount(admin, "community_profiles", "Communityprofielen"),
+    getFilteredSupabaseCount(admin, "community_profiles", "Communityprofielen vandaag", today("created_at")),
+    getSupabaseCount(admin, "episode_signups", "Podcastinschrijvingen"),
+    getFilteredSupabaseCount(admin, "episode_signups", "Podcastinschrijvingen vandaag", today("created_at")),
+    getSupabaseCount(admin, "interview_subscribers", "Interviewvolgers"),
+    getFilteredSupabaseCount(admin, "interview_subscribers", "Interviewvolgers vandaag", today("created_at")),
+    getFilteredSupabaseCount(admin, "auth_login_events", "Admin-inlogdoel", today("occurred_at", "admin")),
+    getFilteredSupabaseCount(admin, "auth_login_events", "Community-inlogdoel", today("occurred_at", "community"))
+  ]);
+  const authSummary = authUsers.error
+    ? { totalAccounts: 0, newAccountsToday: 0, returningLoginsToday: 0 }
+    : summarizeAuthUsers(authUsers.users, range);
+  const count = (result: { count: number | null }) => result.count ?? 0;
+  const queryResults = [
+    profilesTotal,
+    profilesToday,
+    podcastTotal,
+    podcastToday,
+    interviewTotal,
+    interviewToday,
+    adminLoginsToday,
+    communityLoginsToday
+  ];
+  const failedSources = [
+    ...(authUsers.error ? ["Supabase Auth"] : []),
+    ...queryResults.filter((result) => result.error).map((result) => result.label)
+  ];
+
+  return {
+    rows: buildRegistrationAnalyticsRows({
+      ...authSummary,
+      totalCommunityProfiles: count(profilesTotal),
+      newCommunityProfilesToday: count(profilesToday),
+      totalPodcastSignups: count(podcastTotal),
+      newPodcastSignupsToday: count(podcastToday),
+      totalInterviewFollowers: count(interviewTotal),
+      newInterviewFollowersToday: count(interviewToday),
+      adminLoginEventsToday: count(adminLoginsToday),
+      communityLoginEventsToday: count(communityLoginsToday)
+    }),
+    failedSources
+  };
+}
+
 async function getSupabaseAnalyticsRows(
   admin: AdminDataClient,
   context: {
@@ -211,8 +315,9 @@ async function getSupabaseAnalyticsRows(
     pendingInterviewComments: PendingInterviewComment[];
   }
 ): Promise<AdminAnalyticsRow[]> {
-  const counts = await Promise.all([
-    getSupabaseCount(admin, "episode_signups", "Aflevering seintjes"),
+  const [registrationAnalytics, counts] = await Promise.all([
+    getRegistrationAnalyticsRows(admin),
+    Promise.all([
     getSupabaseCount(admin, "community_posts", "Community posts"),
     getSupabaseCount(admin, "community_replies", "Community reacties"),
     getSupabaseCount(admin, "community_supports", "Steunbetuigingen"),
@@ -220,25 +325,24 @@ async function getSupabaseAnalyticsRows(
     getSupabaseCount(admin, "community_pulse_moments", "Aan de pols momenten"),
     getSupabaseCount(admin, "community_profile_photos", "Profiel foto's"),
     getSupabaseCount(admin, "community_profile_events", "Profiel momenten")
+    ])
   ]);
   const byLabel = new Map(counts.map((item) => [item.label, item]));
-  const failedSources = counts.filter((item) => item.error).map((item) => item.label);
+  const failedSources = [
+    ...registrationAnalytics.failedSources,
+    ...counts.filter((item) => item.error).map((item) => item.label)
+  ];
   const countValue = (label: string) => byLabel.get(label)?.count ?? 0;
   const publishedEpisodes = context.episodes.filter((episode) => episode.status === "published").length;
   const openModeration = context.pendingPosts.length + context.pendingInterviewComments.length + context.reports.length;
 
   const rows: AdminAnalyticsRow[] = [
+    ...registrationAnalytics.rows,
     {
       metric: "Gepubliceerde afleveringen",
       value: formatAdminNumber(publishedEpisodes),
       detail: `${context.episodes.length} totaal in beheer`,
       source: "Supabase podcast_episodes"
-    },
-    {
-      metric: "Geef mij een seintje",
-      value: formatAdminNumber(countValue("Aflevering seintjes")),
-      detail: "Inschrijvingen voor nieuwe afleveringen",
-      source: "Supabase episode_signups"
     },
     {
       metric: "Community posts",

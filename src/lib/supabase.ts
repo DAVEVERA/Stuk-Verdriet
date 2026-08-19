@@ -2,6 +2,8 @@ import { createBrowserClient, createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { normalizeAdminRole, resolveAdminRole } from "@/lib/admin-access";
+import type { AdminUserRole } from "@/types/content";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -74,23 +76,24 @@ export function adminEmailList() {
     .filter(Boolean);
 }
 
-export async function isEmailAdmin(email: string): Promise<boolean> {
+export async function getAdminRole(email: string): Promise<AdminUserRole | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const environmentWhitelisted = adminEmailList().includes(normalizedEmail);
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    // Fallback to environment variable if database is not ready/configured
-    return adminEmailList().includes(email.trim().toLowerCase());
+    return resolveAdminRole({ databaseRole: null, environmentWhitelisted });
   }
 
   const { data, error } = await admin
     .from("admin_users")
-    .select("id")
-    .eq("email", email.trim().toLowerCase())
+    .select("role")
+    .eq("email", normalizedEmail)
     .maybeSingle();
 
-  if (error || !data) {
-    // Second fallback to env var for bootstrap safety
-    return adminEmailList().includes(email.trim().toLowerCase());
-  }
+  const databaseRole = error ? null : normalizeAdminRole(data?.role);
+  return resolveAdminRole({ databaseRole, environmentWhitelisted });
+}
 
-  return true;
+export async function isEmailAdmin(email: string): Promise<boolean> {
+  return Boolean(await getAdminRole(email));
 }

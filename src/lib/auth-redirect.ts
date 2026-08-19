@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSupabaseRouteClient } from "@/lib/supabase";
+import { getLoginIntent } from "@/lib/login-intent";
+import { createSupabaseAdminClient, createSupabaseRouteClient } from "@/lib/supabase";
 
 function encodeBase64Url(value: string) {
   return Buffer.from(value, "utf8").toString("base64url");
@@ -51,11 +52,25 @@ export async function handleAuthRedirect(request: Request) {
     return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "missing-supabase"), 303);
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     console.error("[auth-callback] code exchange failed", { next, code: error.code });
     return NextResponse.redirect(authErrorUrl(requestUrl.origin, next, "callback"), 303);
+  }
+
+  if (data.user?.id) {
+    const admin = createSupabaseAdminClient();
+    if (admin) {
+      const { error: eventError } = await admin.from("auth_login_events").insert({
+        user_id: data.user.id,
+        intent: getLoginIntent(next)
+      });
+
+      if (eventError) {
+        console.error("[auth-callback] login intent registration failed", { code: eventError.code });
+      }
+    }
   }
 
   return redirectResponse;

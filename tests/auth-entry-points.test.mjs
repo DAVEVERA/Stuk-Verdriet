@@ -22,6 +22,7 @@ const mocks = {
   adminDashboard: moduleUrl("export function AdminDashboard() { return null; }"),
   chatWidget: moduleUrl("export function CommunityChatWidget() { return null; }"),
   fallbackData: moduleUrl("export const fallbackEpisodes = []; export const fallbackSeasons = []; export const fallbackLegalDocuments = [];"),
+  adminAccess: moduleUrl("export function canAccessAdminPortal(role, hasLocalSession) { return Boolean(role) || hasLocalSession; }"),
   content: moduleUrl("export async function getSiteDesignSettings() { return {}; } export async function getSiteSettings() { return {}; }"),
   adminOperations: moduleUrl(`
     export async function getAdminCustomers() { return []; }
@@ -42,6 +43,11 @@ const mocks = {
     export async function hasLocalAdminSession() { return false; }
     export function isLocalAdminEnabled() { return false; }
   `),
+  registrationAnalytics: moduleUrl(`
+    export function buildRegistrationAnalyticsRows() { return []; }
+    export function getAmsterdamDayRange() { return { start: "", end: "" }; }
+    export function summarizeAuthUsers() { return { totalAccounts: 0, newAccountsToday: 0, returningLoginsToday: 0 }; }
+  `),
   shop: moduleUrl(`
     export async function getAdminShopOrders() { return []; }
     export async function getAdminShopProducts() { return []; }
@@ -52,7 +58,7 @@ const mocks = {
     export async function createSupabaseServerClient() {
       return { auth: { getUser: async () => ({ data: { user: null } }) } };
     }
-    export async function isEmailAdmin() { return false; }
+    export async function getAdminRole() { return null; }
     export function createSupabaseAdminClient() { return null; }
   `)
 };
@@ -67,9 +73,11 @@ registerHooks({
     if (specifier === "@/features/admin/AdminDashboard") return { url: mocks.adminDashboard, shortCircuit: true };
     if (specifier === "@/components/CommunityChatWidget") return { url: mocks.chatWidget, shortCircuit: true };
     if (specifier === "@/lib/fallback-data") return { url: mocks.fallbackData, shortCircuit: true };
+    if (specifier === "@/lib/admin-access") return { url: mocks.adminAccess, shortCircuit: true };
     if (specifier === "@/lib/content") return { url: mocks.content, shortCircuit: true };
     if (specifier === "@/lib/admin-operations") return { url: mocks.adminOperations, shortCircuit: true };
     if (specifier === "@/lib/local-admin") return { url: mocks.localAdmin, shortCircuit: true };
+    if (specifier === "@/lib/registration-analytics") return { url: mocks.registrationAnalytics, shortCircuit: true };
     if (specifier === "@/lib/shop") return { url: mocks.shop, shortCircuit: true };
     if (specifier === "@/lib/supabase") return { url: mocks.supabase, shortCircuit: true };
     return nextResolve(specifier, context);

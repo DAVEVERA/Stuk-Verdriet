@@ -24,6 +24,10 @@ create table if not exists public.legal_documents (
 alter table public.admin_users enable row level security;
 alter table public.legal_documents enable row level security;
 
+-- Admin accounts are managed only through authenticated server actions.
+revoke all on table public.admin_users from anon, authenticated;
+grant all on table public.admin_users to service_role;
+
 -- Policies for legal_documents
 drop policy if exists "visible legal documents are public" on public.legal_documents;
 create policy "visible legal documents are public"
@@ -62,8 +66,4 @@ create policy "Admins can manage legal documents"
   using (public.is_db_admin())
   with check (public.is_db_admin());
 
--- Seed initial admin emails from our common list
-insert into public.admin_users (email, role)
-values 
-  ('info@stukverdriet.com', 'super_admin')
-on conflict (email) do nothing;
+-- Bootstrap access comes from ADMIN_EMAILS. No extra account is seeded here.

@@ -1,6 +1,6 @@
 'use server';
 
-import { createSupabaseAdminClient } from '@/lib/supabase';
+import { requireAdminClient } from '@/lib/admin-authorization';
 import type {
   AdminCustomer,
   AdminLogisticsEvent,
@@ -21,8 +21,7 @@ import type {
 } from '@/types/content';
 
 export async function getAdminCustomers() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminCustomer[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('shop_customers')
@@ -57,8 +56,7 @@ export async function getAdminCustomers() {
 }
 
 export async function getAdminOrders() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminOrder[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('shop_orders')
@@ -71,8 +69,7 @@ export async function getAdminOrders() {
 }
 
 export async function getAdminReturns() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminReturn[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('shop_order_returns')
@@ -106,8 +103,7 @@ export async function getAdminReturns() {
 }
 
 export async function getAdminReviews() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminReview[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('shop_reviews')
@@ -121,8 +117,7 @@ export async function getAdminReviews() {
 }
 
 export async function getAdminLogisticsEvents() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminLogisticsEvent[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('shop_logistics_events')
@@ -136,8 +131,7 @@ export async function getAdminLogisticsEvents() {
 }
 
 export async function getAdminServiceQuestions() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminServiceQuestion[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('customer_questions')
@@ -152,8 +146,7 @@ export async function getAdminServiceQuestions() {
 
 // === ADMIN USERS CRUD ===
 export async function getAdminUsers() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as AdminUser[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('admin_users')
@@ -169,8 +162,7 @@ export async function getAdminUsers() {
 }
 
 export async function addAdminUser(email: string, role: AdminUserRole) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient({ manageAdminUsers: true });
 
   const cleanEmail = email.trim().toLowerCase();
   const { data, error } = await admin
@@ -187,8 +179,7 @@ export async function addAdminUser(email: string, role: AdminUserRole) {
 }
 
 export async function removeAdminUser(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient({ manageAdminUsers: true });
 
   const { error } = await admin.from('admin_users').delete().eq('id', id);
 
@@ -200,8 +191,7 @@ export async function removeAdminUser(id: string) {
 }
 
 export async function updateAdminUserRole(id: string, role: AdminUserRole) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient({ manageAdminUsers: true });
 
   const { data, error } = await admin
     .from('admin_users')
@@ -219,8 +209,7 @@ export async function updateAdminUserRole(id: string, role: AdminUserRole) {
 
 // === LEGAL DOCUMENTS CRUD ===
 export async function getLegalDocuments() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as LegalDocument[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('legal_documents')
@@ -242,8 +231,7 @@ export async function saveLegalDocument(
   content: string,
   isVisible: boolean
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const docPayload = {
     title: title.trim(),
@@ -282,8 +270,7 @@ export async function saveLegalDocument(
 }
 
 export async function deleteLegalDocument(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const { error } = await admin.from('legal_documents').delete().eq('id', id);
 
@@ -296,8 +283,7 @@ export async function deleteLegalDocument(id: string) {
 
 // === FAQS CRUD ===
 export async function getAdminFaqs() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as FAQ[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('faqs')
@@ -319,8 +305,7 @@ export async function saveFaq(
   displayOrder: number,
   status: ContentStatus
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const faqPayload = {
     question: question.trim(),
@@ -354,8 +339,7 @@ export async function saveFaq(
 }
 
 export async function deleteFaq(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const { error } = await admin.from('faqs').delete().eq('id', id);
 
@@ -367,8 +351,7 @@ export async function deleteFaq(id: string) {
 
 // === HOSTS CRUD ===
 export async function getAdminHosts() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as HostProfile[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('host_profiles')
@@ -392,8 +375,7 @@ export async function saveHost(
   displayOrder: number,
   status: ContentStatus
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const hostPayload = {
     name: name.trim(),
@@ -429,8 +411,7 @@ export async function saveHost(
 }
 
 export async function deleteHost(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const { error } = await admin.from('host_profiles').delete().eq('id', id);
 
@@ -442,8 +423,7 @@ export async function deleteHost(id: string) {
 
 // === MARKETING ITEMS CRUD ===
 export async function getAdminMarketingItems() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as MarketingItem[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('marketing_items')
@@ -465,8 +445,7 @@ export async function saveMarketingItem(
   title: string,
   status: MarketingItemStatus
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const payload = {
     date,
@@ -499,8 +478,7 @@ export async function saveMarketingItem(
 }
 
 export async function deleteMarketingItem(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const { error } = await admin.from('marketing_items').delete().eq('id', id);
 
@@ -512,8 +490,7 @@ export async function deleteMarketingItem(id: string) {
 
 // === CONTENTASSISTENT INSTELLINGEN ===
 export async function getAISettings() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return null as AISettings | null;
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('ai_settings')
@@ -546,8 +523,7 @@ export async function saveAISettings(
   toneDirectness: number,
   toneHopeful: number
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const payload = {
     text_prompt: textPrompt,
@@ -572,8 +548,7 @@ export async function saveAISettings(
 
 // === AUTOMATIONS CRUD ===
 export async function getAdminAutomations() {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [] as Automation[];
+  const admin = await requireAdminClient();
 
   const { data, error } = await admin
     .from('automations')
@@ -595,8 +570,7 @@ export async function saveAutomation(
   description: string,
   isActive: boolean
 ) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const payload = {
     trigger_event: triggerEvent.trim(),
@@ -629,8 +603,7 @@ export async function saveAutomation(
 }
 
 export async function deleteAutomation(id: string) {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { error: 'supabase-not-configured' };
+  const admin = await requireAdminClient();
 
   const { error } = await admin.from('automations').delete().eq('id', id);
 
