@@ -1,7 +1,16 @@
 import { PageIntro } from "@/components/ui";
 import { requestDataDeletion } from "@/lib/privacy-actions";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Afmelden of gegevens verwijderen",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type AfmeldenPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

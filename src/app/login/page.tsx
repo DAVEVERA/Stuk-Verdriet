@@ -1,5 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inloggen",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string; next?: string; missing?: string }>;

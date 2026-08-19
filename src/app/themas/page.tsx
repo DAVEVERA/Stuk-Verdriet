@@ -11,7 +11,10 @@ export async function generateMetadata({ searchParams }: ThemasPageProps) {
   if (!article) {
     return {
       title: "Thema's",
-      description: "Kies een thema dat past bij jouw vraag, moment of herinnering."
+      description: "Kies een thema dat past bij jouw vraag, moment of herinnering.",
+      alternates: {
+        canonical: "/themas"
+      }
     };
   }
 

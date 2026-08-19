@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { createCommunityReply, reportCommunityContent, reportPost, supportPost } from "@/lib/actions";
 import { getApprovedCommunityPostBySlug, getApprovedCommunityReplies } from "@/lib/content";
 import { createSupabaseServerClient } from "@/lib/supabase";
@@ -11,9 +13,52 @@ type CommunityPostPageProps = {
 
 export const dynamic = "force-dynamic";
 
+const getCommunityPost = cache(getApprovedCommunityPostBySlug);
+
+function truncate(value: string, maximumLength: number) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized.length > maximumLength
+    ? `${normalized.slice(0, maximumLength - 1).trimEnd()}…`
+    : normalized;
+}
+
+function metaDescription(value: string) {
+  return truncate(value, 155);
+}
+
+export async function generateMetadata({ params }: CommunityPostPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getCommunityPost(slug);
+  if (!post) {
+    return {
+      robots: {
+        index: false,
+        follow: false
+      }
+    };
+  }
+
+  const description = metaDescription(post.body);
+  const title = truncate(post.title, 52);
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/community/${post.slug}`
+    },
+    openGraph: {
+      title: truncate(post.title, 90),
+      description,
+      url: `/community/${post.slug}`,
+      type: "article",
+      images: post.image_url ? [post.image_url] : undefined
+    }
+  };
+}
+
 export default async function CommunityPostPage({ params }: CommunityPostPageProps) {
   const { slug } = await params;
-  const post = await getApprovedCommunityPostBySlug(slug);
+  const post = await getCommunityPost(slug);
   if (!post) notFound();
 
   const supabase = await createSupabaseServerClient();

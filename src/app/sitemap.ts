@@ -1,86 +1,86 @@
 import type { MetadataRoute } from "next";
 import { getApprovedCommunityPosts, getPublishedEpisodes } from "@/lib/content";
+import { canonicalSiteUrl } from "@/lib/site";
 import { getThemeArticles } from "@/lib/theme-articles";
-import { site } from "@/lib/site";
 
-const productionSiteUrl = "https://www.stukverdriet.com";
+// Alleen aanpassen wanneer de zichtbare hoofdinhoud van de homepage wezenlijk wijzigt.
+const homepageContentLastModified = "2026-08-19";
 
-const staticRoutes = [
-  { path: "", priority: 1, changeFrequency: "weekly" },
-  { path: "/podcast", priority: 0.9, changeFrequency: "weekly" },
-  { path: "/themas", priority: 0.9, changeFrequency: "monthly" },
-  { path: "/over", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/contact", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/archief", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/community", priority: 0.8, changeFrequency: "daily" },
-  { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/cookies", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/algemene-voorwaarden", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/bedrijfsgegevens", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/retourbeleid", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/herroepingsformulier", priority: 0.2, changeFrequency: "yearly" },
-  { path: "/herroepen", priority: 0.2, changeFrequency: "yearly" },
-  { path: "/levering-betaling", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/garantie-klachten", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/verwerkers", priority: 0.2, changeFrequency: "yearly" },
-  { path: "/bewaartermijnen", priority: 0.2, changeFrequency: "yearly" },
-  { path: "/webshop-faq", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/juridisch-memorandum-webshop", priority: 0.1, changeFrequency: "yearly" },
-  { path: "/communityrichtlijnen", priority: 0.4, changeFrequency: "yearly" }
-] satisfies Array<{
-  path: string;
-  priority: number;
-  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
-}>;
+const staticPaths = [
+  "",
+  "/podcast",
+  "/themas",
+  "/community",
+  "/over",
+  "/contact"
+] as const;
 
-function getBaseUrl() {
-  const configuredUrl = site.url.trim();
-  if (!configuredUrl || configuredUrl.includes("localhost")) return productionSiteUrl;
-  return configuredUrl.replace(/\/$/, "");
+export const revalidate = 3600;
+
+function validDate(value: string | null | undefined) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function newestDate(values: Array<string | null | undefined>) {
+  return values
+    .map(validDate)
+    .filter((date): date is Date => Boolean(date))
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+}
+
+function canonicalUrl(pathname: string) {
+  const path = pathname === "/" ? "" : `/${pathname.replace(/^\/+|\/+$/g, "")}`;
+  return `${canonicalSiteUrl}${path}`;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = getBaseUrl();
   const [episodes, posts] = await Promise.all([
     getPublishedEpisodes(),
     getApprovedCommunityPosts()
   ]);
   const themes = getThemeArticles();
 
-  const entries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
-    url: `${baseUrl}${route.path}`,
-    lastModified: new Date(),
-    changeFrequency: route.changeFrequency,
-    priority: route.priority
+  const episodeLastModified = newestDate(
+    episodes.flatMap((episode) => [episode.updated_at, episode.publication_date, episode.created_at])
+  );
+  const communityLastModified = newestDate(
+    posts.flatMap((post) => [post.updated_at, post.created_at])
+  );
+  const homeLastModified = newestDate([
+    homepageContentLastModified,
+    episodeLastModified?.toISOString(),
+    communityLastModified?.toISOString()
+  ]);
+
+  const aggregateDates = new Map<string, Date | undefined>([
+    ["", homeLastModified],
+    ["/podcast", episodeLastModified],
+    ["/community", communityLastModified]
+  ]);
+
+  const entries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
+    url: canonicalUrl(path),
+    lastModified: aggregateDates.get(path)
   }));
 
-  for (const episode of episodes) {
-    entries.push({
-      url: `${baseUrl}/podcast/${episode.slug}`,
-      lastModified: episode.publication_date ? new Date(episode.publication_date) : new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8
-    });
-  }
-
   for (const theme of themes) {
+    if (!theme.slug) continue;
     entries.push({
-      url: `${baseUrl}/themas/${theme.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7
+      url: canonicalUrl(`/themas/${theme.slug}`)
     });
   }
 
   for (const post of posts) {
+    if (!post.slug) continue;
     entries.push({
-      url: `${baseUrl}/community/${post.slug}`,
-      lastModified: new Date(post.updated_at ?? post.created_at),
-      changeFrequency: "monthly",
-      priority: 0.6
+      url: canonicalUrl(`/community/${post.slug}`),
+      lastModified: validDate(post.updated_at ?? post.created_at)
     });
   }
 
-  return entries;
+  return Array.from(
+    new Map(entries.map((entry) => [entry.url, entry])).values()
+  );
 }

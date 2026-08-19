@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import {
   CalendarDays,
@@ -38,6 +39,14 @@ import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 import { PulseMomentDesigner } from "@/components/PulseMomentDesigner";
 import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase";
+
+export const metadata: Metadata = {
+  title: "Mijn communityprofiel",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 import type {
   CommunityFriendship,
   CommunityPost,

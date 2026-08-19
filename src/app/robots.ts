@@ -1,25 +1,15 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/lib/site";
-
-const productionSiteUrl = "https://www.stukverdriet.com";
-
-function getBaseUrl() {
-  const configuredUrl = site.url.trim();
-  if (!configuredUrl || configuredUrl.includes("localhost")) return productionSiteUrl;
-  return configuredUrl.replace(/\/$/, "");
-}
+import { canonicalSiteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = getBaseUrl();
-
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/auth", "/login", "/redirect", "/community/profiel"]
+        disallow: ["/api/", "/auth/", "/redirect"]
       }
     ],
-    sitemap: `${baseUrl}/sitemap.xml`
+    sitemap: `${canonicalSiteUrl}/sitemap.xml`
   };
 }

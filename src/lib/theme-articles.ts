@@ -17,6 +17,29 @@ const themeArticleFiles = [
   "12-Voor-de-omgeving.md"
 ] as const;
 
+const themeArticleFallbacks: Partial<Record<(typeof themeArticleFiles)[number], {
+  title: string;
+  slug: string;
+  seoTitle: string;
+  metaDescription: string;
+  cardText: string;
+}>> = {
+  "01-Rouw-algemeen.md": {
+    title: "Rouw algemeen",
+    slug: "rouw-algemeen",
+    seoTitle: "Rouw algemeen | Herkenning en steun bij verlies",
+    metaDescription: "Lees over rouw, verlies en verder leven. Vind herkenning, praktische houvast en ruimte voor alles wat gemis met je doet.",
+    cardText: "Herkenning, uitleg en steun voor wie leeft met rouw en gemis."
+  },
+  "09-Hulp-en-ondersteuning.md": {
+    title: "Hulp en ondersteuning",
+    slug: "hulp-en-ondersteuning",
+    seoTitle: "Hulp bij rouw en verlies | Luisterlijnen en ondersteuning",
+    metaDescription: "Vind betrouwbare hulp bij rouw, verlies en kanker. Bekijk luisterlijnen, lotgenotencontact en organisaties waar je terechtkunt.",
+    cardText: "Betrouwbare plekken voor een luisterend oor, begeleiding en lotgenotencontact."
+  }
+};
+
 const articlesDirectory = path.join(process.cwd(), "assets", "StukVerdriet-Themas");
 
 function pushParagraph(target: ThemeArticleBlock[], lines: string[]) {
@@ -66,14 +89,18 @@ function readSeoField(lines: string[], label: string) {
   return found?.trim().slice(prefix.length).trim() ?? "";
 }
 
-function parseThemeArticle(markdown: string): ThemeArticle {
+function parseThemeArticle(
+  markdown: string,
+  fallback?: (typeof themeArticleFallbacks)[keyof typeof themeArticleFallbacks]
+): ThemeArticle {
   const normalized = markdown.replace(/\r\n/g, "\n").trim();
   const [articleMarkdown, seoMarkdown = ""] = normalized.split(/\n## SEO\s*\n/);
   const articleLines = articleMarkdown.split("\n");
   const titleLine = articleLines.find((line) => line.startsWith("# "));
-  const title = titleLine?.replace(/^#\s+/, "").trim() ?? "Thema";
+  const htmlTitle = articleMarkdown.match(/<h1>(.*?)<\/h1>/i)?.[1]?.trim();
+  const title = titleLine?.replace(/^#\s+/, "").trim() || htmlTitle || fallback?.title || "Thema";
 
-  const contentLines = articleLines.filter((line) => !line.startsWith("# "));
+  const contentLines = articleLines.filter((line) => !line.startsWith("# ") && !/<h1>.*<\/h1>/i.test(line));
   const sections: ThemeArticleSection[] = [];
   const introLines: string[] = [];
   let currentHeading: string | null = null;
@@ -109,7 +136,7 @@ function parseThemeArticle(markdown: string): ThemeArticle {
   }
 
   const seoLines = seoMarkdown.split("\n");
-  const slug = readSeoField(seoLines, "URL slug").replace(/^\//, "");
+  const slug = readSeoField(seoLines, "URL slug").replace(/^\//, "") || fallback?.slug || "";
 
   return {
     slug,
@@ -119,10 +146,10 @@ function parseThemeArticle(markdown: string): ThemeArticle {
       .map((block) => block.content),
     sections,
     seo: {
-      title: readSeoField(seoLines, "SEO titel"),
-      metaDescription: readSeoField(seoLines, "Meta description"),
+      title: readSeoField(seoLines, "SEO titel") || fallback?.seoTitle || title,
+      metaDescription: readSeoField(seoLines, "Meta description") || fallback?.metaDescription || "",
       slug: `/${slug}`,
-      cardText: readSeoField(seoLines, "Kaarttekst")
+      cardText: readSeoField(seoLines, "Kaarttekst") || fallback?.cardText || ""
     }
   };
 }
@@ -130,7 +157,7 @@ function parseThemeArticle(markdown: string): ThemeArticle {
 export function getThemeArticles(): ThemeArticle[] {
   return themeArticleFiles.map((fileName) => {
     const markdown = fs.readFileSync(path.join(articlesDirectory, fileName), "utf8");
-    return parseThemeArticle(markdown);
+    return parseThemeArticle(markdown, themeArticleFallbacks[fileName]);
   });
 }
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { CommunityChatWidget } from "@/components/CommunityChatWidget";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
@@ -13,6 +14,14 @@ import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/A
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Beheer",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 type AdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
