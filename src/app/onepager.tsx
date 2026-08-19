@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { Heart } from "lucide-react";
 import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { InterviewGrid } from "@/components/InterviewGrid";
@@ -18,6 +18,37 @@ type OnepagerProps = {
   error?: string | null;
   signupStatus?: string | null;
 };
+
+function CommunityPreviewBannerImage() {
+  const shared = {
+    alt: "",
+    sizes: "(min-width: 900px) calc(100vw - 112px), calc(100vw - 36px)"
+  };
+  const {
+    props: desktopImageProps
+  } = getImageProps({
+    ...shared,
+    src: "/hero/snaar-community-hero-desktop.png",
+    width: 1729,
+    height: 910
+  });
+  const {
+    props: mobileImageProps
+  } = getImageProps({
+    ...shared,
+    src: "/hero/snaar-community-hero-mobile.png",
+    width: 892,
+    height: 1764
+  });
+
+  return (
+    <picture className="community-preview-banner-picture">
+      <source media="(min-width: 900px)" srcSet={desktopImageProps.srcSet} sizes={desktopImageProps.sizes} />
+      {/* getImageProps levert hier de geoptimaliseerde fallback voor de art-directed banner. */}
+      <img {...mobileImageProps} className="community-preview-banner-image" alt="" aria-hidden="true" />
+    </picture>
+  );
+}
 
 export async function Onepager({ initialPanel = null, initialTheme = null, submitted = false, error = null, signupStatus = null }: OnepagerProps) {
   const supabase = await createSupabaseServerClient();
@@ -59,21 +90,41 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
         ) : null}
 
         <section className="content-band community-preview-section" id="community-preview" aria-labelledby="community-preview-title">
-          <div className="section-heading">
-            <p className="eyebrow">SNAAR community</p>
-            <h2 id="community-preview-title">Je hoeft het niet alleen te doen.</h2>
-            <p>Lees hoe anderen omgaan met verlies, deel je eigen verhaal of lees rustig mee. SNAAR is de community van Stuk Verdriet.</p>
+          <div className="community-preview-banner">
+            <CommunityPreviewBannerImage />
+            <div className="community-preview-banner-copy">
+              <div className="community-preview-brand-row">
+                <Image
+                  className="community-preview-logo"
+                  src="/img/icons_SNAAR/snaar_cirkel.png"
+                  alt="SNAAR community"
+                  width={289}
+                  height={286}
+                  sizes="(min-width: 900px) 106px, 78px"
+                />
+                <div>
+                  <p className="community-preview-live"><span aria-hidden="true" /> De community is live</p>
+                </div>
+              </div>
+              <h2 id="community-preview-title">Je hoeft het niet alleen te doen.</h2>
+              <p>Lees hoe anderen omgaan met verlies, deel je eigen verhaal of lees rustig mee. SNAAR is de community van Stuk Verdriet.</p>
+              <Link className="button community-preview-cta" href="/community">
+                Ga naar SNAAR
+              </Link>
+            </div>
           </div>
           {posts.length ? (
-            <div className="post-grid compact community-preview-grid">
-              {posts.slice(0, 3).map((post) => (
-                <CommunityPostCard key={post.id} post={post} />
-              ))}
+            <div className="community-preview-feed">
+              <div className="community-preview-feed-heading">
+                <p>Lees mee met de nieuwste verhalen en reacties uit SNAAR.</p>
+              </div>
+              <div className="post-grid compact community-preview-grid">
+                {posts.slice(0, 3).map((post) => (
+                  <CommunityPostCard key={post.id} post={post} />
+                ))}
+              </div>
             </div>
           ) : null}
-          <Link className="button community-preview-cta" href="/community">
-            Word deel van de community
-          </Link>
         </section>
 
         <section className="aya-support-banner" aria-labelledby="aya-support-title">

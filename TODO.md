@@ -38,3 +38,13 @@ Deze fase richt zich op het bouwen van een volledig functionele marketingkalende
 ## Completion Marker
 
 ALL_TASKS_COMPLETE: true
+
+## Current Ralph Task - Homepage community
+
+- [x] Bestaande sectie, lange berichttitel en SNAAR-assets inspecteren
+- [x] Responsive SNAAR-banner met live-status en logo bouwen
+- [x] Vaste slogan en ondersteunende tekst exact behouden
+- [x] Communitykaarttitels kleiner en stabiel maken
+- [x] Visuele QA uitvoeren op 320px, 375px, 390px en desktop
+- [x] Tests, lint, typecheck en productiebuild uitvoeren
+- [x] Eindcontrole en Ralph-log afronden
