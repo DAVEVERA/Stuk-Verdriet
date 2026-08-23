@@ -23,6 +23,7 @@ const mocks = {
   chatWidget: moduleUrl("export function CommunityChatWidget() { return null; }"),
   fallbackData: moduleUrl("export const fallbackEpisodes = []; export const fallbackSeasons = []; export const fallbackLegalDocuments = [];"),
   adminAccess: moduleUrl("export function canAccessAdminPortal(role, hasLocalSession) { return Boolean(role) || hasLocalSession; }"),
+  authRedirect: moduleUrl("export function safeAuthNext(value) { return value === '/admin' ? '/admin' : '/community'; }"),
   content: moduleUrl("export async function getSiteDesignSettings() { return {}; } export async function getSiteSettings() { return {}; }"),
   adminOperations: moduleUrl(`
     export async function getAdminCustomers() { return []; }
@@ -75,6 +76,7 @@ registerHooks({
     if (specifier === "@/components/CommunityChatWidget") return { url: mocks.chatWidget, shortCircuit: true };
     if (specifier === "@/lib/fallback-data") return { url: mocks.fallbackData, shortCircuit: true };
     if (specifier === "@/lib/admin-access") return { url: mocks.adminAccess, shortCircuit: true };
+    if (specifier === "@/lib/auth-redirect") return { url: mocks.authRedirect, shortCircuit: true };
     if (specifier === "@/lib/content") return { url: mocks.content, shortCircuit: true };
     if (specifier === "@/lib/admin-operations") return { url: mocks.adminOperations, shortCircuit: true };
     if (specifier === "@/lib/local-admin") return { url: mocks.localAdmin, shortCircuit: true };
@@ -127,4 +129,14 @@ test("/login?next=/admin offers Google OAuth and configured local admin login", 
   const loginPage = await importTsx(resolve("src/app/login/page.tsx"));
   const element = await loginPage.default({ searchParams: Promise.resolve({ next: "/admin" }) });
   assertAdminLoginOptions(renderToStaticMarkup(element));
+});
+
+test("the retired shop login target falls back to the community login", async () => {
+  const loginPage = await importTsx(resolve("src/app/login/page.tsx"));
+  const element = await loginPage.default({ searchParams: Promise.resolve({ next: "/shop" }) });
+  const markup = renderToStaticMarkup(element);
+
+  assert.match(markup, /Log in op SNAAR/);
+  assert.match(markup, /href="\/auth\/google\?next=%2Fcommunity"/);
+  assert.doesNotMatch(markup, /shop/i);
 });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { safeAuthNext } from "@/lib/auth-redirect";
 
 export const metadata: Metadata = {
   title: "Inloggen",
@@ -25,22 +26,19 @@ const errorMessages: Record<string, string> = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = (await searchParams) ?? {};
-  const next = params.next ?? "/community";
+  const next = safeAuthNext(params.next ?? "/community");
   const error = params.error ?? params.missing;
   const isAdminLogin = next === "/admin";
-  const isShopLogin = next === "/shop";
   const googleLoginHref = `/auth/google?next=${encodeURIComponent(next)}`;
 
   return (
     <div className="login-under-construction">
       <div className="login-uc-content">
-        <p className="eyebrow">{isAdminLogin ? "Beheer" : isShopLogin ? "Shop" : "SNAAR"}</p>
-        <h1>{isAdminLogin ? "Beheer login" : isShopLogin ? "Log in voor de shop" : "Log in op SNAAR"}</h1>
+        <p className="eyebrow">{isAdminLogin ? "Beheer" : "SNAAR"}</p>
+        <h1>{isAdminLogin ? "Beheer login" : "Log in op SNAAR"}</h1>
         <p>
           {isAdminLogin
             ? "Log in met Google of een toegestaan lokaal beheeraccount."
-            : isShopLogin
-              ? "De shop staat nog afgeschermd. Log in om deze pagina te bekijken."
             : "Lees verhalen zonder account. Log in als je wilt reageren, steun geven of zelf iets wilt delen."}
         </p>
 
@@ -99,7 +97,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
 
         <Link href={next === "/admin" ? "/" : next} className="login-uc-back">
-          Terug naar {next === "/admin" ? "Stuk Verdriet" : isShopLogin ? "Shop" : "SNAAR"}
+          Terug naar {next === "/admin" ? "Stuk Verdriet" : "SNAAR"}
         </Link>
       </div>
     </div>

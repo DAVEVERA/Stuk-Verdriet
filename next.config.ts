@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   experimental: {
+    cpus: 2,
     serverActions: {
       bodySizeLimit: "5.1mb"
     }

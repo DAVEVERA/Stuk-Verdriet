@@ -121,17 +121,11 @@ export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: So
         ))}
         <Link href="/algemene-voorwaarden">Algemene voorwaarden</Link>
         <Link href="/bedrijfsgegevens">Bedrijfsgegevens</Link>
-        <Link href="/retourbeleid">Retourbeleid</Link>
-        <Link href="/herroepingsformulier">Herroepingsformulier</Link>
-        <Link href="/herroepen">Aankoop herroepen</Link>
-        <Link href="/levering-betaling">Levering en betaling</Link>
-        <Link href="/garantie-klachten">Garantie en klachten</Link>
         <Link href="/privacy">Privacyverklaring</Link>
         <Link href="/verwerkers">Verwerkers</Link>
         <Link href="/bewaartermijnen">Bewaartermijnen</Link>
         <Link href="/communityrichtlijnen">Communityrichtlijnen</Link>
         <Link href="/cookies">Cookieverklaring</Link>
-        <Link href="/webshop-faq">Webshop FAQ</Link>
       </nav>
       <div className="footer-contact">
         <a className="quiet-link" href={`mailto:${site.email}`}>

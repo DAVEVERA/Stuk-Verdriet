@@ -5,12 +5,11 @@ import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
 import { canAccessAdminPortal } from "@/lib/admin-access";
 import { getSiteDesignSettings, getSiteSettings } from "@/lib/content";
-import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsersWithStatus, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
+import { getAdminUsersWithStatus, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { buildRegistrationAnalyticsRows, getAmsterdamDayRange, summarizeAuthUsers, type AuthUserTiming } from "@/lib/registration-analytics";
-import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
 import { getAdminRole, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
-import type { AdminAnalyticsRow, AdminAnalyticsSource, AdminIdentity, AdminLoginActivity } from "@/features/admin/AdminDashboard";
+import type { AdminAnalyticsRow, AdminAnalyticsSource, AdminDataState, AdminIdentity, AdminLoginActivity } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +66,24 @@ type OpenCommunityReport = {
   resolved_at?: string | null;
 };
 
+type PendingCommunityReply = {
+  id: string;
+  post_id: string;
+  author_name: string | null;
+  author_display_type: string;
+  body: string;
+  created_at: string;
+  status: string;
+  community_posts?: {
+    title: string;
+    slug: string;
+  } | null;
+};
+
+type RawPendingCommunityReply = Omit<PendingCommunityReply, "community_posts"> & {
+  community_posts?: PendingCommunityReply["community_posts"] | PendingCommunityReply["community_posts"][];
+};
+
 function getAdminDisplayName(user: User | null, localAdminAllowed: boolean) {
   if (!user) return localAdminAllowed ? "Lokale beheerder" : "Beheerder";
   const metadata = user.user_metadata as Record<string, unknown>;
@@ -103,22 +120,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const siteSettings = await getSiteSettings();
   const [
     pendingPostsResult,
+    pendingCommunityRepliesResult,
     reportsResult,
     seasonsResult,
     episodesResult,
-    pendingInterviewCommentsResult,
-    shopProducts,
-    shopOrders,
-    shopSettings,
-    customers,
-    orders,
-    returns,
-    reviews,
-    logisticsEvents,
-    serviceQuestions
+    pendingInterviewCommentsResult
   ] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
+        admin
+          .from("community_replies")
+          .select("id,post_id,author_name,author_display_type,body,created_at,status,community_posts(title,slug)")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
         admin.from("community_reports").select("*").is("resolved_at", null).order("created_at", { ascending: false }),
         admin.from("podcast_seasons").select("*").order("season_number", { ascending: true }),
         admin.from("podcast_episodes").select("*").order("season_number", { ascending: true }).order("episode_number", { ascending: true }),
@@ -126,34 +140,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .from("interview_comments")
           .select("id,interview_id,author_name,author_display_type,body,created_at,status,interviews(title,slug)")
           .eq("status", "pending")
-          .order("created_at", { ascending: false }),
-        getAdminShopProducts(),
-        getAdminShopOrders(),
-        getAdminShopSettings(),
-        hasGoogleAdminSession ? getAdminCustomers() : [],
-        hasGoogleAdminSession ? getAdminOrders() : [],
-        hasGoogleAdminSession ? getAdminReturns() : [],
-        hasGoogleAdminSession ? getAdminReviews() : [],
-        hasGoogleAdminSession ? getAdminLogisticsEvents() : [],
-        hasGoogleAdminSession ? getAdminServiceQuestions() : []
+          .order("created_at", { ascending: false })
       ])
     : [
         { data: [] },
         { data: [] },
+        { data: [] },
         { data: fallbackSeasons },
         { data: fallbackEpisodes },
-        { data: [] },
-        await getAdminShopProducts(),
-        [],
-        await getAdminShopSettings(),
-        [],
-        [],
-        [],
-        [],
-        [],
-        []
+        { data: [] }
       ];
   const pendingPosts = pendingPostsResult.data;
+  const pendingCommunityReplies = pendingCommunityRepliesResult.data;
   const reports = reportsResult.data;
   const seasons = seasonsResult.data;
   const episodes = episodesResult.data;
@@ -162,14 +160,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...comment,
     interviews: Array.isArray(comment.interviews) ? (comment.interviews[0] ?? null) : (comment.interviews ?? null)
   }));
+  const normalizedPendingCommunityReplies = ((pendingCommunityReplies ?? []) as RawPendingCommunityReply[]).map((reply) => ({
+    ...reply,
+    community_posts: Array.isArray(reply.community_posts) ? (reply.community_posts[0] ?? null) : (reply.community_posts ?? null)
+  }));
   const analyticsSnapshot = admin
     ? await getSupabaseAnalyticsRows(admin, {
         episodes: ((episodes ?? []) as PodcastEpisode[]),
         pendingPosts: pendingPosts ?? [],
+        pendingCommunityReplies: normalizedPendingCommunityReplies,
         reports: reports ?? [],
         pendingInterviewComments: normalizedPendingInterviewComments
       })
-    : { rows: [] as AdminAnalyticsRow[], loginActivity: [] as AdminLoginActivity[] };
+    : { rows: [] as AdminAnalyticsRow[], loginActivity: [] as AdminLoginActivity[], loginActivityState: "unknown" as const };
   const analyticsRows = analyticsSnapshot.rows;
   const analyticsSources = getAnalyticsSources(Boolean(admin));
 
@@ -207,18 +210,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         pendingPosts={pendingPosts ?? []}
         reports={reports ?? []}
         pendingInterviewComments={normalizedPendingInterviewComments}
+        pendingCommunityReplies={normalizedPendingCommunityReplies}
         analyticsRows={analyticsRows}
         analyticsSources={analyticsSources}
-        shopProducts={shopProducts}
-        shopOrders={shopOrders}
-        shopSettings={shopSettings}
-        customers={customers}
-        orders={orders}
-        returns={returns}
-        reviews={reviews}
-        logisticsEvents={logisticsEvents}
-        serviceQuestions={serviceQuestions}
-        stripeConfigured={Boolean(process.env.STRIPE_SECRET_KEY)}
         sectionDesign={sectionDesign}
         siteSettings={siteSettings}
         missingSupabase={!hasSupabaseEnv}
@@ -237,6 +231,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         adminIdentity={adminIdentity}
         dataCheckedAt={dataCheckedAt}
         loginActivity={analyticsSnapshot.loginActivity}
+        loginActivityState={analyticsSnapshot.loginActivityState}
       />
   );
 }
@@ -392,7 +387,8 @@ async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
       communityLoginEventsToday: count(communityLoginsToday)
     }).map((row) => ({ ...row, state: stateForMetric(row.metric) })),
     failedSources: recentLoginEvents.error ? [...failedSources, "Recente inlogactiviteit"] : failedSources,
-    loginActivity
+    loginActivity,
+    loginActivityState: recentLoginEvents.error ? "error" as const : "verified" as const
   };
 }
 
@@ -401,10 +397,11 @@ async function getSupabaseAnalyticsRows(
   context: {
     episodes: PodcastEpisode[];
     pendingPosts: PendingCommunityPost[];
+    pendingCommunityReplies: PendingCommunityReply[];
     reports: OpenCommunityReport[];
     pendingInterviewComments: PendingInterviewComment[];
   }
-): Promise<{ rows: AdminAnalyticsRow[]; loginActivity: AdminLoginActivity[] }> {
+): Promise<{ rows: AdminAnalyticsRow[]; loginActivity: AdminLoginActivity[]; loginActivityState: AdminDataState }> {
   const [registrationAnalytics, counts] = await Promise.all([
     getRegistrationAnalyticsRows(admin),
     Promise.all([
@@ -426,7 +423,7 @@ async function getSupabaseAnalyticsRows(
   const countState = (label: string): AdminAnalyticsRow["state"] => byLabel.get(label)?.error ? "error" : "verified";
   const formattedCount = (label: string) => countState(label) === "error" ? "—" : formatAdminNumber(countValue(label));
   const publishedEpisodes = context.episodes.filter((episode) => episode.status === "published").length;
-  const openModeration = context.pendingPosts.length + context.pendingInterviewComments.length + context.reports.length;
+  const openModeration = context.pendingPosts.length + context.pendingCommunityReplies.length + context.pendingInterviewComments.length + context.reports.length;
 
   const rows: AdminAnalyticsRow[] = [
     ...registrationAnalytics.rows,
@@ -491,7 +488,11 @@ async function getSupabaseAnalyticsRows(
     });
   }
 
-  return { rows, loginActivity: registrationAnalytics.loginActivity };
+  return {
+    rows,
+    loginActivity: registrationAnalytics.loginActivity,
+    loginActivityState: registrationAnalytics.loginActivityState
+  };
 }
 
 function getAnalyticsSources(hasAdminClient: boolean): AdminAnalyticsSource[] {

@@ -1,11 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { hasRouteAccess, isProtectedRoute, isShopRoute, routeAccessCookie } from "@/lib/route-password";
+import { isHiddenShopPath } from "@/lib/shop-visibility";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export async function proxy(request: NextRequest) {
+  if (isHiddenShopPath(request.nextUrl.pathname)) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "X-Robots-Tag": "noindex, nofollow" }
+    });
+  }
+
   const legacyRedirectUrl = process.env.LEGACY_SITE_REDIRECT_URL;
   if (legacyRedirectUrl) {
     const targetUrl = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, legacyRedirectUrl);

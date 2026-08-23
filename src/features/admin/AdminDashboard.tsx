@@ -20,8 +20,6 @@ import {
   LayoutTemplate,
   LockKeyhole,
   Network,
-  Package,
-  ReceiptText,
   Palette,
   Paintbrush,
   Plus,
@@ -39,25 +37,16 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
+import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveSiteSettings, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
 import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation } from "@/lib/admin-operations";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
 import styles from "./AdminDashboard.module.css";
 import type {
-  AdminCustomer,
-  AdminLogisticsEvent,
-  AdminOrder,
-  AdminReturn,
-  AdminReview,
-  AdminServiceQuestion,
   PodcastEpisode,
   PodcastLinkCard,
   PodcastSeason,
   SectionDesignKey,
   SectionDesignSettings,
-  ShopOrder,
-  ShopProduct,
-  ShopSettings,
   SiteDesignSettings,
   SiteSettings,
   AdminUser,
@@ -110,24 +99,29 @@ type AdminInterviewComment = {
   } | null;
 };
 
+type AdminCommunityReply = {
+  id: string;
+  post_id: string;
+  author_name: string | null;
+  author_display_type: string;
+  body: string;
+  created_at: string;
+  status: string;
+  community_posts?: {
+    title: string;
+    slug: string;
+  } | null;
+};
+
 type AdminDashboardProps = {
   episodes: PodcastEpisode[];
   seasons: PodcastSeason[];
   pendingPosts: AdminPost[];
   reports: AdminReport[];
   pendingInterviewComments: AdminInterviewComment[];
+  pendingCommunityReplies: AdminCommunityReply[];
   analyticsRows: AdminAnalyticsRow[];
   analyticsSources: AdminAnalyticsSource[];
-  shopProducts: ShopProduct[];
-  shopOrders: ShopOrder[];
-  shopSettings: ShopSettings;
-  customers: AdminCustomer[];
-  orders: AdminOrder[];
-  returns: AdminReturn[];
-  reviews: AdminReview[];
-  logisticsEvents: AdminLogisticsEvent[];
-  serviceQuestions: AdminServiceQuestion[];
-  stripeConfigured: boolean;
   sectionDesign: SiteDesignSettings;
   siteSettings?: SiteSettings;
   missingSupabase?: boolean;
@@ -146,6 +140,7 @@ type AdminDashboardProps = {
   adminIdentity: AdminIdentity;
   dataCheckedAt: string;
   loginActivity: AdminLoginActivity[];
+  loginActivityState: AdminDataState;
 };
 
 export type AdminDataState = "verified" | "unknown" | "error";
@@ -209,11 +204,6 @@ const emptyEpisode: PodcastEpisode = {
 
 const tabs = [
   ["today", "Vandaag"],
-  ["customers", "Klanten"],
-  ["orders", "Orders"],
-  ["returns", "Retouren"],
-  ["logistics", "Logistiek"],
-  ["service", "Service"],
   ["podcast", "Podcast"],
   ["reviews", "Inbox"],
   ["builder", "Sitebuilder"],
@@ -223,7 +213,6 @@ const tabs = [
   ["integrations", "Koppelingen"],
   ["ai", "AI hulp"],
   ["analytics", "Analytics"],
-  ["shop", "Shop"],
   ["brand", "Branding"],
   ["automation", "Automations"],
   ["seasons", "Seizoenen"],
@@ -253,11 +242,6 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
     ids: ["podcast", "seasons", "hosts", "builder", "sections", "site", "brand", "documents"]
   },
   {
-    title: "Aanmeldingen & shop",
-    helper: "Klanten en bestellingen",
-    ids: ["customers", "orders", "returns", "logistics", "service", "shop"]
-  },
-  {
     title: "Groei & planning",
     helper: "Planning en groei",
     ids: ["calendar", "ai", "analytics", "automation"]
@@ -273,7 +257,6 @@ const tabGroupIcons = {
   "Overzicht": Gauge,
   "Community": UsersRound,
   "Content & media": Captions,
-  "Aanmeldingen & shop": Package,
   "Groei & planning": BarChart3,
   "Beheerders & rollen": ShieldCheck
 } as const;
@@ -299,7 +282,6 @@ const feedbackLabels: Record<string, string> = {
   season: "seizoen",
   "section-design": "sectie ontwerp",
   "section-design-save": "sectie ontwerp",
-  "shop-product": "shop product",
   site: "site instellingen",
   "transcript-started": "transcriptie gestart",
   "transcript-ready": "transcriptie klaar",
@@ -332,18 +314,9 @@ export function AdminDashboard({
   pendingPosts,
   reports,
   pendingInterviewComments,
+  pendingCommunityReplies,
   analyticsRows,
   analyticsSources,
-  shopProducts,
-  shopOrders,
-  shopSettings,
-  customers,
-  orders,
-  returns,
-  reviews,
-  logisticsEvents,
-  serviceQuestions,
-  stripeConfigured,
   sectionDesign,
   siteSettings,
   missingSupabase,
@@ -361,7 +334,8 @@ export function AdminDashboard({
   automations = [],
   adminIdentity,
   dataCheckedAt,
-  loginActivity
+  loginActivity,
+  loginActivityState
 }: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
@@ -375,14 +349,13 @@ export function AdminDashboard({
   const failedTranscripts = episodes.filter((episode) => episode.transcript_status === "failed").length;
   const missingMedia = episodes.filter((episode) => !episode.audio_file_url || !episode.image_url).length;
   const scheduledEpisodes = episodes.filter((episode) => episode.status === "scheduled").length;
-  const pendingReviewCount = pendingPosts.length + pendingInterviewComments.length + reports.length;
+  const pendingReviewCount = pendingPosts.length + pendingCommunityReplies.length + pendingInterviewComments.length + reports.length;
   const tabBadges: Partial<Record<(typeof tabs)[number][0], number>> = {
     today: pendingReviewCount + failedTranscripts + missingMedia,
-    reviews: pendingInterviewComments.length,
-    community: pendingPosts.length + reports.length,
+    reviews: pendingReviewCount,
+    community: pendingPosts.length + pendingCommunityReplies.length + reports.length,
     calendar: scheduledEpisodes,
-    analytics: analyticsRows.length,
-    shop: shopOrders.filter((order) => order.status === "pending").length
+    analytics: analyticsRows.length
   };
   const tabMap = new Map<AdminTabId, (typeof tabs)[number]>(tabs.map((tab) => [tab[0], tab]));
   const activeTabLabel = tabMap.get(activeTab)?.[1] ?? "Overzicht";
@@ -545,12 +518,14 @@ export function AdminDashboard({
           pendingPosts={pendingPosts}
           reports={reports}
           pendingInterviewComments={pendingInterviewComments}
+          pendingCommunityReplies={pendingCommunityReplies}
           missingMedia={missingMedia}
           failedTranscripts={failedTranscripts}
           scheduledEpisodes={scheduledEpisodes}
           analyticsRows={analyticsRows}
           analyticsSources={analyticsSources}
           loginActivity={loginActivity}
+          loginActivityState={loginActivityState}
           dataCheckedAt={dataCheckedAt}
           onOpenTab={openTab}
         />
@@ -732,12 +707,7 @@ export function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingPosts={pendingPosts} reports={reports} operationsReviews={reviews} /> : null}
-      {activeTab === "customers" ? <OperationsCenter title="Klanten" subtitle="Beheer klantprofielen, contactgegevens en volgorde van bestellingen" items={customers} type="customers" /> : null}
-      {activeTab === "orders" ? <OperationsCenter title="Orders" subtitle="Volg open bestellingen, statuswijzigingen en betalingsfase" items={orders} type="orders" /> : null}
-      {activeTab === "returns" ? <OperationsCenter title="Retouren" subtitle="Bekijk retourverzoeken en volg de afhandeling" items={returns} type="returns" /> : null}
-      {activeTab === "logistics" ? <OperationsCenter title="Logistiek" subtitle="Beheer verzending, tracking en fulfilmentnotities" items={logisticsEvents} type="logistics" /> : null}
-      {activeTab === "service" ? <OperationsCenter title="Service en klantvragen" subtitle="Volg vragen, meldingen en klantcontact" items={serviceQuestions} type="service" /> : null}
+      {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingCommunityReplies={pendingCommunityReplies} pendingPosts={pendingPosts} reports={reports} /> : null}
       {activeTab === "builder" ? <ElementorBuilder settings={sectionDesign} onOpenSections={() => setActiveTab("sections")} /> : null}
       {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} sourceError={adminUsersError} /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
@@ -745,7 +715,6 @@ export function AdminDashboard({
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
       {activeTab === "ai" ? <AIStudio /> : null}
       {activeTab === "analytics" ? <AnalyticsCenter rows={analyticsRows} sources={analyticsSources} /> : null}
-      {activeTab === "shop" ? <ShopCommerceCenter products={shopProducts} orders={shopOrders} settings={shopSettings} stripeConfigured={stripeConfigured} /> : null}
       {activeTab === "brand" ? <BrandLibrary /> : null}
       {activeTab === "automation" ? <AutomationHub /> : null}
       {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
@@ -844,135 +813,6 @@ function ModuleReadiness({ state, detail }: { state: string; detail: string }) {
   );
 }
 
-function OperationsCenter({
-  title,
-  subtitle,
-  items,
-  type
-}: {
-  title: string;
-  subtitle: string;
-  items: unknown[];
-  type: "customers" | "orders" | "returns" | "reviews" | "logistics" | "service";
-}) {
-  const rows = items.slice(0, 8);
-
-  const renderItem = (item: unknown, index: number) => {
-    if (type === "customers") {
-      const customer = item as AdminCustomer;
-      return (
-        <div className="review-card" key={customer.id ?? index}>
-          <div className="review-card-top">
-            <span>{customer.status === "vip" ? "VIP" : customer.status === "needs_follow_up" ? "Volgen" : "Actief"}</span>
-            <small>{customer.last_order_at ? new Date(customer.last_order_at).toLocaleDateString("nl-NL") : "Geen order"}</small>
-          </div>
-          <strong>{customer.name ?? customer.email ?? "Onbekende klant"}</strong>
-          <p>{customer.email ?? "Geen e-mailadres"}</p>
-          <small>{customer.order_count} order(s) · €{(customer.total_spent_cents / 100).toFixed(2)}</small>
-        </div>
-      );
-    }
-
-    if (type === "orders") {
-      const order = item as AdminOrder;
-      return (
-        <div className="review-card" key={order.id ?? index}>
-          <div className="review-card-top">
-            <span>{order.status}</span>
-            <small>{new Date(order.created_at).toLocaleDateString("nl-NL")}</small>
-          </div>
-          <strong>{order.id}</strong>
-          <p>{order.customer_email ?? "Geen klant e-mailadres"}</p>
-          <small>{order.total_cents / 100} {order.currency.toUpperCase()}</small>
-        </div>
-      );
-    }
-
-    if (type === "returns") {
-      const returnItem = item as AdminReturn;
-      return (
-        <div className="review-card" key={returnItem.id ?? index}>
-          <div className="review-card-top">
-            <span>{returnItem.status}</span>
-            <small>{new Date(returnItem.created_at).toLocaleDateString("nl-NL")}</small>
-          </div>
-          <strong>{returnItem.order_id}</strong>
-          <p>{returnItem.reason ?? "Geen reden opgegeven"}</p>
-          <small>{returnItem.customer_email ?? returnItem.customer_name ?? "Klant"}</small>
-        </div>
-      );
-    }
-
-    if (type === "reviews") {
-      const review = item as AdminReview;
-      return (
-        <div className="review-card" key={review.id ?? index}>
-          <div className="review-card-top">
-            <span>{review.status}</span>
-            <small>{new Date(review.created_at).toLocaleDateString("nl-NL")}</small>
-          </div>
-          <strong>{review.title ?? "Bekijk review"}</strong>
-          <p>{review.body ?? "Geen tekst beschikbaar"}</p>
-          <small>{review.customer_name ?? review.customer_email ?? "Klant"} · {review.rating}/5</small>
-        </div>
-      );
-    }
-
-    if (type === "logistics") {
-      const event = item as AdminLogisticsEvent;
-      return (
-        <div className="review-card" key={event.id ?? index}>
-          <div className="review-card-top">
-            <span>{event.event_type}</span>
-            <small>{new Date(event.created_at).toLocaleDateString("nl-NL")}</small>
-          </div>
-          <strong>{event.order_id}</strong>
-          <p>{event.message ?? "Geen details beschikbaar"}</p>
-          <small>{event.carrier ?? "Logistiek"} · {event.tracking_code ?? "Geen tracking"}</small>
-        </div>
-      );
-    }
-
-    const question = item as AdminServiceQuestion;
-    return (
-      <div className="review-card" key={question.id ?? index}>
-        <div className="review-card-top">
-          <span>{question.status}</span>
-          <small>{new Date(question.created_at).toLocaleDateString("nl-NL")}</small>
-        </div>
-        <strong>{question.subject ?? "Klantenvraag"}</strong>
-        <p>{question.message ?? "Geen details beschikbaar"}</p>
-        <small>{question.customer_name ?? question.customer_email ?? "Klant"}</small>
-      </div>
-    );
-  };
-
-  return (
-    <div className="admin-module">
-      <div className="admin-module-hero">
-        <div>
-          <p className="eyebrow">Operations</p>
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
-        </div>
-      </div>
-      <div className="admin-grid wide">
-        <article className="admin-panel">
-          <h3>Live overzicht</h3>
-          {rows.length ? <div className="review-board">{rows.map((item, index) => renderItem(item, index))}</div> : <p className="empty-state">Geen data beschikbaar voor deze module.</p>}
-        </article>
-        <article className="admin-panel">
-          <h3>Workflow</h3>
-          <div className="compact-list">
-            <p>Gebruik deze module om klantencontact, orderafhandeling, retouren, reviews en servicevragen centraal te volgen.</p>
-            <p>Alle data wordt uit de bestaande admincontext geladen; zodra de relevante Supabase-tabellen gevuld zijn, verschijnen ze automatisch hier.</p>
-          </div>
-        </article>
-      </div>
-    </div>
-  );
-}
-
 function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
   return (
     <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Preset kiezen" title="Preset kiezen">
@@ -988,12 +828,14 @@ function TodayDashboard({
   pendingPosts,
   reports,
   pendingInterviewComments,
+  pendingCommunityReplies,
   missingMedia,
   failedTranscripts,
   scheduledEpisodes,
   analyticsRows,
   analyticsSources,
   loginActivity,
+  loginActivityState,
   dataCheckedAt,
   onOpenTab
 }: {
@@ -1001,12 +843,14 @@ function TodayDashboard({
   pendingPosts: AdminPost[];
   reports: AdminReport[];
   pendingInterviewComments: AdminInterviewComment[];
+  pendingCommunityReplies: AdminCommunityReply[];
   missingMedia: number;
   failedTranscripts: number;
   scheduledEpisodes: number;
   analyticsRows: AdminAnalyticsRow[];
   analyticsSources: AdminAnalyticsSource[];
   loginActivity: AdminLoginActivity[];
+  loginActivityState: AdminDataState;
   dataCheckedAt: string;
   onOpenTab: (tab: (typeof tabs)[number][0]) => void;
 }) {
@@ -1027,8 +871,7 @@ function TodayDashboard({
     error: ["Niet alle cijfers konden worden gecontroleerd", "Cijfers met een bronfout worden niet als nul weergegeven."]
   }[healthState];
   const googleIntent = analyticsRows.find((row) => row.metric === "Google-inlogdoel");
-  const loginActivityState = googleIntent?.state ?? "unknown";
-  const openReviews = pendingPosts.length + pendingInterviewComments.length + reports.length;
+  const openReviews = pendingPosts.length + pendingCommunityReplies.length + pendingInterviewComments.length + reports.length;
 
   return (
     <div className={`${styles.overview} admin-module`}>
@@ -1158,35 +1001,44 @@ function formatActivityTime(value: string) {
   }).format(date);
 }
 
-function ReviewCenter({ pendingInterviewComments, pendingPosts, reports, operationsReviews }: { pendingInterviewComments: AdminInterviewComment[]; pendingPosts: AdminPost[]; reports: AdminReport[]; operationsReviews: AdminReview[] }) {
+function ReviewCenter({ pendingInterviewComments, pendingCommunityReplies, pendingPosts, reports }: { pendingInterviewComments: AdminInterviewComment[]; pendingCommunityReplies: AdminCommunityReply[]; pendingPosts: AdminPost[]; reports: AdminReport[] }) {
   return (
     <div className="admin-module">
       <div className="admin-module-hero">
         <div>
           <p className="eyebrow">Review inbox</p>
           <h2>Af- en goedkeuren</h2>
-          <p>Moderatie voor interviewcomments, community posts en open meldingen in een veilige reviewflow.</p>
+          <p>Moderatie voor interviewreacties, communityreacties, communityberichten en open meldingen in een veilige reviewflow.</p>
         </div>
       </div>
       <div className="review-summary" aria-label="Review samenvatting">
         <span><strong>{pendingInterviewComments.length}</strong> interviewreacties</span>
+        <span><strong>{pendingCommunityReplies.length}</strong> communityreacties</span>
         <span><strong>{pendingPosts.length}</strong> communityberichten</span>
         <span><strong>{reports.length}</strong> open meldingen</span>
       </div>
       <div className="review-board">
         <article className="admin-panel review-lane">
-          <h3>Productreviews</h3>
-          {operationsReviews.length ? operationsReviews.map((review) => (
-            <div className="review-card" key={review.id}>
+          <h3>Communityreacties</h3>
+          {pendingCommunityReplies.length ? pendingCommunityReplies.map((reply) => (
+            <div className="review-card" key={reply.id}>
               <div className="review-card-top">
-                <span>{review.status}</span>
-                <small>{new Date(review.created_at).toLocaleDateString("nl-NL")}</small>
+                <span>Wacht op review</span>
+                <small>{new Date(reply.created_at).toLocaleDateString("nl-NL")}</small>
               </div>
-              <strong>{review.title ?? "Review"}</strong>
-              <p>{review.body ?? "Geen tekst beschikbaar"}</p>
-              <small>{review.customer_name ?? review.customer_email ?? "Klant"} · {review.rating}/5</small>
+              <strong>{reply.community_posts?.title ?? "Communitybericht"}</strong>
+              <p>{reply.body}</p>
+              <small>Door {reply.author_name ?? "Anoniem"} - {reply.author_display_type}</small>
+              <div className="review-actions">
+                <form action={moderateCommunityReply.bind(null, reply.id, "approved")}>
+                  <button className="button" type="submit"><CheckCircle2 size={16} aria-hidden /> Goedkeuren</button>
+                </form>
+                <form action={moderateCommunityReply.bind(null, reply.id, "rejected")}>
+                  <button className="text-link danger" type="submit"><XCircle size={16} aria-hidden /> Afwijzen</button>
+                </form>
+              </div>
             </div>
-          )) : <p className="empty-state">Geen productreviews beschikbaar.</p>}
+          )) : <p className="empty-state">Geen communityreacties die op review wachten.</p>}
         </article>
         <article className="admin-panel review-lane">
           <h3>Interview comments</h3>
@@ -1894,165 +1746,6 @@ function AnalyticsCenter({ rows, sources }: { rows: AdminAnalyticsRow[]; sources
         </div>
       ) : null}
     </div>
-  );
-}
-
-function ShopCommerceCenter({ products, orders, settings, stripeConfigured }: { products: ShopProduct[]; orders: ShopOrder[]; settings: ShopSettings; stripeConfigured: boolean }) {
-  const publishedProducts = products.filter((product) => product.status === "published").length;
-  const pendingOrders = orders.filter((order) => order.status === "pending").length;
-  const paidOrders = orders.filter((order) => order.status === "paid" || order.status === "fulfilled").length;
-
-  return (
-    <div className="admin-module">
-      <div className="admin-module-hero">
-        <div>
-          <p className="eyebrow">Ecommerce</p>
-          <h2>Shop beheer</h2>
-          <p>Producten, voorraad, Stripe-koppeling en orders voor de Stuk Verdriet shop.</p>
-        </div>
-        <Package aria-hidden />
-      </div>
-      <ModuleReadiness
-        state={stripeConfigured ? "Stripe secret aanwezig" : "Stripe setup nodig"}
-        detail="Checkout gebruikt server-side STRIPE_SECRET_KEY. Webhook-afhandeling voor betaalstatussen is de volgende productieslice."
-      />
-
-      <div className="admin-kpi-grid">
-        <article className="admin-kpi-card static">
-          <Package size={20} aria-hidden />
-          <strong>{products.length}</strong>
-          <span>Producten</span>
-          <small>{publishedProducts} gepubliceerd</small>
-        </article>
-        <article className="admin-kpi-card static">
-          <ReceiptText size={20} aria-hidden />
-          <strong>{orders.length}</strong>
-          <span>Orders</span>
-          <small>{pendingOrders} pending, {paidOrders} betaald/afgerond</small>
-        </article>
-      </div>
-
-      <div className="admin-grid wide">
-        <AdminForm title="Shoptekst en servicepunten" action={saveShopSettings}>
-          <input type="hidden" name="return_tab" value="shop" readOnly />
-          <label>Eyebrow<input name="eyebrow" defaultValue={settings.eyebrow} /></label>
-          <label>Titel<input name="title" required defaultValue={settings.title} /></label>
-          <label>Intro<textarea name="intro" required defaultValue={settings.intro} /></label>
-          <label>Servicepunten<textarea name="service_points" defaultValue={settings.service_points.join("\n")} /></label>
-          <label>Checkout-notitie<textarea name="checkout_note" defaultValue={settings.checkout_note ?? ""} /></label>
-          <button className="button" type="submit"><Save size={17} aria-hidden /> Shoptekst opslaan</button>
-        </AdminForm>
-
-        <AdminForm title="Nieuw product" action={saveShopProduct}>
-          <input type="hidden" name="return_tab" value="shop" readOnly />
-          <label>Titel<input name="title" required /></label>
-          <label>Slug<input name="slug" placeholder="wordt automatisch gemaakt als leeg" /></label>
-          <label>Korte omschrijving<input name="short_description" /></label>
-          <label>Omschrijving<textarea name="description" /></label>
-          <div className="field-row">
-            <label>Prijs<input name="price" inputMode="decimal" required placeholder="14,95" /></label>
-            <label>Valuta<input name="currency" defaultValue="eur" maxLength={3} /></label>
-          </div>
-          <div className="field-row">
-            <label>Voorraad<input name="inventory_count" type="number" min="0" /></label>
-            <label>Volgorde<input name="sort_order" type="number" defaultValue="100" /></label>
-          </div>
-          <label>Afbeelding URL<input name="image_url" /></label>
-          <label className="upload-field">
-            <ImagePlus aria-hidden />
-            <span>Productafbeelding uploaden</span>
-            <input name="image_file" type="file" accept="image/*" />
-          </label>
-          <label>Stripe Price ID<input name="stripe_price_id" placeholder="price_..." /></label>
-          <label>Stripe Product ID<input name="stripe_product_id" placeholder="prod_..." /></label>
-          <div className="field-row">
-            <label>Status<ShopStatusSelect defaultValue="draft" /></label>
-            <label className="check-row"><input name="featured" type="checkbox" /> Uitgelicht</label>
-          </div>
-          <button className="button" type="submit"><Save size={17} aria-hidden /> Product opslaan</button>
-        </AdminForm>
-      </div>
-
-      <article className="admin-panel">
-        <h2>Producten bewerken</h2>
-        <div className="shop-admin-product-list">
-          {products.map((product) => <ShopProductAdminForm product={product} key={product.id} />)}
-          {!products.length ? <p className="empty-state">Nog geen shopproducten.</p> : null}
-        </div>
-      </article>
-
-      <article className="admin-panel">
-        <h2>Recente orders</h2>
-        <div className="admin-table-card">
-          {orders.map((order) => (
-            <div className="admin-table-row" key={order.id}>
-              <strong>{formatAdminPrice(order.total_cents, order.currency)}</strong>
-              <span>{order.status}</span>
-              <span>{order.customer_email ?? "Geen e-mail"}</span>
-              <small>{new Date(order.created_at).toLocaleString("nl-NL")}</small>
-            </div>
-          ))}
-          {!orders.length ? <p className="empty-state">Nog geen orders. Zodra checkout actief is verschijnen ze hier.</p> : null}
-        </div>
-      </article>
-    </div>
-  );
-}
-
-function ShopProductAdminForm({ product }: { product: ShopProduct }) {
-  return (
-    <form className="shop-admin-product-form" action={saveShopProduct}>
-      <input type="hidden" name="id" defaultValue={product.id} />
-      <input type="hidden" name="return_tab" value="shop" readOnly />
-      <div className="shop-admin-product-form-head">
-        <div>
-          <strong>{product.title}</strong>
-          <small>{formatAdminPrice(product.price_cents, product.currency)} - {product.status}</small>
-        </div>
-        {product.status !== "archived" ? (
-          <button className="text-link danger" type="submit" formAction={archiveShopProduct.bind(null, product.id)}>Archiveer</button>
-        ) : null}
-      </div>
-      <div className="form-grid">
-        <label>Titel<input name="title" required defaultValue={product.title} /></label>
-        <label>Slug<input name="slug" defaultValue={product.slug} /></label>
-        <label>Korte omschrijving<input name="short_description" defaultValue={product.short_description ?? ""} /></label>
-        <label>Omschrijving<textarea name="description" defaultValue={product.description ?? ""} /></label>
-        <div className="field-row">
-          <label>Prijs<input name="price" inputMode="decimal" required defaultValue={String(product.price_cents / 100).replace(".", ",")} /></label>
-          <label>Valuta<input name="currency" defaultValue={product.currency} maxLength={3} /></label>
-        </div>
-        <div className="field-row">
-          <label>Voorraad<input name="inventory_count" type="number" min="0" defaultValue={product.inventory_count ?? ""} /></label>
-          <label>Volgorde<input name="sort_order" type="number" defaultValue={product.sort_order} /></label>
-        </div>
-        <label>Afbeelding URL<input name="image_url" defaultValue={product.image_url ?? ""} /></label>
-        <label>Stripe Price ID<input name="stripe_price_id" defaultValue={product.stripe_price_id ?? ""} /></label>
-        <label>Stripe Product ID<input name="stripe_product_id" defaultValue={product.stripe_product_id ?? ""} /></label>
-        <div className="field-row">
-          <label>Status<ShopStatusSelect defaultValue={product.status} /></label>
-          <label className="check-row"><input name="featured" type="checkbox" defaultChecked={product.featured} /> Uitgelicht</label>
-        </div>
-        <button className="button" type="submit"><Save size={17} aria-hidden /> Wijzigingen opslaan</button>
-      </div>
-    </form>
-  );
-}
-
-function formatAdminPrice(priceCents: number, currency = "eur") {
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: currency.toUpperCase()
-  }).format(priceCents / 100);
-}
-
-function ShopStatusSelect({ defaultValue = "draft" }: { defaultValue?: string }) {
-  return (
-    <select name="status" defaultValue={defaultValue} aria-label="Shop productstatus" title="Shop productstatus">
-      <option value="draft">Concept</option>
-      <option value="published">Gepubliceerd</option>
-      <option value="archived">Gearchiveerd</option>
-    </select>
   );
 }
 
