@@ -3,50 +3,15 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { HeroPodcastPlayer } from "@/components/HeroPodcastPlayer";
-import type { PodcastEpisode } from "@/types/content";
+import { defaultSiteContent } from "@/lib/site-content";
+import type { PodcastEpisode, SiteHeroSlide } from "@/types/content";
 
-type HeroSlide = {
-  image: string;
-  mobileImage: string;
-  imageAlt: string;
-  imageClassName: string;
-  heroClassName: string;
-  slogan: [string, string];
-  mobileSlogan?: [string] | [string, string];
-  hideCopy?: boolean;
-};
+const slideImageClasses = ["hero-slide-image-podcast", "hero-slide-image-lavie", "hero-slide-image-episode-live"];
+const slideHeroClasses = ["hero-state-podcast", "hero-state-lavie", "hero-state-butterfly"];
 
-const slides: HeroSlide[] = [
-  {
-    image: "/img/podcastopnamehero.png",
-    mobileImage: "/img/mobile/podcastopnameheromobiel.png",
-    imageAlt: "Susan en Daniela tijdens een podcastopname",
-    imageClassName: "hero-slide-image-podcast",
-    heroClassName: "hero-state-podcast",
-    slogan: ["Verdriet verdient", "een stem."],
-    mobileSlogan: ["Verdriet verdient een stem."]
-  },
-  {
-    image: "/img/Laviehero.png",
-    mobileImage: "/img/mobile/Lavieheromobiel.png",
-    imageAlt: "Podcastopstelling bij La Vie met microfoons en een roze bank",
-    imageClassName: "hero-slide-image-lavie",
-    heroClassName: "hero-state-lavie",
-    slogan: ["Woorden geven aan", "wat niet te bevatten is."]
-  },
-  {
-    image: "/hero/Hero_ep1_live.png",
-    mobileImage: "/hero/Hero_ep1_live.png",
-    imageAlt: "Hero-afbeelding voor aflevering 1 live",
-    imageClassName: "hero-slide-image-episode-live",
-    heroClassName: "hero-state-butterfly",
-    slogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
-    mobileSlogan: ["Samen door wat niemand", "alleen zou moeten dragen."],
-    hideCopy: true
-  }
-];
-
-export function HeroSlider({ siteName, latest, episodes }: { siteName: string; latest: PodcastEpisode | null; episodes: PodcastEpisode[] }) {
+export function HeroSlider({ siteName, latest, episodes, configuredSlides }: { siteName: string; latest: PodcastEpisode | null; episodes: PodcastEpisode[]; configuredSlides?: SiteHeroSlide[] }) {
+  const enabledSlides = configuredSlides?.filter((slide) => slide.enabled) ?? [];
+  const slides = enabledSlides.length ? enabledSlides : [defaultSiteContent.heroSlides[0]];
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSlide = slides[activeIndex];
   const mobileSlogan = activeSlide.mobileSlogan ?? activeSlide.slogan;
@@ -57,10 +22,10 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
       setActiveIndex((current) => (current + 1) % slides.length);
     }, 6200);
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [slides.length]);
 
   return (
-    <section className={`hero hero-slider ${activeSlide.heroClassName}`} id="home" aria-label="Stuk Verdriet introductie">
+    <section className={`hero hero-slider ${slideHeroClasses[activeIndex] ?? slideHeroClasses[0]}`} id="home" aria-label="Stuk Verdriet introductie">
       <div className="hero-visual">
         <div className="hero-slide-stack" aria-hidden="true">
           {slides.map((slide, index) => (
@@ -71,7 +36,7 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
                 fill
                 priority={index === 0}
                 sizes="100vw"
-                className={`hero-slide-desktop-image ${slide.imageClassName}`}
+                className={`hero-slide-desktop-image ${slideImageClasses[index] ?? slideImageClasses[0]}`}
               />
               <Image
                 src={slide.mobileImage}
@@ -79,7 +44,7 @@ export function HeroSlider({ siteName, latest, episodes }: { siteName: string; l
                 fill
                 priority={index === 0}
                 sizes="100vw"
-                className={`hero-slide-mobile-image ${slide.imageClassName}`}
+                className={`hero-slide-mobile-image ${slideImageClasses[index] ?? slideImageClasses[0]}`}
               />
             </div>
           ))}

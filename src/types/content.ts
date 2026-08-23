@@ -308,9 +308,45 @@ export type SocialLinks = {
   apple_podcast_url: string | null;
 };
 
+export type SiteHeroSlide = {
+  id: string;
+  image: string;
+  mobileImage: string;
+  imageAlt: string;
+  slogan: [string, string];
+  mobileSlogan: [string] | [string, string];
+  hideCopy: boolean;
+  enabled: boolean;
+};
+
+export type SiteContentSettings = {
+  heroSlides: SiteHeroSlide[];
+  hostsTitle: string;
+  communityKicker: string;
+  communityTitle: string;
+  communityBody: string;
+  communityCtaLabel: string;
+  ayaTitle: string;
+  ayaBody: string;
+  ayaCtaLine: string;
+  ayaSecondaryLabel: string;
+  ayaPrimaryLabel: string;
+  interviewsTitle: string;
+  interviewsIntro: string;
+  communityHeroLine1: string;
+  communityHeroLine2: string;
+  communityHeroLine3: string;
+  communityFeedKicker: string;
+  communityFeedTitle: string;
+  communityEmptyTitle: string;
+  communityEmptyBody: string;
+};
+
 export type SiteSettings = {
   logo_url: string | null;
   homepage_intro: string | null;
+  social_links: SocialLinks;
+  content: SiteContentSettings;
 };
 
 export type SectionDesignKey =

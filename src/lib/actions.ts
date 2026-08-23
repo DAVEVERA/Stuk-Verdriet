@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { encodeAuthNext } from "@/lib/auth-redirect";
 import { clearLocalAdminSession } from "@/lib/local-admin";
 import { normalizeSectionDesign } from "@/lib/section-design";
+import { normalizeSiteImageUrl, normalizeSocialLinks, parseSiteContent } from "@/lib/site-content";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
 import { canUsePulseMoment } from "@/lib/pulse-moments";
@@ -274,6 +275,17 @@ async function uploadPublicFile(
     data: { publicUrl }
   } = admin.storage.from(bucket).getPublicUrl(path);
   return publicUrl;
+}
+
+async function ensureSiteBrandingBucket(admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>, errorPath: string) {
+  const { data } = await admin.storage.getBucket("site-branding");
+  if (data) return;
+  const { error } = await admin.storage.createBucket("site-branding", {
+    public: true,
+    fileSizeLimit: siteLogoMaxSize,
+    allowedMimeTypes: [...siteLogoTypes]
+  });
+  if (error && !/already exists|duplicate/i.test(error.message)) redirect(withReturnStatus(errorPath, "error", "site-branding"));
 }
 
 type ProfileMediaFailureStage = "avatar-upload" | "cover-upload" | "profile-read" | "profile-write";
@@ -1671,6 +1683,30 @@ export async function moderateCommunityReply(replyId: string, status: "approved"
   revalidatePath("/community");
 }
 
+export async function moderateCommunityPulse(momentId: string, status: "published" | "archived") {
+  const supabase = await requireAdminClient();
+  const { error } = await supabase
+    .from("community_pulse_moments")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", momentId);
+  if (error) redirect("/admin?tab=community&error=community-pulse");
+  revalidatePath("/admin");
+  revalidatePath("/community");
+  redirect("/admin?tab=community&saved=community-pulse");
+}
+
+export async function setCommunityProfileVisibility(userId: string, isDiscoverable: boolean) {
+  const supabase = await requireAdminClient();
+  const { error } = await supabase
+    .from("community_profiles")
+    .update({ is_discoverable: isDiscoverable, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+  if (error) redirect("/admin?tab=community&error=community-profile");
+  revalidatePath("/admin");
+  revalidatePath("/community");
+  redirect("/admin?tab=community&saved=community-profile");
+}
+
 export async function resolveCommunityReport(reportId: string, formData: FormData) {
   const supabase = await requireAdminClient();
   const note = String(formData.get("resolution_note") ?? "").trim().slice(0, 500);
@@ -2045,41 +2081,95 @@ export async function saveShopSettings(formData: FormData) {
 
 export async function saveSiteSettings(formData: FormData) {
   const supabase = await requireAdminClient();
-  const { data } = await supabase.from("site_settings").select("social_links, logo_url").eq("id", "main").single();
+  const { data } = await supabase.from("site_settings").select("social_links, logo_url, homepage_intro").eq("id", "main").single();
   const currentSocialLinks =
     data?.social_links && typeof data.social_links === "object" && !Array.isArray(data.social_links)
       ? (data.social_links as Record<string, unknown>)
       : {};
 
   const logoUpload = getUploadFile(formData, "logo_file");
-  let logoUrl = String(formData.get("logo_url") ?? "").trim() || data?.logo_url || "/brand/sverdriet_logo.webp";
+  let logoUrl = normalizeSiteImageUrl(formData.get("logo_url") ?? data?.logo_url, "/brand/sverdriet_logo.webp");
   if (logoUpload) {
     if (!isAllowedSiteLogo(logoUpload)) redirect(adminReturnTarget(formData, "error", "site-logo", "site"));
+    await ensureSiteBrandingBucket(supabase, "/admin?tab=site");
     logoUrl = await uploadPublicFile(supabase, "site-branding", "logo", logoUpload, "png", "/admin?tab=site");
   }
 
-  await supabase.from("site_settings").upsert(
+  const result = await supabase.from("site_settings").upsert(
     {
       id: "main",
       logo_url: logoUrl,
-      homepage_intro: String(formData.get("homepage_intro") ?? "").trim() || null,
+      homepage_intro: formData.has("homepage_intro")
+        ? String(formData.get("homepage_intro") ?? "").trim() || null
+        : data?.homepage_intro ?? null,
       social_links: {
         section_styles: currentSocialLinks.section_styles ?? {},
-        instagram_url: String(formData.get("instagram_url") ?? "").trim() || null,
-        facebook_url: String(formData.get("facebook_url") ?? "").trim() || null,
-        tiktok_url: String(formData.get("tiktok_url") ?? "").trim() || null,
-        spotify_url: String(formData.get("spotify_url") ?? "").trim() || null,
-        youtube_music_url: String(formData.get("youtube_music_url") ?? "").trim() || null,
-        podimo_url: String(formData.get("podimo_url") ?? "").trim() || null,
-        apple_podcast_url: String(formData.get("apple_podcast_url") ?? "").trim() || null
+        site_content: currentSocialLinks.site_content ?? {},
+        ...normalizeSocialLinks({
+          instagram_url: formData.get("instagram_url"),
+          facebook_url: formData.get("facebook_url"),
+          tiktok_url: formData.get("tiktok_url"),
+          spotify_url: formData.get("spotify_url"),
+          youtube_music_url: formData.get("youtube_music_url"),
+          podimo_url: formData.get("podimo_url"),
+          apple_podcast_url: formData.get("apple_podcast_url")
+        })
       }
     },
     { onConflict: "id" }
   );
+  if (result.error) redirect(adminReturnTarget(formData, "error", "site", "site"));
   revalidatePath("/");
   revalidatePath("/contact");
   revalidatePath("/admin");
   redirect(adminReturnTarget(formData, "saved", "site", "site"));
+}
+
+export async function saveSiteContentSettings(formData: FormData) {
+  const supabase = await requireAdminClient();
+  const content = parseSiteContent(String(formData.get("site_content") ?? "{}"));
+  const { data, error: readError } = await supabase
+    .from("site_settings")
+    .select("social_links")
+    .eq("id", "main")
+    .single();
+  if (readError && readError.code !== "PGRST116") redirect(adminReturnTarget(formData, "error", "site-content-read", "site"));
+  const currentSocialLinks =
+    data?.social_links && typeof data.social_links === "object" && !Array.isArray(data.social_links)
+      ? (data.social_links as Record<string, unknown>)
+      : {};
+
+  if (content.heroSlides.some((_, index) => getUploadFile(formData, `hero_desktop_${index}`) || getUploadFile(formData, `hero_mobile_${index}`))) {
+    await ensureSiteBrandingBucket(supabase, "/admin?tab=site");
+  }
+
+  for (let index = 0; index < content.heroSlides.length; index += 1) {
+    const desktopFile = getUploadFile(formData, `hero_desktop_${index}`);
+    const mobileFile = getUploadFile(formData, `hero_mobile_${index}`);
+    if (desktopFile) {
+      if (!isAllowedSiteLogo(desktopFile)) redirect(adminReturnTarget(formData, "error", "hero-image", "site"));
+      content.heroSlides[index].image = await uploadPublicFile(supabase, "site-branding", `hero/${content.heroSlides[index].id}/desktop`, desktopFile, "webp", "/admin?tab=site");
+    }
+    if (mobileFile) {
+      if (!isAllowedSiteLogo(mobileFile)) redirect(adminReturnTarget(formData, "error", "hero-image", "site"));
+      content.heroSlides[index].mobileImage = await uploadPublicFile(supabase, "site-branding", `hero/${content.heroSlides[index].id}/mobile`, mobileFile, "webp", "/admin?tab=site");
+    }
+  }
+
+  const result = await supabase.from("site_settings").upsert(
+    {
+      id: "main",
+      social_links: { ...currentSocialLinks, site_content: content },
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "id" }
+  );
+  if (result.error) redirect(adminReturnTarget(formData, "error", "site-content", "site"));
+
+  revalidatePath("/");
+  revalidatePath("/community");
+  revalidatePath("/admin");
+  redirect(adminReturnTarget(formData, "saved", "site-content", "site"));
 }
 
 export async function saveSectionDesignSettings(formData: FormData) {

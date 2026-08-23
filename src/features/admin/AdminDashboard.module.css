@@ -704,6 +704,10 @@
     flex: 0 0 min(230px, 78vw);
   }
 
+  .navigationGroup:has(.groupButtonActive) {
+    order: -1;
+  }
+
   .moduleNavigation {
     display: flex;
     gap: 5px;

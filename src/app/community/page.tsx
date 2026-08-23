@@ -1,4 +1,4 @@
-import { getApprovedCommunityPosts, getCommunityCategories } from '@/lib/content';
+import { getApprovedCommunityPosts, getCommunityCategories, getSiteSettings } from '@/lib/content';
 import type { Metadata } from 'next';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase';
 import { CommunityPulseStrip } from '@/components/CommunityPulseStrip';
@@ -35,7 +35,8 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     data: { user },
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
 
-  const categories = await getCommunityCategories();
+  const [categories, siteSettings] = await Promise.all([getCommunityCategories(), getSiteSettings()]);
+  const copy = siteSettings.content;
   const isLoggedIn = Boolean(user);
   const posts = await getApprovedCommunityPosts(user?.id ?? null);
   let currentProfile: CommunityProfile | null = null;
@@ -117,9 +118,9 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
         <div className="community-hero-brand-stage" aria-label="SNAAR">
           <div className="community-hero-banner">
             <h1 className="community-hero-text">
-              <span>Hoe gevoelig de snaar ook is,</span>
-              <span>hier raken we hem samen.</span>
-              <span>Je hoeft het niet alleen te doen.</span>
+              <span>{copy.communityHeroLine1}</span>
+              <span>{copy.communityHeroLine2}</span>
+              <span>{copy.communityHeroLine3}</span>
             </h1>
           </div>
         </div>
@@ -134,8 +135,8 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           <div className="community-feed">
             <div className="community-feed-heading">
               <div>
-                <p className="eyebrow">Nieuw in de community</p>
-                <h2 id="community-feed-title">Jouw Feed</h2>
+                <p className="eyebrow">{copy.communityFeedKicker}</p>
+                <h2 id="community-feed-title">{copy.communityFeedTitle}</h2>
               </div>
               <span>{posts.length} bijdragen</span>
             </div>
@@ -191,11 +192,8 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
               </div>
             ) : (
               <div className="community-empty-state">
-                <h3>De community wordt gevuld.</h3>
-                <p>
-                  De eerste goedgekeurde verhalen, vragen en tips verschijnen hier. Je kunt alvast
-                  een bijdrage insturen.
-                </p>
+                <h3>{copy.communityEmptyTitle}</h3>
+                <p>{copy.communityEmptyBody}</p>
               </div>
             )}
           </div>

@@ -61,6 +61,7 @@ import type {
   CommunityReply,
   HostProfile,
   PodcastEpisode,
+  SiteHeroSlide,
   PodcastSeason,
   SocialLinks,
 } from '@/types/content';
@@ -820,11 +821,13 @@ export function SocialLinksList({ links }: { links: SocialLinks }) {
 export function Hero({
   latest,
   episodes,
+  slides,
 }: {
   latest: PodcastEpisode | null;
   episodes: PodcastEpisode[];
+  slides?: SiteHeroSlide[];
 }) {
-  return <HeroSlider siteName={site.name} latest={latest} episodes={episodes} />;
+  return <HeroSlider siteName={site.name} latest={latest} episodes={episodes} configuredSlides={slides} />;
 }
 
 export function EpisodeSignupSection({ status }: { status?: string | null }) {

@@ -10,6 +10,7 @@ import {
   fallbackSponsors
 } from "@/lib/fallback-data";
 import { normalizeSectionDesign } from "@/lib/section-design";
+import { normalizeSiteContent, normalizeSiteImageUrl, normalizeSocialLinks } from "@/lib/site-content";
 import { createSupabaseAdminClient, createSupabasePublicClient } from "@/lib/supabase";
 import type {
   CommunityCategory,
@@ -283,19 +284,30 @@ export async function getPublishedSponsors(): Promise<SponsorLogo[]> {
 
 export async function getSocialLinks(): Promise<SocialLinks> {
   const supabase = createSupabasePublicClient();
-  if (!supabase) return fallbackSocialLinks;
+  if (!supabase) return normalizeSocialLinks(fallbackSocialLinks);
   const { data, error } = await supabase.from("site_settings").select("social_links").eq("id", "main").single();
-  if (error || !data?.social_links) return fallbackSocialLinks;
-  return data.social_links as SocialLinks;
+  if (error || !data?.social_links) return normalizeSocialLinks(fallbackSocialLinks);
+  return normalizeSocialLinks(data.social_links);
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const fallback: SiteSettings = { logo_url: null, homepage_intro: null };
+  const fallback: SiteSettings = {
+    logo_url: null,
+    homepage_intro: null,
+    social_links: normalizeSocialLinks(fallbackSocialLinks),
+    content: normalizeSiteContent({})
+  };
   const supabase = createSupabasePublicClient();
   if (!supabase) return fallback;
-  const { data, error } = await supabase.from("site_settings").select("logo_url, homepage_intro").eq("id", "main").single();
+  const { data, error } = await supabase.from("site_settings").select("logo_url, homepage_intro, social_links").eq("id", "main").single();
   if (error || !data) return fallback;
-  return { logo_url: data.logo_url ?? null, homepage_intro: data.homepage_intro ?? null };
+  const settings = data.social_links && typeof data.social_links === "object" ? data.social_links as Record<string, unknown> : {};
+  return {
+    logo_url: data.logo_url ? normalizeSiteImageUrl(data.logo_url, "/brand/sverdriet_logo.webp") : null,
+    homepage_intro: data.homepage_intro ?? null,
+    social_links: normalizeSocialLinks(settings),
+    content: normalizeSiteContent(settings.site_content)
+  };
 }
 
 export async function getSiteDesignSettings(): Promise<SiteDesignSettings> {

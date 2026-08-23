@@ -5,7 +5,7 @@ import { InterviewGrid } from "@/components/InterviewGrid";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
 import Link from "next/link";
 import { CommunityCategoryGrid, CommunityFeedback, CommunityPostCard, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
-import { getApprovedCommunityPosts, getCommunityCategories, getInterviewsWithComments, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSocialLinks } from "@/lib/content";
+import { getApprovedCommunityPosts, getCommunityCategories, getInterviewsWithComments, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSiteSettings, getSocialLinks } from "@/lib/content";
 import { likeInterview, shareInterview, submitInterviewComment, likeComment } from "@/lib/interview-actions";
 import { type OnepagerPanel } from "@/lib/site";
 import { createSupabaseServerClient } from "@/lib/supabase";
@@ -52,7 +52,7 @@ function CommunityPreviewBannerImage() {
 
 export async function Onepager({ initialPanel = null, initialTheme = null, submitted = false, error = null, signupStatus = null }: OnepagerProps) {
   const supabase = await createSupabaseServerClient();
-  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, sectionDesign, authResult, interviewsData] = await Promise.all([
+  const [latest, seasons, episodes, categories, posts, hosts, socialLinks, sectionDesign, siteSettings, authResult, interviewsData] = await Promise.all([
     getLatestEpisode(),
     getPublishedSeasons(),
     getPublishedEpisodes(),
@@ -61,25 +61,27 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
     getPublishedHosts(),
     getSocialLinks(),
     getSiteDesignSettings(),
+    getSiteSettings(),
     supabase ? supabase.auth.getUser() : Promise.resolve({ data: { user: null } }),
     getInterviewsWithComments()
   ]);
   const isLoggedIn = Boolean(authResult.data.user);
   const themeArticles = getThemeArticles();
   const { interviews, commentsByInterview } = interviewsData;
+  const copy = siteSettings.content;
 
   return (
     <>
       <SiteDesignStyles settings={sectionDesign} />
       <h1 className="sr-only">Stuk Verdriet - podcast en community over rouw, verlies en verder leven</h1>
-      <Hero latest={latest} episodes={episodes} />
+      <Hero latest={latest} episodes={episodes} slides={copy.heroSlides} />
       <div className="story-gradient-flow">
         <GoFundMeSupportSection />
 
         {hosts.length ? (
           <section className="content-band hosts-section" id="over">
             <div className="section-heading">
-              <h2>Over de podcastmakers</h2>
+              <h2>{copy.hostsTitle}</h2>
             </div>
             <div className="host-grid">
               {hosts.map((host) => (
@@ -103,13 +105,13 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
                   sizes="(min-width: 900px) 106px, 78px"
                 />
                 <div>
-                  <p className="community-preview-live"><span aria-hidden="true" /> De community is live</p>
+                  <p className="community-preview-live"><span aria-hidden="true" /> {copy.communityKicker}</p>
                 </div>
               </div>
-              <h2 id="community-preview-title">Je hoeft het niet alleen te doen.</h2>
-              <p>Lees hoe anderen omgaan met verlies, deel je eigen verhaal of lees rustig mee. SNAAR is de community van Stuk Verdriet.</p>
+              <h2 id="community-preview-title">{copy.communityTitle}</h2>
+              <p>{copy.communityBody}</p>
               <Link className="button community-preview-cta" href="/community">
-                Ga naar SNAAR
+                {copy.communityCtaLabel}
               </Link>
             </div>
           </div>
@@ -133,19 +135,15 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
               <a className="aya-logo-link" href="https://ayafonds.nl/" aria-label="Bezoek AYAfonds.nl">
                 <Image src="/img/AYAFonds/Embleem_logo_paars.svg" alt="AYA Fonds" width={148} height={125} />
               </a>
-              <h2 id="aya-support-title">Deze podcast is mogelijk gemaakt door het AYA Fonds.</h2>
-              <p>
-                Het AYA Fonds zet zich in voor betere mentale, sociale en fysieke zorg voor jongvolwassenen
-                met kanker (AYA&apos;s) en hun naasten. Met hun steun krijgen verhalen over rouw, zorg en
-                verder leven een plek waar ze gehoord mogen worden.
-              </p>
-              <p className="aya-cta-line">Geef voor jongvolwassenen met kanker.</p>
+              <h2 id="aya-support-title">{copy.ayaTitle}</h2>
+              <p>{copy.ayaBody}</p>
+              <p className="aya-cta-line">{copy.ayaCtaLine}</p>
               <div className="aya-banner-actions" aria-label="AYA Fonds acties">
                 <a className="aya-donate-button" href="https://ayafonds.nl/" target="_self">
-                  Meer over AYA Fonds
+                  {copy.ayaSecondaryLabel}
                 </a>
                 <a className="aya-donate-button aya-donate-primary" href="https://ayafonds.nl/doneer/" target="_self">
-                  Doneer direct aan AYA Fonds <Heart size={18} aria-hidden />
+                  {copy.ayaPrimaryLabel} <Heart size={18} aria-hidden />
                 </a>
               </div>
             </div>
@@ -154,8 +152,8 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
 
         <section className="interview-section content-band" id="interviews" aria-labelledby="interviews-title">
           <div className="section-heading">
-            <h2 id="interviews-title">Échte verhalen</h2>
-            <p>Echte verhalen van mensen die hun ervaringen delen rond verlies, rouw en verder leven.</p>
+            <h2 id="interviews-title">{copy.interviewsTitle}</h2>
+            <p>{copy.interviewsIntro}</p>
           </div>
           <InterviewGrid
             interviews={interviews}

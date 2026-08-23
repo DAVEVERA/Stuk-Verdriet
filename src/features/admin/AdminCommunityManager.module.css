@@ -1,0 +1,23 @@
+.manager { display: grid; gap: 1.25rem; }
+.hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 24px; background: linear-gradient(135deg, #eef4ef, #fff8f2); border: 1px solid rgba(47,75,58,.12); }
+.hero h2, .panel h3, .item h4 { margin: 0; }
+.hero p, .panel p, .item p { color: #655e57; line-height: 1.55; }
+.counts { display: flex; gap: .6rem; flex-wrap: wrap; }
+.counts span { border-radius: 999px; padding: .55rem .8rem; background: #fff; color: #2f4b3a; font-size: .85rem; font-weight: 700; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .7rem; }
+.toolbar button { min-height: 44px; border: 1px solid rgba(47,75,58,.2); border-radius: 999px; padding: .65rem 1rem; background: #fff; color: #2f4b3a; font: inherit; font-weight: 700; cursor: pointer; }
+.toolbar button[aria-selected="true"] { background: #2f4b3a; color: #fff; }
+.panel { display: grid; gap: 1rem; padding: clamp(1rem, 3vw, 1.75rem); border-radius: 20px; background: #fff; border: 1px solid rgba(47,75,58,.12); }
+.panelHeader { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.search { min-height: 44px; width: min(100%, 320px); border: 1px solid #d9d1c9; border-radius: 12px; padding: .7rem .85rem; font: inherit; }
+.list { display: grid; gap: .75rem; }
+.item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1rem; align-items: center; padding: 1rem; border: 1px solid #e5ded7; border-radius: 15px; background: #fffdfa; }
+.meta { display: flex; gap: .55rem; flex-wrap: wrap; color: #756d66; font-size: .82rem; }
+.status { display: inline-flex; width: fit-content; margin-bottom: .4rem; border-radius: 999px; padding: .25rem .55rem; background: #eef4ef; color: #2f4b3a; font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+.actions form { margin: 0; }
+.actions button { min-height: 40px; border: 1px solid #2f4b3a; border-radius: 999px; padding: .55rem .8rem; background: #2f4b3a; color: #fff; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.actions .secondary { background: #fff; color: #2f4b3a; }
+.actions .danger { border-color: #9d3e42; background: #fff; color: #9d3e42; }
+.empty { padding: 2rem 1rem; text-align: center; color: #756d66; border: 1px dashed #d9d1c9; border-radius: 14px; }
+@media(max-width:760px){.hero,.panelHeader{flex-direction:column}.item{grid-template-columns:1fr}.actions{justify-content:flex-start}.search{width:100%}}

@@ -10,7 +10,7 @@ import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { buildRegistrationAnalyticsRows, getAmsterdamDayRange, summarizeAuthUsers, type AuthUserTiming } from "@/lib/registration-analytics";
 import { getAdminRole, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
 import type { AdminAnalyticsRow, AdminAnalyticsSource, AdminDataState, AdminIdentity, AdminLoginActivity } from "@/features/admin/AdminDashboard";
-import type { PodcastEpisode, PodcastSeason } from "@/types/content";
+import type { CommunityPost, CommunityProfile, CommunityPulseMoment, CommunityReply, PodcastEpisode, PodcastSeason } from "@/types/content";
 
 export const dynamic = "force-dynamic";
 
@@ -124,7 +124,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     reportsResult,
     seasonsResult,
     episodesResult,
-    pendingInterviewCommentsResult
+    pendingInterviewCommentsResult,
+    recentPostsResult,
+    recentRepliesResult,
+    communityProfilesResult,
+    pulseMomentsResult
   ] = admin
     ? await Promise.all([
         admin.from("community_posts").select("id,title,category,created_at,status").eq("status", "pending").order("created_at", { ascending: false }),
@@ -140,7 +144,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .from("interview_comments")
           .select("id,interview_id,author_name,author_display_type,body,created_at,status,interviews(title,slug)")
           .eq("status", "pending")
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false }),
+        admin.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50),
+        admin.from("community_replies").select("*").order("created_at", { ascending: false }).limit(50),
+        admin.from("community_profiles").select("*").order("created_at", { ascending: false }).limit(50),
+        admin.from("community_pulse_moments").select("*").order("created_at", { ascending: false }).limit(50)
       ])
     : [
         { data: [] },
@@ -148,6 +156,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         { data: [] },
         { data: fallbackSeasons },
         { data: fallbackEpisodes },
+        { data: [] },
+        { data: [] },
+        { data: [] },
+        { data: [] },
         { data: [] }
       ];
   const pendingPosts = pendingPostsResult.data;
@@ -156,6 +168,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const seasons = seasonsResult.data;
   const episodes = episodesResult.data;
   const pendingInterviewComments = pendingInterviewCommentsResult.data;
+  const communityDataError = [recentPostsResult, recentRepliesResult, communityProfilesResult, pulseMomentsResult]
+    .map((result) => "error" in result ? result.error?.message : null)
+    .filter(Boolean)
+    .join(" · ") || null;
   const normalizedPendingInterviewComments = ((pendingInterviewComments ?? []) as RawPendingInterviewComment[]).map((comment) => ({
     ...comment,
     interviews: Array.isArray(comment.interviews) ? (comment.interviews[0] ?? null) : (comment.interviews ?? null)
@@ -211,6 +227,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         reports={reports ?? []}
         pendingInterviewComments={normalizedPendingInterviewComments}
         pendingCommunityReplies={normalizedPendingCommunityReplies}
+        communityPosts={(recentPostsResult.data ?? []) as CommunityPost[]}
+        communityReplies={(recentRepliesResult.data ?? []) as CommunityReply[]}
+        communityProfiles={(communityProfilesResult.data ?? []) as CommunityProfile[]}
+        communityPulseMoments={(pulseMomentsResult.data ?? []) as CommunityPulseMoment[]}
+        communityDataError={communityDataError}
         analyticsRows={analyticsRows}
         analyticsSources={analyticsSources}
         sectionDesign={sectionDesign}

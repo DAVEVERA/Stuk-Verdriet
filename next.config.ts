@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   experimental: {
     cpus: 2,
     serverActions: {
-      bodySizeLimit: "5.1mb"
+      bodySizeLimit: "31mb"
     }
   },
   turbopack: {

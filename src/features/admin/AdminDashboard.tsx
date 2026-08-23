@@ -17,7 +17,6 @@ import {
   ImagePlus,
   Instagram,
   KeyRound,
-  LayoutTemplate,
   LockKeyhole,
   Network,
   Palette,
@@ -28,7 +27,6 @@ import {
   Search,
   Share2,
   ShieldCheck,
-  Sparkles,
   UsersRound,
   Video,
   WandSparkles,
@@ -37,16 +35,15 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveSiteSettings, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
+import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
 import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation } from "@/lib/admin-operations";
-import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
+import { AdminSiteEditor } from "./AdminSiteEditor";
+import { AdminCommunityManager } from "./AdminCommunityManager";
 import styles from "./AdminDashboard.module.css";
 import type {
   PodcastEpisode,
   PodcastLinkCard,
   PodcastSeason,
-  SectionDesignKey,
-  SectionDesignSettings,
   SiteDesignSettings,
   SiteSettings,
   AdminUser,
@@ -58,7 +55,11 @@ import type {
   MarketingItem,
   AISettings,
   Automation,
-  MarketingItemStatus
+  MarketingItemStatus,
+  CommunityPost,
+  CommunityReply,
+  CommunityProfile,
+  CommunityPulseMoment
 } from "@/types/content";
 
 type AdminPost = {
@@ -120,10 +121,15 @@ type AdminDashboardProps = {
   reports: AdminReport[];
   pendingInterviewComments: AdminInterviewComment[];
   pendingCommunityReplies: AdminCommunityReply[];
+  communityPosts: CommunityPost[];
+  communityReplies: CommunityReply[];
+  communityProfiles: CommunityProfile[];
+  communityPulseMoments: CommunityPulseMoment[];
+  communityDataError: string | null;
   analyticsRows: AdminAnalyticsRow[];
   analyticsSources: AdminAnalyticsSource[];
   sectionDesign: SiteDesignSettings;
-  siteSettings?: SiteSettings;
+  siteSettings: SiteSettings;
   missingSupabase?: boolean;
   localPreview?: boolean;
   savedMessage?: string | null;
@@ -206,19 +212,16 @@ const tabs = [
   ["today", "Vandaag"],
   ["podcast", "Podcast"],
   ["reviews", "Inbox"],
-  ["builder", "Sitebuilder"],
   ["access", "Beheerders"],
   ["keys", "Secrets"],
   ["calendar", "Kalender"],
   ["integrations", "Koppelingen"],
-  ["ai", "AI hulp"],
+  ["ai", "AI & automations"],
   ["analytics", "Analytics"],
   ["brand", "Branding"],
-  ["automation", "Automations"],
   ["seasons", "Seizoenen"],
   ["community", "Community"],
-  ["site", "Site"],
-  ["sections", "Secties"],
+  ["site", "Site bewerken"],
   ["hosts", "Hosts"],
   ["documents", "Documentatie"]
 ] as const;
@@ -239,12 +242,12 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Content & media",
     helper: "Podcast, site en documenten",
-    ids: ["podcast", "seasons", "hosts", "builder", "sections", "site", "brand", "documents"]
+    ids: ["site", "podcast", "seasons", "hosts", "brand", "documents"]
   },
   {
     title: "Groei & planning",
     helper: "Planning en groei",
-    ids: ["calendar", "ai", "analytics", "automation"]
+    ids: ["calendar", "ai", "analytics"]
   },
   {
     title: "Beheerders & rollen",
@@ -283,6 +286,9 @@ const feedbackLabels: Record<string, string> = {
   "section-design": "sectie ontwerp",
   "section-design-save": "sectie ontwerp",
   site: "site instellingen",
+  "site-content": "site teksten en hero",
+  "community-pulse": "Aan de pols-moment",
+  "community-profile": "zichtbaarheid van communitylid",
   "transcript-started": "transcriptie gestart",
   "transcript-ready": "transcriptie klaar",
   "transcript-processing": "transcriptie wordt verwerkt",
@@ -315,6 +321,11 @@ export function AdminDashboard({
   reports,
   pendingInterviewComments,
   pendingCommunityReplies,
+  communityPosts,
+  communityReplies,
+  communityProfiles,
+  communityPulseMoments,
+  communityDataError,
   analyticsRows,
   analyticsSources,
   sectionDesign,
@@ -708,96 +719,20 @@ export function AdminDashboard({
       ) : null}
 
       {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingCommunityReplies={pendingCommunityReplies} pendingPosts={pendingPosts} reports={reports} /> : null}
-      {activeTab === "builder" ? <ElementorBuilder settings={sectionDesign} onOpenSections={() => setActiveTab("sections")} /> : null}
       {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} sourceError={adminUsersError} /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
-      {activeTab === "calendar" ? <MarketingCalendar /> : null}
+      {activeTab === "calendar" ? <MarketingCalendar marketingItems={marketingItems} /> : null}
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
-      {activeTab === "ai" ? <AIStudio /> : null}
+      {activeTab === "ai" ? <AIStudio aiSettings={aiSettings} automations={automations} /> : null}
       {activeTab === "analytics" ? <AnalyticsCenter rows={analyticsRows} sources={analyticsSources} /> : null}
       {activeTab === "brand" ? <BrandLibrary /> : null}
-      {activeTab === "automation" ? <AutomationHub /> : null}
-      {activeTab === "community" ? <CommunityModeration pendingPosts={pendingPosts} reports={reports} /> : null}
-      {activeTab === "site" ? <SiteSettingsForm siteSettings={siteSettings} /> : null}
-      {activeTab === "sections" ? <SectionDesignEditor initialSettings={sectionDesign} /> : null}
+      {activeTab === "community" ? <AdminCommunityManager posts={communityPosts} replies={communityReplies} profiles={communityProfiles} moments={communityPulseMoments} sourceError={communityDataError} /> : null}
+      {activeTab === "site" ? <AdminSiteEditor siteSettings={siteSettings} sectionDesign={sectionDesign} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
       {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
         </div>
       </div>
     </section>
-  );
-}
-
-function SectionDesignEditor({ initialSettings }: { initialSettings: SiteDesignSettings }) {
-  const [settings, setSettings] = useState<SiteDesignSettings>(initialSettings);
-
-  function updateSection(section: SectionDesignKey, field: keyof SectionDesignSettings, value: string) {
-    setSettings((current) => ({
-      ...current,
-      [section]: {
-        ...mergeSectionDesign(current, section),
-        [field]: value
-      }
-    }));
-  }
-
-  return (
-    <form className="section-design-editor" action={saveSectionDesignSettings}>
-      <input type="hidden" name="section_styles" value={encodeSiteDesignSettings(settings)} readOnly />
-      <input type="hidden" name="return_tab" value="sections" readOnly />
-      <div className="editor-topbar">
-        <div>
-          <p className="eyebrow">No-code stijlbeheer</p>
-          <h2>Secties aanpassen</h2>
-          <p className="small-note">Kies per homepage-sectie veilige presets voor kleur, lettertype, ruimte, breedte en layout.</p>
-        </div>
-        <button className="button" type="submit">
-          <Save size={17} aria-hidden /> Secties opslaan
-        </button>
-      </div>
-
-      <div className="section-design-grid">
-        {sectionDesignSections.map((section) => {
-          const value = mergeSectionDesign(settings, section.key);
-          return (
-            <article className="section-design-card" key={section.key}>
-              <div className="section-design-card-header">
-                <Palette size={18} aria-hidden />
-                <h3>{section.label}</h3>
-              </div>
-              <div className="section-design-preview">
-                <span aria-hidden />
-                <strong>{section.label}</strong>
-                <small>{value.layout} / {value.spacing}</small>
-                <small>
-                  {value.backgroundColor || "standaard"} / {value.textColor || "standaard"} / {value.accentColor || "standaard"}
-                </small>
-              </div>
-              <div className="section-design-controls">
-                <label>Achtergrond<ColorInput value={value.backgroundColor} onChange={(next) => updateSection(section.key, "backgroundColor", next)} /></label>
-                <label>Tekst<ColorInput value={value.textColor} onChange={(next) => updateSection(section.key, "textColor", next)} /></label>
-                <label>Accent<ColorInput value={value.accentColor} onChange={(next) => updateSection(section.key, "accentColor", next)} /></label>
-                <label>Lettertype<SelectControl value={value.fontFamily} options={["brand", "display", "handwritten"]} onChange={(next) => updateSection(section.key, "fontFamily", next)} /></label>
-                <label>Grootte<SelectControl value={value.fontScale} options={["compact", "normal", "large"]} onChange={(next) => updateSection(section.key, "fontScale", next)} /></label>
-                <label>Ruimte<SelectControl value={value.spacing} options={["compact", "normal", "spacious"]} onChange={(next) => updateSection(section.key, "spacing", next)} /></label>
-                <label>Breedte<SelectControl value={value.maxWidth} options={["standard", "wide", "full"]} onChange={(next) => updateSection(section.key, "maxWidth", next)} /></label>
-                <label>Hoogte<SelectControl value={value.minHeight} options={["auto", "focus", "screen"]} onChange={(next) => updateSection(section.key, "minHeight", next)} /></label>
-                <label>Layout<SelectControl value={value.layout} options={["default", "centered", "split", "dense"]} onChange={(next) => updateSection(section.key, "layout", next)} /></label>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </form>
-  );
-}
-
-function ColorInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <span className="color-input">
-      <input type="color" value={value || "#ffffff"} onChange={(event) => onChange(event.target.value)} aria-label="Kleur kiezen" />
-      <button type="button" onClick={() => onChange("")}>Reset</button>
-    </span>
   );
 }
 
@@ -810,16 +745,6 @@ function ModuleReadiness({ state, detail }: { state: string; detail: string }) {
         <p>{detail}</p>
       </div>
     </aside>
-  );
-}
-
-function SelectControl({ value, options, onChange }: { value: string; options: string[]; onChange: (value: string) => void }) {
-  return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Preset kiezen" title="Preset kiezen">
-      {options.map((option) => (
-        <option key={option} value={option}>{option}</option>
-      ))}
-    </select>
   );
 }
 
@@ -1094,53 +1019,6 @@ function ReviewCenter({ pendingInterviewComments, pendingCommunityReplies, pendi
             <AdminReportCard report={report} key={report.id} />
           )) : <p className="empty-state">Geen open meldingen.</p>}
         </article>
-      </div>
-    </div>
-  );
-}
-
-function ElementorBuilder({ settings, onOpenSections }: { settings: SiteDesignSettings; onOpenSections: () => void }) {
-  return (
-    <div className="admin-module builder-shell">
-      <div className="admin-module-hero">
-        <div>
-          <p className="eyebrow">Sitebeheer</p>
-          <h2>Pagina builder</h2>
-          <p>Bekijk de homepage-opbouw en pas styling veilig aan via Secties. De canvas is een preview, de opslaglaag zit in Secties.</p>
-        </div>
-        <button className="button" type="button" onClick={onOpenSections}>
-          <Save size={17} aria-hidden /> Pas secties aan
-        </button>
-      </div>
-      <ModuleReadiness state="Live preview" detail="Deze module leest de huidige sectie-instellingen. Wijzigingen opslaan doe je via Secties." />
-      <div className="builder-layout">
-        <aside className="builder-outline">
-          <h3>Pagina outline</h3>
-          {sectionDesignSections.map((section) => <button key={section.key} type="button">{section.label}</button>)}
-        </aside>
-        <section className="builder-canvas" aria-label="Builder preview">
-          {sectionDesignSections.slice(0, 4).map((section) => {
-            const value = mergeSectionDesign(settings, section.key);
-            return (
-              <article className="builder-section-preview" key={section.key} style={{ background: value.backgroundColor || undefined, color: value.textColor || undefined }}>
-                <span style={{ background: value.accentColor || undefined }} />
-                <p className="eyebrow">{section.key}</p>
-                <h3>{section.label}</h3>
-                <small>{value.layout} / {value.spacing} / {value.maxWidth}</small>
-              </article>
-            );
-          })}
-        </section>
-        <aside className="builder-inspector">
-          <h3>Inspector</h3>
-          <label>Component<select defaultValue="hero"><option>Hero</option><option>Podcast</option><option>Community</option></select></label>
-          <label>Layout<select defaultValue="split"><option>default</option><option>centered</option><option>split</option><option>dense</option></select></label>
-          <label>AI copy tone<select defaultValue="warm"><option>warm</option><option>kort</option><option>campagne</option></select></label>
-          <div className="compare-card">
-            <strong>Voor / na</strong>
-            <div><span>Live</span><span>Concept</span></div>
-          </div>
-        </aside>
       </div>
     </div>
   );
@@ -1514,6 +1392,7 @@ function AIStudio({
   const [triggerEvent, setTriggerEvent] = useState("Als podcast live gaat");
   const [actionType, setActionType] = useState("Maak kalender-item aan");
   const [autoDescription, setAutoDescription] = useState("");
+  const [editingAutomationId, setEditingAutomationId] = useState<string | null>(null);
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
@@ -1534,14 +1413,30 @@ function AIStudio({
     setErrorMsg("");
 
     startTransition(async () => {
-      const res = await saveAutomation(null, triggerEvent, actionType, autoDescription, true);
+      const currentAutomation = automations.find((automation) => automation.id === editingAutomationId);
+      const res = await saveAutomation(editingAutomationId, triggerEvent, actionType, autoDescription, currentAutomation?.is_active ?? true);
       if (res.error) {
         setErrorMsg("Automation fout: " + res.error);
       } else {
         setAutoDescription("");
+        setEditingAutomationId(null);
         router.refresh();
       }
     });
+  }
+
+  function handleEditAutomation(automation: Automation) {
+    setEditingAutomationId(automation.id);
+    setTriggerEvent(automation.trigger_event);
+    setActionType(automation.action_type);
+    setAutoDescription(automation.description);
+  }
+
+  function cancelAutomationEdit() {
+    setEditingAutomationId(null);
+    setTriggerEvent("Als podcast live gaat");
+    setActionType("Maak kalender-item aan");
+    setAutoDescription("");
   }
 
   async function handleToggleAutomation(automation: Automation) {
@@ -1591,10 +1486,10 @@ function AIStudio({
       <div className="admin-grid wide" style={{ marginBottom: "2rem" }}>
         {/* LEFT PANEL - PROMPT WRITING */}
         <article className="admin-panel">
-          <h2>Prompt Sjablonen & Generatoren</h2>
+          <h2>Schrijfhulp en beeldprompt</h2>
           <form className="form-grid" onSubmit={handleSaveSettings}>
             <label>
-              <h3><WandSparkles size={18} aria-hidden /> Tekstschrijver Prompt</h3>
+              <h3><WandSparkles size={18} aria-hidden /> Instructie voor teksten</h3>
               <p className="small-note">Stuurinstructie voor captions en teksten.</p>
               <textarea 
                 value={textPrompt} 
@@ -1605,7 +1500,7 @@ function AIStudio({
             </label>
 
             <label>
-              <h3><ImageIcon size={18} aria-hidden /> Nano Banana Beeld Prompt</h3>
+              <h3><ImageIcon size={18} aria-hidden /> Instructie voor beelden</h3>
               <p className="small-note">Instructie voor AI-beeldgeneratoren.</p>
               <textarea 
                 value={imagePrompt} 
@@ -1615,7 +1510,7 @@ function AIStudio({
               />
             </label>
 
-            <h3><Brain size={18} aria-hidden /> Merk Persoonlijkheid (Fine-tuning)</h3>
+            <h3><Brain size={18} aria-hidden /> Toon van Stuk Verdriet</h3>
             <p className="small-note">Instellingen beïnvloeden de AI-tonaliteit.</p>
             <div className="tone-grid" style={{ gap: "15px" }}>
               <label style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1633,15 +1528,15 @@ function AIStudio({
             </div>
 
             <button className="button" type="submit" disabled={isPending} style={{ marginTop: "1rem" }}>
-              AI Instellingen Opslaan
+              AI-instellingen opslaan
             </button>
           </form>
         </article>
 
         {/* RIGHT PANEL - AUTOMATIONS & IDEAS */}
         <article className="admin-panel">
-          <h2><Workflow size={18} aria-hidden /> AI Automation Builder</h2>
-          <p className="small-note">Maak laagdrempelig eigen automatische AI-taken aan die reageren op website-events.</p>
+          <h2><Workflow size={18} aria-hidden /> Automationregels</h2>
+          <p className="small-note">Leg triggers, acties en instructies vast voor de gekoppelde automatisering.</p>
 
           <form className="form-grid" onSubmit={handleAddAutomation} style={{ marginTop: "1rem" }}>
             <label>Als (Trigger Event)
@@ -1649,7 +1544,6 @@ function AIStudio({
                 <option value="Als podcast live gaat">Als podcast live gaat</option>
                 <option value="Als nieuw lid lid wordt">Als nieuw community-lid registreert</option>
                 <option value="Als herinnering geplaatst wordt">Als herinnering/pulse geplaatst wordt</option>
-                <option value="Als nieuwe bestelling gedaan wordt">Als nieuwe bestelling gedaan wordt</option>
               </select>
             </label>
             <label>Dan (AI Actie)
@@ -1669,12 +1563,13 @@ function AIStudio({
                 disabled={isPending} 
               />
             </label>
-            <button className="button" type="submit" disabled={isPending}>
-              Automation Activeren
-            </button>
+            <div className="subtle-actions">
+              <button className="button" type="submit" disabled={isPending}>{editingAutomationId ? "Wijzigingen opslaan" : "Regel opslaan"}</button>
+              {editingAutomationId ? <button className="text-link" type="button" onClick={cancelAutomationEdit} disabled={isPending}>Annuleren</button> : null}
+            </div>
           </form>
 
-          <h3 style={{ marginTop: "2rem" }}>Actieve AI Automations ({automations.length})</h3>
+          <h3 style={{ marginTop: "2rem" }}>Opgeslagen automatiseringsregels ({automations.length})</h3>
           <div className="compact-list" style={{ marginTop: "1rem" }}>
             {automations.map((auto) => (
               <div key={auto.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
@@ -1684,6 +1579,7 @@ function AIStudio({
                   <small style={{ opacity: 0.7 }}>Status: {auto.is_active ? "Actief" : "Gepauzeerd"}</small>
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => handleEditAutomation(auto)} disabled={isPending}>Bewerk</button>
                   <button type="button" className="text-link" onClick={() => handleToggleAutomation(auto)} disabled={isPending}>
                     {auto.is_active ? "Pauzeer" : "Hervat"}
                   </button>
@@ -1693,7 +1589,7 @@ function AIStudio({
                 </div>
               </div>
             ))}
-            {!automations.length ? <p className="empty-state">Geen automations geconfigureerd. Voeg er een toe om te starten.</p> : null}
+            {!automations.length ? <p className="empty-state">Nog geen automatiseringsregels opgeslagen.</p> : null}
           </div>
         </article>
       </div>
@@ -1779,34 +1675,6 @@ function BrandLibrary() {
   );
 }
 
-function AutomationHub() {
-  return (
-    <div className="admin-module">
-      <div className="admin-module-hero">
-        <div>
-          <p className="eyebrow">Make AI</p>
-          <h2>Publishing automations</h2>
-          <p>Automation blueprint: kalenderitem goedkeuren, AI copy finaliseren, asset koppelen en social post klaarzetten.</p>
-        </div>
-        <Workflow aria-hidden />
-      </div>
-      <ModuleReadiness state="Blueprint" detail="Automations zijn nog geen live workflows. Koppel eerst Make webhook, reviewstatus en publishing logs." />
-      <div className="automation-flow">
-        {["Kalenderitem", "AI copy", "Review", "Make webhook", "Social publish", "Analytics terugkoppeling"].map((step, index) => (
-          <article key={step}>
-            <span>{index + 1}</span>
-            <strong>{step}</strong>
-          </article>
-        ))}
-      </div>
-      <article className="admin-panel">
-        <h3>Webhook payload</h3>
-        <code>{`{ "channel": "instagram", "status": "approved", "asset": "canva-design-id" }`}</code>
-      </article>
-    </div>
-  );
-}
-
 function EpisodePreview({ episode, linkCards }: { episode: PodcastEpisode; linkCards: PodcastLinkCard[] }) {
   return (
     <aside className="episode-preview">
@@ -1829,38 +1697,6 @@ function EpisodePreview({ episode, linkCards }: { episode: PodcastEpisode; linkC
         ))}
       </div>
     </aside>
-  );
-}
-
-function CommunityModeration({ pendingPosts, reports }: { pendingPosts: AdminPost[]; reports: AdminReport[] }) {
-  return (
-    <div className="admin-grid wide">
-      <article className="admin-panel">
-        <h2>Pending berichten</h2>
-        {pendingPosts.length ? (
-          pendingPosts.map((post) => (
-            <div key={post.id} className="post-card">
-              <h3>{post.title}</h3>
-              <p>{post.category}</p>
-              <form className="subtle-actions" action={moderatePost.bind(null, post.id, "approved")}>
-                <button className="button" type="submit">Goedkeuren</button>
-              </form>
-              <form className="subtle-actions" action={moderatePost.bind(null, post.id, "rejected")}>
-                <button className="text-link" type="submit">Afwijzen</button>
-              </form>
-            </div>
-          ))
-        ) : (
-          <p className="empty-state">Geen berichten die op review wachten.</p>
-        )}
-      </article>
-      <article className="admin-panel">
-        <h2>Meldingen</h2>
-        <div className="review-lane">
-          {reports.length ? reports.map((report) => <AdminReportCard report={report} key={report.id} />) : <p>Geen open meldingen.</p>}
-        </div>
-      </article>
-    </div>
   );
 }
 
@@ -1894,35 +1730,6 @@ function AdminReportCard({ report }: { report: AdminReport }) {
         ) : null}
       </div>
     </div>
-  );
-}
-
-function SiteSettingsForm({ siteSettings }: { siteSettings?: SiteSettings }) {
-  const currentLogoUrl = siteSettings?.logo_url || "/brand/sverdriet_logo.webp";
-  return (
-    <AdminForm title="Site instellingen" action={saveSiteSettings}>
-      <input type="hidden" name="return_tab" value="site" readOnly />
-      {currentLogoUrl ? (
-        <div className="admin-current-logo">
-          <Image src={currentLogoUrl} alt="Huidig logo" width={64} height={64} />
-        </div>
-      ) : null}
-      <label className="upload-field">
-        <ImagePlus aria-hidden />
-        <span>Logo uploaden</span>
-        <input name="logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
-      </label>
-      <label>Logo URL<input name="logo_url" defaultValue={currentLogoUrl} /></label>
-      <label>Homepage intro<textarea name="homepage_intro" defaultValue={siteSettings?.homepage_intro ?? ""} placeholder="Intro voor de homepage" /></label>
-      <label>Instagram<input name="instagram_url" /></label>
-      <label>Facebook<input name="facebook_url" /></label>
-      <label>TikTok<input name="tiktok_url" /></label>
-      <label>Spotify<input name="spotify_url" /></label>
-      <label>YouTube Music<input name="youtube_music_url" /></label>
-      <label>Podimo<input name="podimo_url" /></label>
-      <label>Apple Podcasts<input name="apple_podcast_url" /></label>
-      <button className="button" type="submit">Opslaan</button>
-    </AdminForm>
   );
 }
 
