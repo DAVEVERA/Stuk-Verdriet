@@ -32,6 +32,7 @@ const mocks = {
     export async function getAdminReviews() { return []; }
     export async function getAdminServiceQuestions() { return []; }
     export async function getAdminUsers() { return []; }
+    export async function getAdminUsersWithStatus() { return { users: [], error: null }; }
     export async function getLegalDocuments() { return []; }
     export async function getAdminFaqs() { return []; }
     export async function getAdminHosts() { return []; }

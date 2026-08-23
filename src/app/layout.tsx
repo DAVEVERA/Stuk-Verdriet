@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { CookieConsent } from "@/components/CookieConsent";
 import { CommunityAccountDockLoader } from "@/components/CommunityAccountDockLoader";
 import { SideNav } from "@/components/SideNav";
+import { RouteShell } from "@/components/RouteShell";
 import { Footer } from "@/components/ui";
 import { getSiteSettings, getSocialLinks } from "@/lib/content";
 import { site } from "@/lib/site";
@@ -155,22 +156,27 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="nl" className={`${jost.variable} ${slogan.variable} ${figtree.variable}`} data-scroll-behavior="smooth">
       <body>
-        <div className="site-shell">
-          <Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} logoUrl={logoUrl} />
-          <Suspense fallback={null}>
-            <SideNav socialLinks={socialLinks} />
-          </Suspense>
-          <Suspense fallback={null}>
-            <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
-          </Suspense>
-          <main className="main">{children}</main>
-          <Footer socialLinks={socialLinks} logoUrl={logoUrl} />
-        </div>
+        <RouteShell
+          header={<Header socialLinks={socialLinks} spotifyUrl={socialLinks.spotify_url} logoUrl={logoUrl} />}
+          sideNavigation={(
+            <Suspense fallback={null}>
+              <SideNav socialLinks={socialLinks} />
+            </Suspense>
+          )}
+          accountDock={(
+            <Suspense fallback={null}>
+              <CommunityAccountDockLoader hasSupabaseEnv={hasSupabaseEnv} />
+            </Suspense>
+          )}
+          footer={<Footer socialLinks={socialLinks} logoUrl={logoUrl} />}
+          cookieConsent={<CookieConsent gaId={gaId} />}
+        >
+          {children}
+        </RouteShell>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(buildWebsiteJsonLd(logoUrl)) }}
         />
-        <CookieConsent gaId={gaId} />
       </body>
     </html>
   );

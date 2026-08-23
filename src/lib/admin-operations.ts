@@ -146,6 +146,11 @@ export async function getAdminServiceQuestions() {
 
 // === ADMIN USERS CRUD ===
 export async function getAdminUsers() {
+  const result = await getAdminUsersWithStatus();
+  return result.users;
+}
+
+export async function getAdminUsersWithStatus() {
   const admin = await requireAdminClient();
 
   const { data, error } = await admin
@@ -156,9 +161,9 @@ export async function getAdminUsers() {
 
   if (error) {
     console.error('Error fetching admin users:', error);
-    return [] as AdminUser[];
+    return { users: [] as AdminUser[], error: error.message };
   }
-  return (data ?? []) as AdminUser[];
+  return { users: (data ?? []) as AdminUser[], error: null as string | null };
 }
 
 export async function addAdminUser(email: string, role: AdminUserRole) {

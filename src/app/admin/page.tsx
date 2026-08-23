@@ -1,16 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { User } from "@supabase/supabase-js";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
-import { CommunityChatWidget } from "@/components/CommunityChatWidget";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
 import { canAccessAdminPortal } from "@/lib/admin-access";
 import { getSiteDesignSettings, getSiteSettings } from "@/lib/content";
-import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsers, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
+import { getAdminCustomers, getAdminLogisticsEvents, getAdminOrders, getAdminReturns, getAdminReviews, getAdminServiceQuestions, getAdminUsersWithStatus, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { buildRegistrationAnalyticsRows, getAmsterdamDayRange, summarizeAuthUsers, type AuthUserTiming } from "@/lib/registration-analytics";
 import { getAdminShopOrders, getAdminShopProducts, getAdminShopSettings } from "@/lib/shop";
 import { getAdminRole, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
-import type { AdminAnalyticsRow, AdminAnalyticsSource } from "@/features/admin/AdminDashboard";
+import type { AdminAnalyticsRow, AdminAnalyticsSource, AdminIdentity, AdminLoginActivity } from "@/features/admin/AdminDashboard";
 import type { PodcastEpisode, PodcastSeason } from "@/types/content";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +67,20 @@ type OpenCommunityReport = {
   resolved_at?: string | null;
 };
 
+function getAdminDisplayName(user: User | null, localAdminAllowed: boolean) {
+  if (!user) return localAdminAllowed ? "Lokale beheerder" : "Beheerder";
+  const metadata = user.user_metadata as Record<string, unknown>;
+  const candidate = metadata.full_name ?? metadata.name ?? metadata.display_name;
+  if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  return user.email?.split("@")[0] || "Beheerder";
+}
+
+function getAdminProvider(user: User | null, localAdminAllowed: boolean) {
+  if (!user) return localAdminAllowed ? "Lokaal" : "Onbekend";
+  const provider = user.app_metadata?.provider;
+  return typeof provider === "string" && provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : "Google";
+}
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = (await searchParams) ?? {};
   const saved = Array.isArray(params.saved) ? params.saved[0] : params.saved;
@@ -78,6 +92,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   } = server ? await server.auth.getUser() : { data: { user: null } };
   const adminRole = user?.email ? await getAdminRole(user.email) : null;
   const localAdminAllowed = await hasLocalAdminSession();
+  const hasGoogleAdminSession = Boolean(adminRole);
 
   if (!canAccessAdminPortal(adminRole, localAdminAllowed)) {
     return <AdminAccessGate error={error ?? null} signedInEmail={user?.email ?? null} />;
@@ -115,12 +130,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         getAdminShopProducts(),
         getAdminShopOrders(),
         getAdminShopSettings(),
-        getAdminCustomers(),
-        getAdminOrders(),
-        getAdminReturns(),
-        getAdminReviews(),
-        getAdminLogisticsEvents(),
-        getAdminServiceQuestions()
+        hasGoogleAdminSession ? getAdminCustomers() : [],
+        hasGoogleAdminSession ? getAdminOrders() : [],
+        hasGoogleAdminSession ? getAdminReturns() : [],
+        hasGoogleAdminSession ? getAdminReviews() : [],
+        hasGoogleAdminSession ? getAdminLogisticsEvents() : [],
+        hasGoogleAdminSession ? getAdminServiceQuestions() : []
       ])
     : [
         { data: [] },
@@ -131,12 +146,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         await getAdminShopProducts(),
         [],
         await getAdminShopSettings(),
-        await getAdminCustomers(),
-        await getAdminOrders(),
-        await getAdminReturns(),
-        await getAdminReviews(),
-        await getAdminLogisticsEvents(),
-        await getAdminServiceQuestions()
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
       ];
   const pendingPosts = pendingPostsResult.data;
   const reports = reportsResult.data;
@@ -147,26 +162,45 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     ...comment,
     interviews: Array.isArray(comment.interviews) ? (comment.interviews[0] ?? null) : (comment.interviews ?? null)
   }));
-  const analyticsRows = admin
+  const analyticsSnapshot = admin
     ? await getSupabaseAnalyticsRows(admin, {
         episodes: ((episodes ?? []) as PodcastEpisode[]),
         pendingPosts: pendingPosts ?? [],
         reports: reports ?? [],
         pendingInterviewComments: normalizedPendingInterviewComments
       })
-    : [];
+    : { rows: [] as AdminAnalyticsRow[], loginActivity: [] as AdminLoginActivity[] };
+  const analyticsRows = analyticsSnapshot.rows;
   const analyticsSources = getAnalyticsSources(Boolean(admin));
 
-  const adminUsers = admin ? await getAdminUsers() : [];
-  const legalDocuments = admin ? await getLegalDocuments() : fallbackLegalDocuments;
-  const faqs = admin ? await getAdminFaqs() : [];
-  const hosts = admin ? await getAdminHosts() : [];
-  const marketingItems = admin ? await getAdminMarketingItems() : [];
-  const aiSettings = admin ? await getAISettings() : null;
-  const automations = admin ? await getAdminAutomations() : [];
+  const adminUsersResult = admin && hasGoogleAdminSession
+    ? await getAdminUsersWithStatus()
+    : {
+        users: [],
+        error: admin
+          ? "Beheerders en rollen zijn alleen beschikbaar na een geautoriseerde Google-login."
+          : "Supabase is niet gekoppeld."
+      };
+  const adminUsers = adminUsersResult.users;
+  const legalDocuments = admin && hasGoogleAdminSession ? await getLegalDocuments() : fallbackLegalDocuments;
+  const faqs = admin && hasGoogleAdminSession ? await getAdminFaqs() : [];
+  const hosts = admin && hasGoogleAdminSession ? await getAdminHosts() : [];
+  const marketingItems = admin && hasGoogleAdminSession ? await getAdminMarketingItems() : [];
+  const aiSettings = admin && hasGoogleAdminSession ? await getAISettings() : null;
+  const automations = admin && hasGoogleAdminSession ? await getAdminAutomations() : [];
+  const adminIdentity: AdminIdentity = {
+    displayName: getAdminDisplayName(user, localAdminAllowed),
+    email: user?.email ?? "Lokale beheersessie",
+    role: adminRole ?? "local_admin",
+    provider: getAdminProvider(user, localAdminAllowed)
+  };
+  const dataCheckedAt = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date());
 
   return (
-    <>
       <AdminDashboard
         episodes={(episodes ?? fallbackEpisodes) as PodcastEpisode[]}
         seasons={(seasons ?? fallbackSeasons) as PodcastSeason[]}
@@ -193,15 +227,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         errorMessage={error ?? null}
         initialTab={tab ?? null}
         adminUsers={adminUsers}
+        adminUsersError={adminUsersResult.error}
         legalDocuments={legalDocuments}
         faqs={faqs}
         hosts={hosts}
         marketingItems={marketingItems}
         aiSettings={aiSettings ?? undefined}
         automations={automations}
+        adminIdentity={adminIdentity}
+        dataCheckedAt={dataCheckedAt}
+        loginActivity={analyticsSnapshot.loginActivity}
       />
-      <CommunityChatWidget />
-    </>
   );
 }
 
@@ -231,8 +267,21 @@ async function getFilteredSupabaseCount(
   return { label, count: count ?? 0, error: null };
 }
 
+type AdminAuthUserTiming = AuthUserTiming & {
+  id: string;
+  email: string;
+  provider: string;
+};
+
+type RawLoginActivity = {
+  id: string;
+  user_id: string;
+  intent: "admin" | "community";
+  occurred_at: string;
+};
+
 async function getAllAuthUserTimings(admin: AdminDataClient) {
-  const users: AuthUserTiming[] = [];
+  const users: AdminAuthUserTiming[] = [];
   const perPage = 1000;
 
   for (let page = 1; ; page += 1) {
@@ -241,6 +290,9 @@ async function getAllAuthUserTimings(admin: AdminDataClient) {
 
     users.push(
       ...data.users.map((user) => ({
+        id: user.id,
+        email: user.email ?? "Onbekend account",
+        provider: typeof user.app_metadata?.provider === "string" ? user.app_metadata.provider : "Google",
         created_at: user.created_at,
         last_sign_in_at: user.last_sign_in_at
       }))
@@ -268,7 +320,8 @@ async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
     interviewTotal,
     interviewToday,
     adminLoginsToday,
-    communityLoginsToday
+    communityLoginsToday,
+    recentLoginEvents
   ] = await Promise.all([
     getAllAuthUserTimings(admin),
     getSupabaseCount(admin, "community_profiles", "Communityprofielen"),
@@ -278,7 +331,12 @@ async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
     getSupabaseCount(admin, "interview_subscribers", "Interviewvolgers"),
     getFilteredSupabaseCount(admin, "interview_subscribers", "Interviewvolgers vandaag", today("created_at")),
     getFilteredSupabaseCount(admin, "auth_login_events", "Admin-inlogdoel", today("occurred_at", "admin")),
-    getFilteredSupabaseCount(admin, "auth_login_events", "Community-inlogdoel", today("occurred_at", "community"))
+    getFilteredSupabaseCount(admin, "auth_login_events", "Community-inlogdoel", today("occurred_at", "community")),
+    admin
+      .from("auth_login_events")
+      .select("id,user_id,intent,occurred_at")
+      .order("occurred_at", { ascending: false })
+      .limit(8)
   ]);
   const authSummary = authUsers.error
     ? { totalAccounts: 0, newAccountsToday: 0, returningLoginsToday: 0 }
@@ -299,6 +357,28 @@ async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
     ...queryResults.filter((result) => result.error).map((result) => result.label)
   ];
 
+  const stateForMetric = (metric: string): AdminAnalyticsRow["state"] => {
+    if (["Nieuwe SNAAR-accounts", "Terugkerende logins"].includes(metric)) return authUsers.error ? "error" : "verified";
+    if (metric === "Communityprofielen") return profilesTotal.error || profilesToday.error ? "error" : "verified";
+    if (metric === "Podcastinschrijvingen") return podcastTotal.error || podcastToday.error ? "error" : "verified";
+    if (metric === "Interviewvolgers") return interviewTotal.error || interviewToday.error ? "error" : "verified";
+    if (metric === "Google-inlogdoel") return adminLoginsToday.error || communityLoginsToday.error ? "error" : "verified";
+    return "unknown";
+  };
+  const usersById = new Map(authUsers.users.map((authUser) => [authUser.id, authUser]));
+  const loginActivity: AdminLoginActivity[] = recentLoginEvents.error
+    ? []
+    : ((recentLoginEvents.data ?? []) as RawLoginActivity[]).map((event) => {
+        const authUser = usersById.get(event.user_id);
+        return {
+          id: event.id,
+          intent: event.intent,
+          occurredAt: event.occurred_at,
+          identity: authUser?.email ?? "Onbekend account",
+          provider: authUser?.provider ? authUser.provider.charAt(0).toUpperCase() + authUser.provider.slice(1) : "Google"
+        };
+      });
+
   return {
     rows: buildRegistrationAnalyticsRows({
       ...authSummary,
@@ -310,8 +390,9 @@ async function getRegistrationAnalyticsRows(admin: AdminDataClient) {
       newInterviewFollowersToday: count(interviewToday),
       adminLoginEventsToday: count(adminLoginsToday),
       communityLoginEventsToday: count(communityLoginsToday)
-    }),
-    failedSources
+    }).map((row) => ({ ...row, state: stateForMetric(row.metric) })),
+    failedSources: recentLoginEvents.error ? [...failedSources, "Recente inlogactiviteit"] : failedSources,
+    loginActivity
   };
 }
 
@@ -323,7 +404,7 @@ async function getSupabaseAnalyticsRows(
     reports: OpenCommunityReport[];
     pendingInterviewComments: PendingInterviewComment[];
   }
-): Promise<AdminAnalyticsRow[]> {
+): Promise<{ rows: AdminAnalyticsRow[]; loginActivity: AdminLoginActivity[] }> {
   const [registrationAnalytics, counts] = await Promise.all([
     getRegistrationAnalyticsRows(admin),
     Promise.all([
@@ -342,6 +423,8 @@ async function getSupabaseAnalyticsRows(
     ...counts.filter((item) => item.error).map((item) => item.label)
   ];
   const countValue = (label: string) => byLabel.get(label)?.count ?? 0;
+  const countState = (label: string): AdminAnalyticsRow["state"] => byLabel.get(label)?.error ? "error" : "verified";
+  const formattedCount = (label: string) => countState(label) === "error" ? "—" : formatAdminNumber(countValue(label));
   const publishedEpisodes = context.episodes.filter((episode) => episode.status === "published").length;
   const openModeration = context.pendingPosts.length + context.pendingInterviewComments.length + context.reports.length;
 
@@ -351,43 +434,50 @@ async function getSupabaseAnalyticsRows(
       metric: "Gepubliceerde afleveringen",
       value: formatAdminNumber(publishedEpisodes),
       detail: `${context.episodes.length} totaal in beheer`,
-      source: "Supabase podcast_episodes"
+      source: "Supabase podcast_episodes",
+      state: "verified"
     },
     {
       metric: "Community posts",
-      value: formatAdminNumber(countValue("Community posts")),
+      value: formattedCount("Community posts"),
       detail: `${formatAdminNumber(openModeration)} open moderatie-items`,
-      source: "Supabase community_posts"
+      source: "Supabase community_posts",
+      state: countState("Community posts")
     },
     {
       metric: "Reacties",
-      value: formatAdminNumber(countValue("Community reacties")),
+      value: formattedCount("Community reacties"),
       detail: "Feed- en replyactiviteit",
-      source: "Supabase community_replies"
+      source: "Supabase community_replies",
+      state: countState("Community reacties")
     },
     {
       metric: "Steunbetuigingen",
-      value: formatAdminNumber(countValue("Steunbetuigingen")),
+      value: formattedCount("Steunbetuigingen"),
       detail: "Aantal geplaatste hartreacties",
-      source: "Supabase community_supports"
+      source: "Supabase community_supports",
+      state: countState("Steunbetuigingen")
     },
     {
       metric: "Privéberichten",
-      value: formatAdminNumber(countValue("Privéberichten")),
+      value: formattedCount("Privéberichten"),
       detail: "Messenger berichten opgeslagen",
-      source: "Supabase community_messages"
+      source: "Supabase community_messages",
+      state: countState("Privéberichten")
     },
     {
       metric: "Aan de pols",
-      value: formatAdminNumber(countValue("Aan de pols momenten")),
+      value: formattedCount("Aan de pols momenten"),
       detail: "Aangemaakte momenten",
-      source: "Supabase community_pulse_moments"
+      source: "Supabase community_pulse_moments",
+      state: countState("Aan de pols momenten")
     },
     {
       metric: "Profielmedia",
-      value: formatAdminNumber(countValue("Profiel foto's")),
-      detail: `${formatAdminNumber(countValue("Profiel momenten"))} profielmomenten`,
-      source: "Supabase profielmodules"
+      value: formattedCount("Profiel foto's"),
+      detail: countState("Profiel momenten") === "error" ? "Profielmomenten niet beschikbaar" : `${formatAdminNumber(countValue("Profiel momenten"))} profielmomenten`,
+      source: "Supabase profielmodules",
+      state: countState("Profiel foto's") === "error" || countState("Profiel momenten") === "error" ? "error" : "verified"
     }
   ];
 
@@ -396,11 +486,12 @@ async function getSupabaseAnalyticsRows(
       metric: "Niet opgehaalde bronnen",
       value: formatAdminNumber(failedSources.length),
       detail: failedSources.join(", "),
-      source: "Supabase schema check"
+      source: "Supabase schema check",
+      state: "error"
     });
   }
 
-  return rows;
+  return { rows, loginActivity: registrationAnalytics.loginActivity };
 }
 
 function getAnalyticsSources(hasAdminClient: boolean): AdminAnalyticsSource[] {

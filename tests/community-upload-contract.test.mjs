@@ -75,7 +75,10 @@ const mocks = {
     export async function createSupabaseServerClient() { return globalThis.__communityUploadMocks.server; }
     export async function isEmailAdmin() { return false; }
   `),
-  localAdmin: moduleUrl("export async function hasLocalAdminSession() { return false; }"),
+  localAdmin: moduleUrl(`
+    export async function hasLocalAdminSession() { return false; }
+    export async function clearLocalAdminSession() {}
+  `),
   pulse: moduleUrl("export function canUsePulseMoment() { return true; }"),
   push: moduleUrl("export async function sendPushToUser() {}")
 };

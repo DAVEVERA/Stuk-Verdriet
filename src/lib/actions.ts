@@ -6,6 +6,7 @@ import { appendFile, mkdir } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { encodeAuthNext } from "@/lib/auth-redirect";
+import { clearLocalAdminSession } from "@/lib/local-admin";
 import { normalizeSectionDesign } from "@/lib/section-design";
 import { assertSameOriginRequest, consumeRateLimit, getRequestOrigin, requestIpAddress } from "@/lib/request-guard";
 import { isEmailAdmin, createSupabaseAdminClient, createSupabasePublicClient, createSupabaseServerClient } from "@/lib/supabase";
@@ -555,6 +556,13 @@ export async function signOut(formData?: FormData) {
   const next = safeReturnPath(formData?.get("next") ?? null, "/community");
   if (supabase) await supabase.auth.signOut();
   redirect(next);
+}
+
+export async function signOutAdmin() {
+  const supabase = await createSupabaseServerClient();
+  if (supabase) await supabase.auth.signOut();
+  await clearLocalAdminSession();
+  redirect("/admin");
 }
 
 async function requireCommunityUser(returnPath = "/community") {

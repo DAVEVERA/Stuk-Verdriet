@@ -35,6 +35,7 @@ const mocks = {
   `),
   localAdmin: moduleUrl(`
     export async function hasLocalAdminSession() { return globalThis.__securityProfileMocks.localAdmin; }
+    export async function clearLocalAdminSession() {}
   `),
   pulse: moduleUrl("export function canUsePulseMoment() { return true; }"),
   push: moduleUrl("export async function sendPushToUser() {}")

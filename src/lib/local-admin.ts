@@ -74,11 +74,15 @@ export async function hasLocalAdminSession() {
   return verifyAdminSessionValue(cookieStore.get(adminSessionCookie)?.value);
 }
 
-export async function signOutLocalAdmin(formData?: FormData) {
-  const next = safeAuthNext(String(formData?.get("next") ?? "/"));
+export async function clearLocalAdminSession() {
   const cookieStore = await cookies();
   cookieStore.delete(localAdminCookie);
   cookieStore.delete(adminSessionCookie);
+}
+
+export async function signOutLocalAdmin(formData?: FormData) {
+  const next = safeAuthNext(String(formData?.get("next") ?? "/"));
+  await clearLocalAdminSession();
   redirect(next);
 }
 

@@ -39,9 +39,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, startEpisodeTranscript } from "@/lib/actions";
+import { archiveEpisode, archiveShopProduct, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, saveSectionDesignSettings, saveShopProduct, saveShopSettings, saveSiteSettings, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
 import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation } from "@/lib/admin-operations";
 import { encodeSiteDesignSettings, mergeSectionDesign, sectionDesignSections } from "@/lib/section-design";
+import styles from "./AdminDashboard.module.css";
 import type {
   AdminCustomer,
   AdminLogisticsEvent,
@@ -135,19 +136,26 @@ type AdminDashboardProps = {
   errorMessage?: string | null;
   initialTab?: string | null;
   adminUsers?: AdminUser[];
+  adminUsersError?: string | null;
   legalDocuments?: LegalDocument[];
   faqs?: FAQ[];
   hosts?: HostProfile[];
   marketingItems?: MarketingItem[];
   aiSettings?: AISettings;
   automations?: Automation[];
+  adminIdentity: AdminIdentity;
+  dataCheckedAt: string;
+  loginActivity: AdminLoginActivity[];
 };
+
+export type AdminDataState = "verified" | "unknown" | "error";
 
 export type AdminAnalyticsRow = {
   metric: string;
   value: string;
   detail: string;
   source: string;
+  state?: AdminDataState;
 };
 
 export type AdminAnalyticsSource = {
@@ -155,6 +163,21 @@ export type AdminAnalyticsSource = {
   state: string;
   owner: string;
   note: string;
+};
+
+export type AdminIdentity = {
+  displayName: string;
+  email: string;
+  role: AdminUserRole | "local_admin";
+  provider: string;
+};
+
+export type AdminLoginActivity = {
+  id: string;
+  intent: "admin" | "community";
+  occurredAt: string;
+  identity: string;
+  provider: string;
 };
 
 const emptyEpisode: PodcastEpisode = {
@@ -215,36 +238,56 @@ type AdminTabId = (typeof tabs)[number][0];
 
 const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
-    title: "Inbox",
-    helper: "Aandacht en moderatie",
-    ids: ["today", "reviews", "community"]
+    title: "Overzicht",
+    helper: "Status en aandachtspunten",
+    ids: ["today"]
   },
   {
-    title: "Operaties",
-    helper: "Klanten, orders, retouren en service",
-    ids: ["customers", "orders", "returns", "reviews", "logistics", "service"]
+    title: "Community",
+    helper: "Inbox en moderatie",
+    ids: ["reviews", "community"]
   },
   {
-    title: "Podcast",
-    helper: "Afleveringen en redactie",
-    ids: ["podcast", "seasons", "hosts"]
+    title: "Content & media",
+    helper: "Podcast, site en documenten",
+    ids: ["podcast", "seasons", "hosts", "builder", "sections", "site", "brand", "documents"]
   },
   {
-    title: "Site",
-    helper: "Pagina's en uitstraling",
-    ids: ["builder", "sections", "site", "brand", "documents"]
+    title: "Aanmeldingen & shop",
+    helper: "Klanten en bestellingen",
+    ids: ["customers", "orders", "returns", "logistics", "service", "shop"]
   },
   {
-    title: "Marketing",
+    title: "Groei & planning",
     helper: "Planning en groei",
-    ids: ["calendar", "ai", "analytics", "automation", "shop"]
+    ids: ["calendar", "ai", "analytics", "automation"]
   },
   {
-    title: "Instellingen",
+    title: "Beheerders & rollen",
     helper: "Toegang en koppelingen",
     ids: ["access", "keys", "integrations"]
   }
 ];
+
+const tabGroupIcons = {
+  "Overzicht": Gauge,
+  "Community": UsersRound,
+  "Content & media": Captions,
+  "Aanmeldingen & shop": Package,
+  "Groei & planning": BarChart3,
+  "Beheerders & rollen": ShieldCheck
+} as const;
+
+function formatAdminRole(role: AdminIdentity["role"]) {
+  const labels: Record<AdminIdentity["role"], string> = {
+    super_admin: "Super Admin",
+    admin: "Admin",
+    editor: "Editor",
+    moderator: "Moderator",
+    local_admin: "Lokale beheerder"
+  };
+  return labels[role];
+}
 
 const cardTypes: PodcastLinkCard["type"][] = ["link", "spotify", "podimo", "apple", "book", "donation"];
 
@@ -309,15 +352,20 @@ export function AdminDashboard({
   errorMessage,
   initialTab,
   adminUsers = [],
+  adminUsersError = null,
   legalDocuments = [],
   faqs = [],
   hosts = [],
   marketingItems = [],
   aiSettings,
-  automations = []
+  automations = [],
+  adminIdentity,
+  dataCheckedAt,
+  loginActivity
 }: AdminDashboardProps) {
   const safeInitialTab = tabs.some(([id]) => id === initialTab) ? (initialTab as AdminTabId) : "today";
   const [activeTab, setActiveTab] = useState<AdminTabId>(safeInitialTab);
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState(episodes[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -337,6 +385,8 @@ export function AdminDashboard({
     shop: shopOrders.filter((order) => order.status === "pending").length
   };
   const tabMap = new Map<AdminTabId, (typeof tabs)[number]>(tabs.map((tab) => [tab[0], tab]));
+  const activeTabLabel = tabMap.get(activeTab)?.[1] ?? "Overzicht";
+  const activeGroup = tabGroups.find((group) => group.ids.includes(activeTab)) ?? tabGroups[0];
 
   const filteredEpisodes = useMemo(() => {
     return episodes.filter((episode) => {
@@ -399,51 +449,97 @@ export function AdminDashboard({
 
   function openTab(tab: AdminTabId) {
     setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(null, "", url);
   }
 
   function renderTabButton([id, label]: (typeof tabs)[number]) {
     const badge = tabBadges[id];
     return (
-      <button key={id} type="button" aria-pressed={activeTab === id} className={activeTab === id ? "active" : undefined} onClick={() => openTab(id)}>
-        {label}
-        {badge ? <span>{badge}</span> : null}
+      <button
+        key={id}
+        type="button"
+        aria-current={activeTab === id ? "page" : undefined}
+        className={`${styles.moduleButton} ${activeTab === id ? styles.moduleButtonActive : ""}`}
+        onClick={() => openTab(id)}
+      >
+        <span>{label}</span>
+        {badge ? <strong>{badge}</strong> : null}
       </button>
     );
   }
 
   return (
-    <section className="admin-shell admin-console">
-      {missingSupabase ? <p className="notice">Supabase env vars ontbreken. Je ziet de beheerinterface, maar live opslaan en uploads vereisen Supabase-configuratie.</p> : null}
-      {localPreview ? <p className="notice">Beveiligde lokale beheersessie actief. Opslaan en modereren gebruiken de server-side Supabase-koppeling.</p> : null}
-      {savedMessage ? <p className="notice">Opgeslagen: {feedbackLabels[savedMessage] ?? savedMessage}.</p> : null}
-      {errorMessage ? <p className="notice">Fout: {feedbackLabels[errorMessage] ?? errorMessage}. Controleer Supabase-configuratie, velden of storage buckets.</p> : null}
+    <section className={styles.adminApp}>
+      <aside className={styles.sidebar}>
+        <div className={styles.brandBlock}>
+          <strong>STUK VERDRIET</strong>
+          <span>ADMINPORTAAL</span>
+        </div>
 
-      <AdminOperationsHeader
-        episodes={episodes}
-        missingSupabase={missingSupabase}
-        localPreview={localPreview}
-        pendingReviewCount={pendingReviewCount}
-        missingMedia={missingMedia}
-        failedTranscripts={failedTranscripts}
-        scheduledEpisodes={scheduledEpisodes}
-        onOpenTab={openTab}
-      />
+        <nav className={styles.primaryNavigation} aria-label="Admin onderdelen">
+          {tabGroups.map((group) => {
+            const GroupIcon = tabGroupIcons[group.title as keyof typeof tabGroupIcons];
+            const isActiveGroup = group.ids.includes(activeTab);
+            const groupBadge = group.ids.reduce((total, id) => total + (tabBadges[id] ?? 0), 0);
+            return (
+              <section className={styles.navigationGroup} key={group.title} aria-label={group.title}>
+                <button
+                  type="button"
+                  className={`${styles.groupButton} ${isActiveGroup ? styles.groupButtonActive : ""}`}
+                  aria-expanded={isActiveGroup}
+                  onClick={() => openTab(isActiveGroup ? activeTab : group.ids[0])}
+                >
+                  <GroupIcon size={17} aria-hidden />
+                  <span>
+                    <strong>{group.title}</strong>
+                    <small>{group.helper}</small>
+                  </span>
+                  {groupBadge ? <b>{groupBadge}</b> : null}
+                </button>
+                {isActiveGroup && group.ids.length > 1 ? (
+                  <div className={styles.moduleNavigation}>
+                    {group.ids.map((id) => tabMap.get(id)).filter((tab): tab is (typeof tabs)[number] => Boolean(tab)).map(renderTabButton)}
+                  </div>
+                ) : null}
+              </section>
+            );
+          })}
+        </nav>
 
-      <nav className="admin-navigation" aria-label="Admin onderdelen">
-        {tabGroups.map((group) => (
-          <section className="admin-nav-group" key={group.title} aria-label={group.title}>
-            <div className="admin-nav-group-copy">
-              <strong>{group.title}</strong>
-              <small>{group.helper}</small>
-            </div>
-            <div className="admin-tabs" role="group" aria-label={group.title}>
-              {group.ids.map((id) => tabMap.get(id)).filter((tab): tab is (typeof tabs)[number] => Boolean(tab)).map(renderTabButton)}
-            </div>
-          </section>
-        ))}
-      </nav>
+        <div className={styles.identityBlock}>
+          <strong>{adminIdentity.displayName}</strong>
+          <span>{formatAdminRole(adminIdentity.role)} · {adminIdentity.provider}</span>
+          <small title={adminIdentity.email}>{adminIdentity.email}</small>
+          <form action={signOutAdmin}>
+            <button type="submit">Uitloggen</button>
+          </form>
+        </div>
+      </aside>
 
-      {activeTab === "today" ? (
+      <div className={styles.workspace}>
+        <header className={styles.workspaceHeader}>
+          <div>
+            <p>{activeGroup.title}</p>
+            <h1>{activeTabLabel}</h1>
+            <span>Laatste broncontrole: {dataCheckedAt}</span>
+          </div>
+          <button type="button" onClick={() => router.refresh()}>
+            <RefreshCw size={16} aria-hidden />
+            Bronnen verversen
+          </button>
+        </header>
+
+        <div className={styles.workspaceContent}>
+          <div className={styles.noticeStack} aria-live="polite">
+            {missingSupabase ? <p className={styles.noticeError}>Supabase is niet gekoppeld. Live opslaan, uploads en broncontrole zijn nu niet beschikbaar.</p> : null}
+            {localPreview ? <p className={styles.noticeWarning}>Beveiligde lokale beheersessie actief. Acties gebruiken de server-side Supabase-koppeling.</p> : null}
+            {savedMessage ? <p className={styles.noticeSuccess}>Opgeslagen: {feedbackLabels[savedMessage] ?? savedMessage}.</p> : null}
+            {errorMessage ? <p className={styles.noticeError}>Niet opgeslagen: {feedbackLabels[errorMessage] ?? errorMessage}. Controleer de bronstatus en probeer opnieuw.</p> : null}
+          </div>
+
+          {activeTab === "today" ? (
         <TodayDashboard
           episodes={episodes}
           pendingPosts={pendingPosts}
@@ -452,6 +548,10 @@ export function AdminDashboard({
           missingMedia={missingMedia}
           failedTranscripts={failedTranscripts}
           scheduledEpisodes={scheduledEpisodes}
+          analyticsRows={analyticsRows}
+          analyticsSources={analyticsSources}
+          loginActivity={loginActivity}
+          dataCheckedAt={dataCheckedAt}
           onOpenTab={openTab}
         />
       ) : null}
@@ -639,7 +739,7 @@ export function AdminDashboard({
       {activeTab === "logistics" ? <OperationsCenter title="Logistiek" subtitle="Beheer verzending, tracking en fulfilmentnotities" items={logisticsEvents} type="logistics" /> : null}
       {activeTab === "service" ? <OperationsCenter title="Service en klantvragen" subtitle="Volg vragen, meldingen en klantcontact" items={serviceQuestions} type="service" /> : null}
       {activeTab === "builder" ? <ElementorBuilder settings={sectionDesign} onOpenSections={() => setActiveTab("sections")} /> : null}
-      {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} /> : null}
+      {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} sourceError={adminUsersError} /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
       {activeTab === "calendar" ? <MarketingCalendar /> : null}
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
@@ -653,71 +753,9 @@ export function AdminDashboard({
       {activeTab === "sections" ? <SectionDesignEditor initialSettings={sectionDesign} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
       {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
+        </div>
+      </div>
     </section>
-  );
-}
-
-function AdminOperationsHeader({
-  episodes,
-  missingSupabase,
-  localPreview,
-  pendingReviewCount,
-  missingMedia,
-  failedTranscripts,
-  scheduledEpisodes,
-  onOpenTab
-}: {
-  episodes: PodcastEpisode[];
-  missingSupabase?: boolean;
-  localPreview?: boolean;
-  pendingReviewCount: number;
-  missingMedia: number;
-  failedTranscripts: number;
-  scheduledEpisodes: number;
-  onOpenTab: (tab: AdminTabId) => void;
-}) {
-  const publishedEpisodes = episodes.filter((episode) => episode.status === "published").length;
-  const draftEpisodes = episodes.filter((episode) => episode.status === "draft").length;
-  const environmentLabel = missingSupabase ? "Demo data" : localPreview ? "Lokale preview" : "Live beheer";
-  const environmentTone = missingSupabase || localPreview ? "warning" : "ready";
-
-  return (
-    <header className="admin-ops-header">
-      <div className="admin-ops-copy">
-        <p className="eyebrow">Beheercentrum</p>
-        <h1>Wat moet er nu gebeuren?</h1>
-        <p>
-          Werk vanuit taken: publiceer podcastcontent, keur reacties goed en controleer of de live site klaarstaat.
-          Setup-modules tonen voortaan duidelijk wat nog koppeling nodig heeft.
-        </p>
-      </div>
-      <div className="admin-ops-status" aria-label="Beheerstatus">
-        <span className={`admin-health-pill ${environmentTone}`}>
-          {environmentTone === "ready" ? <CheckCircle2 size={16} aria-hidden /> : <ShieldCheck size={16} aria-hidden />}
-          {environmentLabel}
-        </span>
-        <span>{publishedEpisodes} gepubliceerd</span>
-        <span>{draftEpisodes} concepten</span>
-        <span>{scheduledEpisodes} gepland</span>
-      </div>
-      <div className="admin-ops-actions" aria-label="Snelle acties">
-        <button type="button" onClick={() => onOpenTab("reviews")}>
-          <ClipboardCheck size={18} aria-hidden />
-          <span>{pendingReviewCount}</span>
-          Review inbox
-        </button>
-        <button type="button" onClick={() => onOpenTab("podcast")}>
-          <ImagePlus size={18} aria-hidden />
-          <span>{missingMedia}</span>
-          Media aanvullen
-        </button>
-        <button type="button" onClick={() => onOpenTab("podcast")}>
-          <Captions size={18} aria-hidden />
-          <span>{failedTranscripts}</span>
-          Transcripties
-        </button>
-      </div>
-    </header>
   );
 }
 
@@ -953,6 +991,10 @@ function TodayDashboard({
   missingMedia,
   failedTranscripts,
   scheduledEpisodes,
+  analyticsRows,
+  analyticsSources,
+  loginActivity,
+  dataCheckedAt,
   onOpenTab
 }: {
   episodes: PodcastEpisode[];
@@ -962,50 +1004,137 @@ function TodayDashboard({
   missingMedia: number;
   failedTranscripts: number;
   scheduledEpisodes: number;
+  analyticsRows: AdminAnalyticsRow[];
+  analyticsSources: AdminAnalyticsSource[];
+  loginActivity: AdminLoginActivity[];
+  dataCheckedAt: string;
   onOpenTab: (tab: (typeof tabs)[number][0]) => void;
 }) {
   const draftEpisodes = episodes.filter((episode) => episode.status === "draft").slice(0, 4);
-  const cards = [
-    { label: "Review queue", value: pendingPosts.length + pendingInterviewComments.length + reports.length, helper: "comments, posts en meldingen", icon: ClipboardCheck, tab: "reviews" as const },
-    { label: "Media mist", value: missingMedia, helper: "afleveringen zonder audio of cover", icon: ImagePlus, tab: "podcast" as const },
-    { label: "Transcripties", value: failedTranscripts, helper: "mislukt of aandacht nodig", icon: Captions, tab: "podcast" as const },
-    { label: "Gepland", value: scheduledEpisodes, helper: "content in de kalender", icon: CalendarDays, tab: "calendar" as const }
-  ];
+  const metricNames = ["Nieuwe SNAAR-accounts", "Terugkerende logins", "Communityprofielen", "Podcastinschrijvingen", "Interviewvolgers"];
+  const registrationMetrics = metricNames.map((metric) => analyticsRows.find((row) => row.metric === metric) ?? {
+    metric,
+    value: "—",
+    detail: "Geen betrouwbare bronwaarde ontvangen",
+    source: "Bron niet beschikbaar",
+    state: "unknown" as const
+  });
+  const metricStates = registrationMetrics.map((metric) => metric.state ?? "unknown");
+  const healthState: AdminDataState = metricStates.includes("error") ? "error" : metricStates.includes("unknown") ? "unknown" : "verified";
+  const healthCopy = {
+    verified: ["Alle kernbronnen bereikbaar", `Supabase en registratiebronnen gecontroleerd om ${dataCheckedAt}`],
+    unknown: ["Een deel van de bronstatus is onbekend", "Ververs de bronnen of controleer de ontbrekende configuratie."],
+    error: ["Niet alle cijfers konden worden gecontroleerd", "Cijfers met een bronfout worden niet als nul weergegeven."]
+  }[healthState];
+  const googleIntent = analyticsRows.find((row) => row.metric === "Google-inlogdoel");
+  const loginActivityState = googleIntent?.state ?? "unknown";
+  const openReviews = pendingPosts.length + pendingInterviewComments.length + reports.length;
 
   return (
-    <div className="admin-module">
-      <div className="admin-module-hero">
+    <div className={`${styles.overview} admin-module`}>
+      <section className={`${styles.sourceHealth} ${styles[`sourceHealth_${healthState}`]}`} aria-label="Status van databronnen">
         <div>
-          <p className="eyebrow">Command center</p>
-          <h2>Vandaag in beheer</h2>
-          <p>Begin met wat aandacht vraagt: reviews, media, transcripties en geplande content.</p>
+          {healthState === "verified" ? <CheckCircle2 size={19} aria-hidden /> : healthState === "error" ? <XCircle size={19} aria-hidden /> : <ShieldCheck size={19} aria-hidden />}
+          <span>
+            <strong>{healthCopy[0]}</strong>
+            <small>{healthCopy[1]}</small>
+          </span>
         </div>
-        <button className="button" type="button" onClick={() => onOpenTab(pendingPosts.length + pendingInterviewComments.length + reports.length ? "reviews" : "podcast")}>
-          <ClipboardCheck size={17} aria-hidden /> Start met open taken
-        </button>
-      </div>
-      <div className="admin-kpi-grid">
-        {cards.map(({ label, value, helper, icon: Icon, tab }) => (
-          <button className="admin-kpi-card" key={label} type="button" onClick={() => onOpenTab(tab)}>
-            <Icon size={20} aria-hidden />
-            <strong>{value}</strong>
-            <span>{label}</span>
-            <small>{helper}</small>
-          </button>
-        ))}
-      </div>
-      <div className="admin-grid wide">
+        <b>{healthState === "verified" ? "GEVERIFIEERD" : healthState === "error" ? "BRONFOUT" : "ONBEKEND"}</b>
+      </section>
+
+      <section className={styles.metricGrid} aria-label="Registratiecijfers">
+        {registrationMetrics.map((metric) => {
+          const state = metric.state ?? "unknown";
+          return (
+            <article className={styles.metricCard} key={metric.metric}>
+              <div>
+                <span>{metric.metric}</span>
+                <i className={`${styles.stateDot} ${styles[`stateDot_${state}`]}`} aria-label={state === "verified" ? "Geverifieerd" : state === "error" ? "Bronfout" : "Onbekend"} />
+              </div>
+              <strong>{state === "error" ? "—" : metric.value}</strong>
+              <small>{state === "error" ? "Bronwaarde niet beschikbaar" : metric.detail}</small>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className={styles.activitySection}>
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className="eyebrow">Vandaag</p>
+            <h2>Recente login- en volgactiviteit</h2>
+          </div>
+          <span>{googleIntent?.detail ?? "Admin- en communitylogin worden afzonderlijk geregistreerd"}</span>
+        </div>
+        <div className={styles.activityTable} role="table" aria-label="Recente loginactiviteit">
+          {loginActivity.length ? loginActivity.map((activity) => (
+            <div className={styles.activityRow} role="row" key={activity.id}>
+              <time dateTime={activity.occurredAt}>{formatActivityTime(activity.occurredAt)}</time>
+              <strong className={activity.intent === "admin" ? styles.adminIntent : undefined}>{activity.intent === "admin" ? "Admin" : "Community"}</strong>
+              <span title={activity.identity}>{activity.identity}</span>
+              <small>{activity.provider}</small>
+              <b>Geverifieerd</b>
+            </div>
+          )) : (
+            <div className={styles.activityEmpty}>
+              <strong>{loginActivityState === "error" ? "Loginactiviteit kon niet worden opgehaald." : "Nog geen loginactiviteit gevonden."}</strong>
+              <span>
+                {loginActivityState === "error"
+                  ? "De bron gaf een fout terug; deze lege lijst is daarom geen bevestiging dat er geen aanmeldingen waren."
+                  : loginActivityState === "verified"
+                    ? "Dit is een bevestigde lege toestand; admin- en communitydoelen blijven apart geregistreerd."
+                    : "De bronstatus is nog onbekend. Ververs de bronnen voordat je deze lege lijst als definitief beschouwt."}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className={styles.stateLegend} aria-label="Betekenis van bronstatussen">
+          <span className={styles.legendVerified}>Geverifieerd</span>
+          <span className={styles.legendUnknown}>Onbekend</span>
+          <span className={styles.legendError}>Bronfout</span>
+        </div>
+      </section>
+
+      <div className={styles.overviewLowerGrid}>
         <article className="admin-panel">
-          <h2>Snelle taken</h2>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className="eyebrow">Werkvoorraad</p>
+              <h2>Aandacht vandaag</h2>
+            </div>
+            <span>{openReviews + missingMedia + failedTranscripts} open signalen</span>
+          </div>
           <div className="workflow-list">
-            <button type="button" onClick={() => onOpenTab("reviews")}><CheckCircle2 size={17} aria-hidden /> Beoordeel reacties en meldingen</button>
-            <button type="button" onClick={() => onOpenTab("podcast")}><ImagePlus size={17} aria-hidden /> Vul audio, cover of transcriptie aan</button>
-            <button type="button" onClick={() => onOpenTab("sections")}><LayoutTemplate size={17} aria-hidden /> Pas homepage-secties aan</button>
-            <button type="button" onClick={() => onOpenTab("calendar")}><CalendarDays size={17} aria-hidden /> Bekijk marketingplanning</button>
+            <button type="button" onClick={() => onOpenTab("reviews")}><ClipboardCheck size={17} aria-hidden /> {openReviews} reacties en meldingen beoordelen</button>
+            <button type="button" onClick={() => onOpenTab("podcast")}><ImagePlus size={17} aria-hidden /> {missingMedia} afleveringen missen media</button>
+            <button type="button" onClick={() => onOpenTab("podcast")}><Captions size={17} aria-hidden /> {failedTranscripts} transcripties vragen aandacht</button>
+            <button type="button" onClick={() => onOpenTab("calendar")}><CalendarDays size={17} aria-hidden /> {scheduledEpisodes} publicaties staan gepland</button>
           </div>
         </article>
         <article className="admin-panel">
-          <h2>Concepten</h2>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className="eyebrow">Bronnen</p>
+              <h2>Datakoppelingen</h2>
+            </div>
+          </div>
+          <div className={styles.sourceList}>
+            {analyticsSources.slice(0, 4).map((source) => (
+              <div key={source.platform}>
+                <span><strong>{source.platform}</strong><small>{source.owner}</small></span>
+                <b>{source.state}</b>
+              </div>
+            ))}
+          </div>
+        </article>
+        <article className="admin-panel">
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className="eyebrow">Redactie</p>
+              <h2>Podcastconcepten</h2>
+            </div>
+          </div>
           <div className="compact-list">
             {draftEpisodes.length ? draftEpisodes.map((episode) => (
               <p key={episode.id}>{episode.title} <small>S{episode.season_number} E{episode.episode_number}</small></p>
@@ -1015,6 +1144,18 @@ function TodayDashboard({
       </div>
     </div>
   );
+}
+
+function formatActivityTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Tijd onbekend";
+  return new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function ReviewCenter({ pendingInterviewComments, pendingPosts, reports, operationsReviews }: { pendingInterviewComments: AdminInterviewComment[]; pendingPosts: AdminPost[]; reports: AdminReport[]; operationsReviews: AdminReview[] }) {
@@ -1153,7 +1294,7 @@ function ElementorBuilder({ settings, onOpenSections }: { settings: SiteDesignSe
   );
 }
 
-function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
+function AccessAndRoles({ adminUsers = [], sourceError }: { adminUsers?: AdminUser[]; sourceError?: string | null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [emailInput, setEmailInput] = useState("");
@@ -1162,7 +1303,7 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!emailInput.trim()) return;
+    if (!emailInput.trim() || sourceError) return;
     setErrorMsg("");
     
     startTransition(async () => {
@@ -1214,6 +1355,16 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
       </div>
 
       {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+      {sourceError ? (
+        <div className={styles.roleSourceError} role="alert">
+          <XCircle size={20} aria-hidden />
+          <span>
+            <strong>Rollenbeheer is niet beschikbaar</strong>
+            <small>De tabel <code>public.admin_users</code> kon niet betrouwbaar worden gelezen. Er wordt daarom geen lege beheerderslijst getoond.</small>
+            <code>{sourceError}</code>
+          </span>
+        </div>
+      ) : null}
 
       <div className="admin-grid wide">
         <article className="admin-panel">
@@ -1227,7 +1378,7 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
                 placeholder="beheerder@stukverdriet.nl" 
                 value={emailInput} 
                 onChange={(e) => setEmailInput(e.target.value)} 
-                disabled={isPending}
+                disabled={isPending || Boolean(sourceError)}
               />
             </label>
             <label>
@@ -1235,7 +1386,7 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
               <select 
                 value={roleInput} 
                 onChange={(e) => setRoleInput(e.target.value as AdminUserRole)}
-                disabled={isPending}
+                disabled={isPending || Boolean(sourceError)}
                 aria-label="Selecteer rol"
                 title="Selecteer rol"
               >
@@ -1245,7 +1396,7 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
                 <option value="moderator">Moderator (Community)</option>
               </select>
             </label>
-            <button className="button" type="submit" disabled={isPending}>
+            <button className="button" type="submit" disabled={isPending || Boolean(sourceError)}>
               {isPending ? "Bezig..." : "Toevoegen"}
             </button>
           </form>
@@ -1264,7 +1415,7 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
                   <select
                     value={user.role}
                     onChange={(e) => handleRoleChange(user.id, e.target.value as AdminUserRole)}
-                    disabled={isPending}
+                    disabled={isPending || Boolean(sourceError)}
                     aria-label="Wijzig rol"
                     title="Wijzig rol"
                   >
@@ -1278,15 +1429,15 @@ function AccessAndRoles({ adminUsers = [] }: { adminUsers?: AdminUser[] }) {
                     className="text-link danger" 
                     style={{ background: "transparent", border: "none", cursor: "pointer" }}
                     onClick={() => handleDelete(user.id)}
-                    disabled={isPending}
+                    disabled={isPending || Boolean(sourceError)}
                   >
                     Verwijder
                   </button>
                 </div>
               </div>
             ))}
-            {!adminUsers.length ? (
-              <p className="empty-state">Geen database beheerders geconfigureerd.</p>
+            {!adminUsers.length && !sourceError ? (
+              <p className="empty-state">De bron is gecontroleerd: er zijn nog geen databasebeheerders geconfigureerd.</p>
             ) : null}
           </div>
         </article>
