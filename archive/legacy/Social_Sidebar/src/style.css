@@ -9,9 +9,9 @@
 }
 
 .sv-social-sidebar {
-  --sv-cream: #f7f4ef;
-  --sv-sand: #e7dfd2;
-  --sv-warm-white: #fffaf4;
+  --sv-cream: #b1a082;
+  --sv-sand: #635847;
+  --sv-warm-white: #d6bd9d;
   --sv-sage: #8fa48f;
   --sv-sage-dark: #536b5a;
   --sv-earth: #a6512e;
@@ -39,7 +39,7 @@
 
   background: linear-gradient(
     145deg,
-    rgba(255, 250, 244, 0.97),
+    rgba(150, 126, 97, 0.97),
     rgba(231, 223, 210, 0.94)
   );
 
@@ -103,12 +103,12 @@
 
   background: linear-gradient(
     145deg,
-    rgba(255, 250, 244, 0.99),
+    rgba(150, 124, 93, 0.99),
     rgba(231, 223, 210, 0.97)
   );
 
   box-shadow: 0 24px 48px rgba(74, 56, 36, 0.22),
-    0 8px 18px rgba(74, 56, 36, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.82);
+    0 8px 18px rgba(74, 56, 36, 0.12), inset 1px 1px 0 rgba(156, 131, 78, 0.82);
 }
 
 .sv-social-tab {
@@ -165,8 +165,8 @@
 
   background: linear-gradient(
     145deg,
-    rgba(255, 250, 244, 0.98),
-    rgba(231, 223, 210, 0.92)
+    rgba(151, 128, 99, 0.98),
+    rgba(122, 107, 83, 0.92)
   );
 
   border: 1px solid rgba(74, 56, 36, 0.1);
@@ -219,7 +219,7 @@
 
   background: radial-gradient(
     circle at 28% 18%,
-    rgba(255, 255, 255, 0.72),
+    rgba(131, 121, 92, 0.72),
     transparent 36%
   );
 
@@ -252,7 +252,7 @@
 
   background: linear-gradient(
     145deg,
-    rgba(255, 250, 244, 1),
+    rgb(161, 154, 145),
     var(--sv-hover-bg)
   );
 
