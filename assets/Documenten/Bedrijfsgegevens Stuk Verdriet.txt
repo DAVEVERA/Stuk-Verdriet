@@ -7,14 +7,10 @@ Laatst bijgewerkt: 19-07-2026
 Deze webshop hoort bij Stuk Verdriet.
 
 Handelsnaam: Stuk Verdriet
-Statutaire naam: [nog invullen indien anders dan handelsnaam]
-Rechtsvorm: [nog invullen]
-KVK-nummer: [nog invullen]
-Btw-identificatienummer: [nog invullen]
-Bezoekadres: [nog invullen of toelichten als het bezoekadres rechtmatig is afgeschermd]
-Postadres: [nog invullen indien afwijkend]
+Statutaire naam: Stukverdriet
+Rechtsvorm: Stichting
+KVK-nummer:
 E-mail: info@stukverdriet.com
-Telefoon: [nog invullen indien beschikbaar]
 Website: https://stukverdriet.com
 
 2. Contact over bestellingen

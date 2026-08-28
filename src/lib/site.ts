@@ -3,7 +3,7 @@ export const canonicalSiteUrl = "https://www.stukverdriet.com";
 export const site = {
   name: "Stuk Verdriet",
   tagline: "Verdriet verdient een stem.",
-  email: "info@stukverdriet.nl",
+  email: "info@stukverdriet.com",
   url: canonicalSiteUrl,
   logo: "/brand/sverdriet_logo.webp",
   colors: {

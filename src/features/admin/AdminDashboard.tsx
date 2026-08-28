@@ -1035,7 +1035,7 @@ function AccessAndRoles({ adminUsers = [], sourceError }: { adminUsers?: AdminUs
     e.preventDefault();
     if (!emailInput.trim() || sourceError) return;
     setErrorMsg("");
-    
+
     startTransition(async () => {
       const res = await addAdminUser(emailInput, roleInput);
       if (res.error) {
@@ -1050,7 +1050,7 @@ function AccessAndRoles({ adminUsers = [], sourceError }: { adminUsers?: AdminUs
   async function handleDelete(id: string) {
     if (!confirm("Weet je zeker dat je deze beheerder wilt verwijderen?")) return;
     setErrorMsg("");
-    
+
     startTransition(async () => {
       const res = await removeAdminUser(id);
       if (res.error) {
@@ -1102,19 +1102,19 @@ function AccessAndRoles({ adminUsers = [], sourceError }: { adminUsers?: AdminUs
           <form className="form-grid" onSubmit={handleAdd}>
             <label>
               E-mailadres
-              <input 
-                type="email" 
-                required 
-                placeholder="beheerder@stukverdriet.nl" 
-                value={emailInput} 
-                onChange={(e) => setEmailInput(e.target.value)} 
+              <input
+                type="email"
+                required
+                placeholder="info@stukverdriet.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
                 disabled={isPending || Boolean(sourceError)}
               />
             </label>
             <label>
               Rol
-              <select 
-                value={roleInput} 
+              <select
+                value={roleInput}
                 onChange={(e) => setRoleInput(e.target.value as AdminUserRole)}
                 disabled={isPending || Boolean(sourceError)}
                 aria-label="Selecteer rol"
@@ -1154,9 +1154,9 @@ function AccessAndRoles({ adminUsers = [], sourceError }: { adminUsers?: AdminUs
                     <option value="editor">Editor</option>
                     <option value="moderator">Moderator</option>
                   </select>
-                  <button 
-                    type="button" 
-                    className="text-link danger" 
+                  <button
+                    type="button"
+                    className="text-link danger"
                     style={{ background: "transparent", border: "none", cursor: "pointer" }}
                     onClick={() => handleDelete(user.id)}
                     disabled={isPending || Boolean(sourceError)}
@@ -1491,9 +1491,9 @@ function AIStudio({
             <label>
               <h3><WandSparkles size={18} aria-hidden /> Instructie voor teksten</h3>
               <p className="small-note">Stuurinstructie voor captions en teksten.</p>
-              <textarea 
-                value={textPrompt} 
-                onChange={(e) => setTextPrompt(e.target.value)} 
+              <textarea
+                value={textPrompt}
+                onChange={(e) => setTextPrompt(e.target.value)}
                 disabled={isPending}
                 style={{ minHeight: "100px" }}
               />
@@ -1502,9 +1502,9 @@ function AIStudio({
             <label>
               <h3><ImageIcon size={18} aria-hidden /> Instructie voor beelden</h3>
               <p className="small-note">Instructie voor AI-beeldgeneratoren.</p>
-              <textarea 
-                value={imagePrompt} 
-                onChange={(e) => setImagePrompt(e.target.value)} 
+              <textarea
+                value={imagePrompt}
+                onChange={(e) => setImagePrompt(e.target.value)}
                 disabled={isPending}
                 style={{ minHeight: "100px" }}
               />
@@ -1555,12 +1555,12 @@ function AIStudio({
               </select>
             </label>
             <label>Omschrijving / AI Instructie
-              <textarea 
-                required 
-                placeholder="bijv: Gebruik de podcasttitel en schrijf een Instagram-caption met maximaal 3 hashtags." 
-                value={autoDescription} 
-                onChange={(e) => setAutoDescription(e.target.value)} 
-                disabled={isPending} 
+              <textarea
+                required
+                placeholder="bijv: Gebruik de podcasttitel en schrijf een Instagram-caption met maximaal 3 hashtags."
+                value={autoDescription}
+                onChange={(e) => setAutoDescription(e.target.value)}
+                disabled={isPending}
               />
             </label>
             <div className="subtle-actions">

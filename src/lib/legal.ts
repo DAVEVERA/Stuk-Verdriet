@@ -73,7 +73,7 @@ Als cookies persoonsgegevens verwerken, gebeurt dat volgens de privacyverklaring
 
 Voor vragen over cookies of privacy kun je contact opnemen via:
 
-info@stukverdriet.nl
+info@stukverdriet.com
 
 9. Webshop en checkout
 
