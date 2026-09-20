@@ -4,7 +4,7 @@ import { FlyoutOverlay } from "@/components/FlyoutOverlay";
 import { InterviewGrid } from "@/components/InterviewGrid";
 import { SiteDesignStyles } from "@/components/SiteDesignStyles";
 import Link from "next/link";
-import { CommunityCategoryGrid, CommunityFeedback, CommunityPostCard, EpisodeSignupSection, GoFundMeSupportSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
+import { CommunityCategoryGrid, CommunityFeedback, CommunityPostCard, EpisodeSignupSection, Hero, HostCard, SocialLinksList } from "@/components/ui";
 import { getApprovedCommunityPosts, getCommunityCategories, getInterviewsWithComments, getLatestEpisode, getPublishedEpisodes, getPublishedHosts, getPublishedSeasons, getSiteDesignSettings, getSiteSettings, getSocialLinks } from "@/lib/content";
 import { likeInterview, shareInterview, submitInterviewComment, likeComment } from "@/lib/interview-actions";
 import { type OnepagerPanel } from "@/lib/site";
@@ -76,8 +76,6 @@ export async function Onepager({ initialPanel = null, initialTheme = null, submi
       <h1 className="sr-only">Stuk Verdriet - podcast en community over rouw, verlies en verder leven</h1>
       <Hero latest={latest} episodes={episodes} slides={copy.heroSlides} />
       <div className="story-gradient-flow">
-        <GoFundMeSupportSection />
-
         {hosts.length ? (
           <section className="content-band hosts-section" id="over">
             <div className="section-heading">

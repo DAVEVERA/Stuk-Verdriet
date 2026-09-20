@@ -70,12 +70,6 @@ const podcastPlaceholderAudioUrl = '/audio/podcast-placeholder.wav';
 const podcastInstagramProfileUrl = 'https://www.instagram.com/stukverdrietdepodcast/';
 const podcastTikTokProfileUrl = 'https://www.tiktok.com/@stuk.verdriet';
 const tychoSupportUrl = 'https://radboudoncologiefonds.voorradboudfonds.nl/project/tycho';
-const gofundmeCampaignUrl =
-  'https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken';
-const gofundmeGoalBarUrl =
-  'https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-goal-bar?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3';
-const gofundmeQrCodeUrl =
-  'https://www.gofundme.com/f/help-ons-stichting-stuk-verdriet-werkelijkheid-maken/stream-qr-code?locale=nl-NL&utm_campaign=fp_sharesheet&utm_medium=customer&utm_source=streaming_widget&attribution_id=sl%3A97015f3d-044e-4a74-9b31-eeef61482df3';
 
 export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: SocialLinks; logoUrl?: string }) {
   const pathname = usePathname();
@@ -186,22 +180,6 @@ export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: So
           </a>
           {' · Tailored by DV'}
         </span>
-        {isCommunityPage ? null : (
-          <a
-            className="copyright-qr"
-            href={gofundmeCampaignUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open de GoFundMe van Stuk Verdriet"
-          >
-            <Image
-              src="/img/QRCODE_GFM.png"
-              alt="QR-code voor de GoFundMe van Stuk Verdriet"
-              width={92}
-              height={92}
-            />
-          </a>
-        )}
       </p>
     </footer>
   );
@@ -724,36 +702,6 @@ function getConversationPeer(conversation: CommunityConversation, currentUserId?
       (participant) => participant.user_id !== currentUserId
     )?.community_profiles ?? null;
   return Array.isArray(rawProfile) ? (rawProfile[0] ?? null) : rawProfile;
-}
-
-export function GoFundMeSupportSection() {
-  return (
-    <section
-      className="gofundme-support-section"
-      id="gofundme"
-      aria-label="Steun het gezin van Tycho"
-    >
-      <div className="gofundme-support-inner">
-        <div className="gofundme-widget-card gofundme-widget-card--goal">
-          <div className="gofundme-widget-goal-frame">
-            <iframe
-              src={gofundmeGoalBarUrl}
-              title="Doelbalk inzamelingsactie"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-          <iframe
-            className="gofundme-widget-qr-inline"
-            src={gofundmeQrCodeUrl}
-            title="QR-code om te doneren"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export function SocialLinksList({ links }: { links: SocialLinks }) {

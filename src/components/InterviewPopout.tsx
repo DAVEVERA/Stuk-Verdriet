@@ -20,7 +20,6 @@ const interviewFooterLinks: Record<string, InterviewFooterLink[]> = {
     { label: "Waar heb je nu behoefte aan?", href: "#themas" }
   ],
   "mijn-verhaal-mag-erbij": [
-    { label: "GoFundMe", href: "#gofundme" },
     { label: "Podcast", href: "#podcast" },
     { label: "TikTok", href: "https://www.tiktok.com/@stuk.verdriet", external: true },
     { label: "Instagram", href: "https://www.instagram.com/stukverdrietdepodcast/", external: true }
