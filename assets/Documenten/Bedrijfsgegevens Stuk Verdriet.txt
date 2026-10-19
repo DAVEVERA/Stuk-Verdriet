@@ -1,17 +1,20 @@
 Bedrijfsgegevens Stuk Verdriet
 
-Laatst bijgewerkt: 19-07-2026
+Laatst bijgewerkt: 19-10-2026
 
 1. Wie is de aanbieder?
 
 Deze webshop hoort bij Stuk Verdriet.
 
 Handelsnaam: Stuk Verdriet
-Statutaire naam: Stukverdriet
+Statutaire naam: Stichting Stuk Verdriet
 Rechtsvorm: Stichting
-KVK-nummer:
+KVK-nummer: 42137342
+RSIN: 869887294
+Vestigingsadres: Laagstraat 17, 5038 PA Tilburg
+Rekeningnummer: NL47 RABO 0178 4871 63
 E-mail: info@stukverdriet.com
-Website: https://stukverdriet.com
+Website: https://www.stukverdriet.com
 
 2. Contact over bestellingen
 
@@ -25,6 +28,10 @@ Heb je een klacht over een product, levering, betaling of de webshop? Mail ons d
 
 Wij bevestigen ontvangst van je klacht en reageren zo snel mogelijk inhoudelijk. Als meer onderzoek nodig is, laten we weten wanneer je een inhoudelijke reactie kunt verwachten.
 
-4. Openstaande invulpunten
+4. Bestuur en beleid
 
-Deze pagina is pas volledig publicatieklaar als KVK-nummer, btw-id, rechtsvorm, bezoekadres en eventuele telefooninformatie zijn ingevuld en gecontroleerd.
+De samenstelling van het bestuur, het beloningsbeleid en het beleidsplan van de stichting staan op de website onder Wie zijn wij, Bestuur en beloningsbeleid en Beleidsplan.
+
+5. Openstaande invulpunten
+
+Een btw-identificatienummer en eventuele telefooninformatie zijn nog niet vastgesteld. Zodra deze bekend zijn, worden ze hier toegevoegd.

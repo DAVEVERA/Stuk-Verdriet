@@ -12,7 +12,11 @@ const staticPaths = [
   "/themas",
   "/community",
   "/over",
-  "/contact"
+  "/contact",
+  "/wie-zijn-wij",
+  "/beleidsplan",
+  "/bestuur-en-beloningsbeleid",
+  "/stichtingsgegevens"
 ] as const;
 
 export const revalidate = 3600;

@@ -42,6 +42,7 @@ import { HeroSlider } from '@/components/HeroSlider';
 import { SusanStoryPopout } from '@/components/SusanStoryPopout';
 import { SocialFollowTrigger } from '@/components/SocialFollowTrigger';
 import { useSectionContrast } from '@/hooks/useSectionContrast';
+import { governanceLinks } from '@/lib/governance';
 import {
   createCommunityReply,
   reportCommunityContent,
@@ -144,6 +145,21 @@ export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: So
           />
         </a>
       </div>
+      <nav className="footer-governance" aria-labelledby="footer-governance-title">
+        <p className="footer-governance-title" id="footer-governance-title">
+          Over de stichting
+        </p>
+        <ul className="footer-governance-grid">
+          {governanceLinks.map((item) => (
+            <li key={item.href}>
+              <Link className="footer-governance-link" href={item.href}>
+                <span className="footer-governance-link-title">{item.label}</span>
+                <span className="footer-governance-link-text">{item.description}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
       <div className="footer-feature-grid" aria-label="Aanbevolen links">
         {footerFeatures.map((item) => (
           <article className="footer-feature" key={item.href}>

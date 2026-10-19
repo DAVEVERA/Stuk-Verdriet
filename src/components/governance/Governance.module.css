@@ -1,0 +1,640 @@
+/* Pagina's over de stichting: bestuur, beleidsplan, beloningsbeleid, stichtingsgegevens. */
+
+.page {
+  display: grid;
+  gap: clamp(28px, 5vw, 52px);
+  margin: 0 auto;
+  max-width: 1040px;
+  padding: clamp(140px, 17vw, 210px) clamp(18px, 4vw, 56px) clamp(64px, 10vw, 120px);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.label {
+  align-items: center;
+  color: var(--pine);
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 12px;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.labelRule {
+  background: var(--sage);
+  display: block;
+  height: 2px;
+  width: clamp(28px, 6vw, 48px);
+}
+
+.title {
+  color: var(--pine);
+  font-size: clamp(2.35rem, 8vw, 5.2rem);
+  line-height: 0.98;
+  margin: 0;
+}
+
+.lede {
+  color: var(--eucalyptus);
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
+  margin: 0;
+  max-width: 58ch;
+}
+
+.meta {
+  color: var(--taupe);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* ---------- Navigatie tussen de vier pagina's ---------- */
+
+.sectionNav {
+  border-top: 1px solid var(--line);
+  padding-top: clamp(16px, 3vw, 22px);
+}
+
+.sectionNavList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sectionNavLink {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--pine);
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 600;
+  min-height: 44px;
+  align-items: center;
+  padding: 8px 18px;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.sectionNavLink:hover,
+.sectionNavLink:focus-visible {
+  background: rgba(138, 157, 139, 0.18);
+  border-color: var(--sage);
+}
+
+.sectionNavLinkCurrent {
+  background: var(--pine);
+  border-color: var(--pine);
+  color: var(--white);
+}
+
+.sectionNavLinkCurrent:hover,
+.sectionNavLinkCurrent:focus-visible {
+  background: var(--pine);
+  border-color: var(--pine);
+  color: var(--white);
+}
+
+/* ---------- Genummerde tekstsecties ---------- */
+
+.sections {
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+}
+
+.section {
+  background: rgba(255, 253, 248, 0.58);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: clamp(8px, 2vw, 24px);
+  grid-template-columns: minmax(0, 1fr);
+  padding: clamp(22px, 4vw, 40px);
+}
+
+.sectionMarker {
+  display: flex;
+}
+
+.sectionNumber {
+  color: var(--sage);
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.sectionBody {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  color: var(--pine);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  line-height: 1.12;
+  margin: 0;
+}
+
+.blockLead {
+  color: var(--ink);
+  font-size: clamp(1.04rem, 2vw, 1.2rem);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 66ch;
+}
+
+.blockParagraph {
+  color: var(--ink);
+  margin: 0;
+  max-width: 72ch;
+}
+
+.blockList {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  max-width: 72ch;
+  padding: 0;
+}
+
+.blockList li {
+  padding-left: 26px;
+  position: relative;
+}
+
+.blockList li::before {
+  background: var(--sage);
+  border-radius: 999px;
+  content: "";
+  height: 7px;
+  left: 4px;
+  position: absolute;
+  top: 0.62em;
+  width: 7px;
+}
+
+/* ---------- Bestuurstabel ---------- */
+
+.tableWrap {
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  min-width: 320px;
+  text-align: left;
+  width: 100%;
+}
+
+.tableCaption {
+  color: var(--pine);
+  font-weight: 700;
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px 12px 0;
+}
+
+.table thead th {
+  color: var(--eucalyptus);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.table tbody th {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.table tbody td {
+  color: var(--eucalyptus);
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- Vaststelling ---------- */
+
+.adoption {
+  align-items: baseline;
+  border-left: 3px solid var(--sage);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 4px 0 4px 18px;
+}
+
+.adoptionStatement {
+  color: var(--ink);
+  font-weight: 600;
+  margin: 0;
+}
+
+.adoptionDate {
+  color: var(--eucalyptus);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.adoptionDate b {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Bestuursleden ---------- */
+
+.boardGrid {
+  display: grid;
+  gap: clamp(16px, 3vw, 26px);
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.boardCard {
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.62), rgba(231, 220, 200, 0.28));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 0;
+  grid-template-rows: auto auto;
+  overflow: hidden;
+}
+
+.boardPhoto {
+  aspect-ratio: 4 / 5;
+  background: rgba(138, 157, 139, 0.18);
+  overflow: hidden;
+  position: relative;
+}
+
+.boardPhoto img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.boardCardBody {
+  display: grid;
+  gap: 6px;
+  padding: clamp(16px, 3vw, 22px);
+}
+
+.boardRole {
+  color: var(--pine);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.boardName {
+  color: var(--ink);
+  font-size: clamp(1.18rem, 2.4vw, 1.42rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.boardTagline {
+  color: var(--eucalyptus);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ---------- Persoonlijke introductie ---------- */
+
+.intro {
+  background: linear-gradient(160deg, rgba(66, 86, 69, 0.96), rgba(107, 122, 106, 0.94));
+  color: rgba(255, 253, 248, 0.9);
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+  padding: clamp(24px, 5vw, 52px);
+}
+
+.introHeader {
+  display: grid;
+  gap: 8px;
+}
+
+.introName {
+  color: var(--white);
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.introRole {
+  color: rgba(255, 253, 248, 0.72);
+  margin: 0;
+}
+
+.introBody {
+  display: grid;
+  gap: 14px;
+}
+
+.introBody p {
+  margin: 0;
+  max-width: 68ch;
+}
+
+.introClosing {
+  border-top: 1px solid rgba(255, 253, 248, 0.22);
+  color: var(--white);
+  font-family: var(--font-slogan), cursive;
+  font-size: clamp(1.4rem, 4vw, 2.1rem);
+  line-height: 1.25;
+  margin: 0;
+  max-width: 24ch;
+  padding-top: clamp(16px, 3vw, 24px);
+}
+
+/* ---------- Feitenlijsten ---------- */
+
+.factGroup {
+  background: rgba(255, 253, 248, 0.58);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  padding: clamp(22px, 4vw, 40px);
+}
+
+.factGroupTitle {
+  color: var(--pine);
+  font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+  line-height: 1.12;
+  margin: 0;
+}
+
+.factList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.fact {
+  align-items: baseline;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 4px 24px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 14px 0;
+}
+
+.fact:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.fact:last-child {
+  padding-bottom: 0;
+}
+
+.factLabel {
+  color: var(--eucalyptus);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 2px;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.factHint {
+  color: var(--taupe);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.factValue {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 1.04rem;
+  gap: 8px;
+  margin: 0;
+}
+
+.factValueText {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.factLink {
+  color: var(--pine);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.copyButton {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--pine);
+  cursor: pointer;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  position: relative;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+  width: 34px;
+}
+
+/* De knop blijft visueel klein, maar het aanraakvlak is 44px. */
+.copyButton::after {
+  content: "";
+  inset: 50% 50%;
+  margin: -22px 0 0 -22px;
+  height: 44px;
+  position: absolute;
+  width: 44px;
+}
+
+.copyButton:hover,
+.copyButton:focus-visible {
+  background: rgba(138, 157, 139, 0.2);
+  border-color: var(--sage);
+}
+
+.copyStatus {
+  color: var(--eucalyptus);
+  font-size: 0.82rem;
+}
+
+/* ---------- Toelichting onder de gegevens ---------- */
+
+.note {
+  border-left: 3px solid var(--sage);
+  color: var(--eucalyptus);
+  display: grid;
+  gap: 10px;
+  padding: 2px 0 2px 18px;
+}
+
+.note p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+/* ---------- Verder lezen ---------- */
+
+.related {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 16px;
+  padding-top: clamp(22px, 4vw, 34px);
+}
+
+.relatedTitle {
+  color: var(--pine);
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+  margin: 0;
+}
+
+.relatedGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.relatedCard {
+  align-content: start;
+  background: rgba(255, 253, 248, 0.5);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 18px;
+  position: relative;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.relatedCard:hover,
+.relatedCard:focus-visible {
+  background: rgba(255, 253, 248, 0.86);
+  border-color: var(--sage);
+  transform: translateY(-2px);
+}
+
+.relatedCardTitle {
+  color: var(--pine);
+  font-size: 1.04rem;
+  font-weight: 700;
+  padding-right: 26px;
+}
+
+.relatedCardText {
+  color: var(--eucalyptus);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.relatedCardArrow {
+  color: var(--sage);
+  font-size: 1.1rem;
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  transition: transform 180ms ease;
+}
+
+.relatedCard:hover .relatedCardArrow,
+.relatedCard:focus-visible .relatedCardArrow {
+  transform: translateX(3px);
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---------- Breekpunten ---------- */
+
+@media (min-width: 620px) {
+  .boardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fact {
+    align-items: baseline;
+    grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.6fr);
+  }
+
+  .relatedGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 860px) {
+  .section {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .boardGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relatedCard,
+  .relatedCardArrow,
+  .sectionNavLink,
+  .copyButton {
+    transition: none;
+  }
+
+  .relatedCard:hover,
+  .relatedCard:focus-visible {
+    transform: none;
+  }
+
+  .relatedCard:hover .relatedCardArrow,
+  .relatedCard:focus-visible .relatedCardArrow {
+    transform: none;
+  }
+}
