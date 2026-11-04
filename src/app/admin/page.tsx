@@ -5,7 +5,7 @@ import { AdminDashboard } from "@/features/admin/AdminDashboard";
 import { fallbackEpisodes, fallbackSeasons, fallbackLegalDocuments } from "@/lib/fallback-data";
 import { canAccessAdminPortal } from "@/lib/admin-access";
 import { getSiteDesignSettings, getSiteSettings } from "@/lib/content";
-import { getAdminUsersWithStatus, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations, getAdminThemeArticles } from "@/lib/admin-operations";
+import { getAdminUsersWithStatus, getLegalDocuments, getAdminFaqs, getAdminHosts, getAdminMarketingItems, getAISettings, getAdminAutomations, getAdminThemeArticles, getAdminEpisodeSignups, getAdminInterviewSubscribers, getPushSubscriberStats } from "@/lib/admin-operations";
 import { hasLocalAdminSession, isLocalAdminEnabled } from "@/lib/local-admin";
 import { buildRegistrationAnalyticsRows, getAmsterdamDayRange, summarizeAuthUsers, type AuthUserTiming } from "@/lib/registration-analytics";
 import { getAdminRole, createSupabaseAdminClient, createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase";
@@ -205,6 +205,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const faqs = admin && hasGoogleAdminSession ? await getAdminFaqs() : [];
   const hosts = admin && hasGoogleAdminSession ? await getAdminHosts() : [];
   const themeArticles = admin && hasGoogleAdminSession ? await getAdminThemeArticles() : [];
+  const episodeSignups = admin && hasGoogleAdminSession ? await getAdminEpisodeSignups() : [];
+  const interviewSubscribers = admin && hasGoogleAdminSession ? await getAdminInterviewSubscribers() : [];
+  const pushStats = admin && hasGoogleAdminSession ? await getPushSubscriberStats() : { total: 0, enabled: 0 };
   const marketingItems = admin && hasGoogleAdminSession ? await getAdminMarketingItems() : [];
   const aiSettings = admin && hasGoogleAdminSession ? await getAISettings() : null;
   const automations = admin && hasGoogleAdminSession ? await getAdminAutomations() : [];
@@ -248,6 +251,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         faqs={faqs}
         hosts={hosts}
         themeArticles={themeArticles}
+        episodeSignups={episodeSignups}
+        interviewSubscribers={interviewSubscribers}
+        pushStats={pushStats}
         marketingItems={marketingItems}
         aiSettings={aiSettings ?? undefined}
         automations={automations}

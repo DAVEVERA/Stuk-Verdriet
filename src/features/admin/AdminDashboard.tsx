@@ -36,7 +36,7 @@ import {
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
-import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation, saveThemeArticle, deleteThemeArticle } from "@/lib/admin-operations";
+import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation, saveThemeArticle, deleteThemeArticle, sendAdminPushBroadcast } from "@/lib/admin-operations";
 import { AdminSiteEditor } from "./AdminSiteEditor";
 import { AdminCommunityManager } from "./AdminCommunityManager";
 import styles from "./AdminDashboard.module.css";
@@ -51,6 +51,9 @@ import type {
   FAQ,
   HostProfile,
   ThemeArticleRecord,
+  EpisodeSignup,
+  InterviewSubscriber,
+  PushSubscriberStats,
   AdminUserRole,
   ContentStatus,
   MarketingItem,
@@ -142,6 +145,9 @@ type AdminDashboardProps = {
   faqs?: FAQ[];
   hosts?: HostProfile[];
   themeArticles?: ThemeArticleRecord[];
+  episodeSignups?: EpisodeSignup[];
+  interviewSubscribers?: InterviewSubscriber[];
+  pushStats?: PushSubscriberStats;
   marketingItems?: MarketingItem[];
   aiSettings?: AISettings;
   automations?: Automation[];
@@ -216,6 +222,7 @@ const tabs = [
   ["reviews", "Inbox"],
   ["access", "Beheerders"],
   ["keys", "Secrets"],
+  ["subscribers", "Abonnees"],
   ["calendar", "Kalender"],
   ["integrations", "Koppelingen"],
   ["ai", "AI & automations"],
@@ -250,7 +257,7 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Groei & planning",
     helper: "Planning en groei",
-    ids: ["calendar", "ai", "analytics"]
+    ids: ["subscribers", "calendar", "ai", "analytics"]
   },
   {
     title: "Beheerders & rollen",
@@ -344,6 +351,9 @@ export function AdminDashboard({
   faqs = [],
   hosts = [],
   themeArticles = [],
+  episodeSignups = [],
+  interviewSubscribers = [],
+  pushStats = { total: 0, enabled: 0 },
   marketingItems = [],
   aiSettings,
   automations = [],
@@ -370,7 +380,8 @@ export function AdminDashboard({
     reviews: pendingReviewCount,
     community: pendingPosts.length + pendingCommunityReplies.length + reports.length,
     calendar: scheduledEpisodes,
-    analytics: analyticsRows.length
+    analytics: analyticsRows.length,
+    subscribers: episodeSignups.length + interviewSubscribers.length
   };
   const tabMap = new Map<AdminTabId, (typeof tabs)[number]>(tabs.map((tab) => [tab[0], tab]));
   const activeTabLabel = tabMap.get(activeTab)?.[1] ?? "Overzicht";
@@ -725,6 +736,7 @@ export function AdminDashboard({
       {activeTab === "reviews" ? <ReviewCenter pendingInterviewComments={pendingInterviewComments} pendingCommunityReplies={pendingCommunityReplies} pendingPosts={pendingPosts} reports={reports} /> : null}
       {activeTab === "access" ? <AccessAndRoles adminUsers={adminUsers} sourceError={adminUsersError} /> : null}
       {activeTab === "keys" ? <ApiKeyVault missingSupabase={missingSupabase} /> : null}
+      {activeTab === "subscribers" ? <SubscribersManager episodeSignups={episodeSignups} interviewSubscribers={interviewSubscribers} pushStats={pushStats} /> : null}
       {activeTab === "calendar" ? <MarketingCalendar marketingItems={marketingItems} /> : null}
       {activeTab === "integrations" ? <IntegrationCenter analyticsSources={analyticsSources} /> : null}
       {activeTab === "ai" ? <AIStudio aiSettings={aiSettings} automations={automations} /> : null}
@@ -2228,6 +2240,167 @@ function ThemeArticleManager({ articles = [] }: { articles?: ThemeArticleRecord[
               </div>
             ))}
             {!articles.length ? <p className="empty-state">Nog geen thema&apos;s in de database. De site toont dan de meegeleverde standaardthema&apos;s.</p> : null}
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+function toCsvValue(value: unknown): string {
+  const text = value == null ? "" : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCsv(filename: string, headers: string[], rows: string[][]) {
+  const lines = [headers, ...rows].map((cols) => cols.map(toCsvValue).join(","));
+  const csv = "﻿" + lines.join("\r\n"); // BOM zodat Excel UTF-8 goed leest
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function formatSubscriberDate(value: string | null) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(parsed);
+}
+
+function SubscribersManager({
+  episodeSignups,
+  interviewSubscribers,
+  pushStats
+}: {
+  episodeSignups: EpisodeSignup[];
+  interviewSubscribers: InterviewSubscriber[];
+  pushStats: PushSubscriberStats;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [pushTitle, setPushTitle] = useState("");
+  const [pushBody, setPushBody] = useState("");
+  const [pushUrl, setPushUrl] = useState("");
+  const [pushResult, setPushResult] = useState("");
+  const [pushError, setPushError] = useState("");
+  const [query, setQuery] = useState("");
+
+  const filteredSignups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return episodeSignups;
+    return episodeSignups.filter((signup) => `${signup.name} ${signup.email} ${signup.source}`.toLowerCase().includes(q));
+  }, [episodeSignups, query]);
+
+  function handleSendPush(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pushTitle.trim() || !pushBody.trim()) return;
+    setPushError("");
+    setPushResult("");
+    startTransition(async () => {
+      try {
+        const res = await sendAdminPushBroadcast(pushTitle, pushBody, pushUrl);
+        if (res.error) {
+          setPushError(res.error);
+        } else {
+          setPushResult(`Verzonden naar ${res.sent} van ${res.total} aangemelde apparaten.`);
+          setPushTitle("");
+          setPushBody("");
+          setPushUrl("");
+        }
+      } catch {
+        setPushError("Versturen niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  function exportSignups() {
+    downloadCsv(
+      `aanmeldingen-aflevering-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Naam", "E-mail", "Bron", "Status", "Aangemeld op"],
+      filteredSignups.map((signup) => [signup.name, signup.email, signup.source, signup.status, formatSubscriberDate(signup.created_at)])
+    );
+  }
+
+  function exportInterviewSubscribers() {
+    downloadCsv(
+      `interview-abonnees-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Naam", "E-mail", "Interview", "Aangemeld op"],
+      interviewSubscribers.map((sub) => [sub.name ?? "", sub.email, sub.interview_id ?? "", formatSubscriberDate(sub.created_at)])
+    );
+  }
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Bereik</p>
+          <h2>Abonnees &amp; berichten</h2>
+          <p>Bekijk en exporteer wie zich heeft aangemeld, en stuur een pushbericht naar aangemelde apparaten.</p>
+        </div>
+      </div>
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h2>Pushbericht versturen</h2>
+          <p className="small-note">Gaat naar {pushStats.enabled} aangemelde {pushStats.enabled === 1 ? "apparaat" : "apparaten"} (van {pushStats.total} totaal).</p>
+          {pushError ? <p className="notice error">{pushError}</p> : null}
+          {pushResult ? <p className="notice">{pushResult}</p> : null}
+          <form className="form-grid" onSubmit={handleSendPush}>
+            <label>Titel<input required value={pushTitle} onChange={(e) => setPushTitle(e.target.value)} disabled={isPending} maxLength={80} placeholder="bijv. Nieuwe aflevering staat online" /></label>
+            <label>Bericht<textarea style={{ minHeight: "90px" }} required value={pushBody} onChange={(e) => setPushBody(e.target.value)} disabled={isPending} maxLength={300} placeholder="Korte tekst die in de notificatie verschijnt" /></label>
+            <label>Link (optioneel)<input value={pushUrl} onChange={(e) => setPushUrl(e.target.value)} disabled={isPending} placeholder="bijv. /podcast of https://..." /></label>
+            <button className="button" type="submit" disabled={isPending || pushStats.enabled === 0}>{isPending ? "Versturen…" : "Verstuur pushbericht"}</button>
+            {pushStats.enabled === 0 ? <p className="small-note">Nog geen apparaten aangemeld voor pushberichten.</p> : null}
+          </form>
+          <p className="small-note" style={{ marginTop: "1rem" }}>E-mailnieuwsbrief volgt als losse module (vereist een e-mailprovider). Exporteer tot die tijd de lijst hieronder en mail via je eigen tool.</p>
+        </article>
+
+        <article className="admin-panel">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+            <h2>Aanmeldingen aflevering ({episodeSignups.length})</h2>
+            <button type="button" className="button ghost" onClick={exportSignups} disabled={!filteredSignups.length}>Exporteer CSV</button>
+          </div>
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Zoek op naam, e-mail of bron" style={{ marginTop: "0.75rem", width: "100%" }} />
+          <div className="compact-list" style={{ marginTop: "1rem", maxHeight: "420px", overflowY: "auto" }}>
+            {filteredSignups.map((signup) => (
+              <div key={signup.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <strong>{signup.name}</strong>
+                  <p className="small-note" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{signup.email}</p>
+                </div>
+                <p className="small-note" style={{ whiteSpace: "nowrap" }}>{signup.source} · {formatSubscriberDate(signup.created_at)}</p>
+              </div>
+            ))}
+            {!filteredSignups.length ? <p className="empty-state">{episodeSignups.length ? "Geen aanmeldingen gevonden voor deze zoekopdracht." : "Nog geen aanmeldingen."}</p> : null}
+          </div>
+        </article>
+
+        <article className="admin-panel">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+            <h2>Interview-abonnees ({interviewSubscribers.length})</h2>
+            <button type="button" className="button ghost" onClick={exportInterviewSubscribers} disabled={!interviewSubscribers.length}>Exporteer CSV</button>
+          </div>
+          <div className="compact-list" style={{ marginTop: "1rem", maxHeight: "420px", overflowY: "auto" }}>
+            {interviewSubscribers.map((sub) => (
+              <div key={sub.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <strong>{sub.name ?? "—"}</strong>
+                  <p className="small-note" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{sub.email}</p>
+                </div>
+                <p className="small-note" style={{ whiteSpace: "nowrap" }}>{formatSubscriberDate(sub.created_at)}</p>
+              </div>
+            ))}
+            {!interviewSubscribers.length ? <p className="empty-state">Nog geen interview-abonnees.</p> : null}
           </div>
         </article>
       </div>

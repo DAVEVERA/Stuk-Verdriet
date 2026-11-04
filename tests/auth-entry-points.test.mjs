@@ -40,6 +40,10 @@ const mocks = {
     export async function getAdminMarketingItems() { return []; }
     export async function getAISettings() { return null; }
     export async function getAdminAutomations() { return []; }
+    export async function getAdminThemeArticles() { return []; }
+    export async function getAdminEpisodeSignups() { return []; }
+    export async function getAdminInterviewSubscribers() { return []; }
+    export async function getPushSubscriberStats() { return { total: 0, enabled: 0 }; }
   `),
   localAdmin: moduleUrl(`
     export async function hasLocalAdminSession() { return false; }

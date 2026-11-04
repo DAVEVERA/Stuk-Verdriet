@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAdminClient } from '@/lib/admin-authorization';
+import { sendPushBroadcast } from '@/lib/push';
 import type {
   AdminCustomer,
   AdminLogisticsEvent,
@@ -19,6 +20,9 @@ import type {
   Automation,
   MarketingItemStatus,
   ThemeArticleRecord,
+  EpisodeSignup,
+  InterviewSubscriber,
+  PushSubscriberStats,
 } from '@/types/content';
 
 export async function getAdminCustomers() {
@@ -446,6 +450,90 @@ export async function deleteThemeArticle(id: string) {
     return { error: error.message };
   }
   return { success: true };
+}
+
+// === SUBSCRIBERS / AUDIENCE ===
+export async function getAdminEpisodeSignups() {
+  const admin = await requireAdminClient();
+
+  const { data, error } = await admin
+    .from('episode_signups')
+    .select('id, name, email, source, status, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching episode signups:', error);
+    return [] as EpisodeSignup[];
+  }
+  return (data ?? []) as EpisodeSignup[];
+}
+
+export async function getAdminInterviewSubscribers() {
+  const admin = await requireAdminClient();
+
+  const { data, error } = await admin
+    .from('interview_subscribers')
+    .select('id, name, email, interview_id, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching interview subscribers:', error);
+    return [] as InterviewSubscriber[];
+  }
+  return (data ?? []) as InterviewSubscriber[];
+}
+
+export async function getPushSubscriberStats(): Promise<PushSubscriberStats> {
+  const admin = await requireAdminClient();
+
+  const [totalResult, enabledResult] = await Promise.all([
+    admin.from('push_subscriptions').select('*', { count: 'exact', head: true }),
+    admin.from('push_subscriptions').select('*', { count: 'exact', head: true }).eq('push_enabled', true),
+  ]);
+
+  return {
+    total: totalResult.count ?? 0,
+    enabled: enabledResult.count ?? 0,
+  };
+}
+
+export async function sendAdminPushBroadcast(title: string, body: string, url: string) {
+  // Authorization guard (throws for non-admins / local sessions).
+  await requireAdminClient();
+
+  const trimmedTitle = title.trim();
+  const trimmedBody = body.trim();
+  if (!trimmedTitle || !trimmedBody) {
+    return { error: 'Titel en bericht zijn verplicht.' };
+  }
+  if (trimmedTitle.length > 80) {
+    return { error: 'Houd de titel onder de 80 tekens.' };
+  }
+  if (trimmedBody.length > 300) {
+    return { error: 'Houd het bericht onder de 300 tekens.' };
+  }
+
+  const result = await sendPushBroadcast({
+    title: trimmedTitle,
+    body: trimmedBody,
+    url: url.trim() || undefined,
+    tag: 'admin-broadcast',
+  });
+
+  if (result.reason === 'vapid-not-configured') {
+    return { error: 'Push is niet geconfigureerd op de server (VAPID-sleutels ontbreken).' };
+  }
+  if (result.reason === 'no-admin-client') {
+    return { error: 'Supabase service-role ontbreekt op de server.' };
+  }
+  if (result.reason === 'query-failed') {
+    return { error: 'Kon de aangemelde apparaten niet ophalen.' };
+  }
+  if (result.reason === 'no-subscriptions') {
+    return { error: 'Er zijn nog geen apparaten aangemeld voor pushberichten.' };
+  }
+
+  return { success: true, sent: result.sent, total: result.total };
 }
 
 // === HOSTS CRUD ===

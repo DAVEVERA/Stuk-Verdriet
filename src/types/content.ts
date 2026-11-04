@@ -544,6 +544,29 @@ export type ThemeArticleRecord = {
   updated_at: string;
 };
 
+// Audience / subscribers managed via the admin portal.
+export type EpisodeSignup = {
+  id: string;
+  name: string;
+  email: string;
+  source: string;
+  status: string;
+  created_at: string;
+};
+
+export type InterviewSubscriber = {
+  id: string;
+  name: string | null;
+  email: string;
+  interview_id: string | null;
+  created_at: string | null;
+};
+
+export type PushSubscriberStats = {
+  total: number;
+  enabled: number;
+};
+
 export type AdminUserRole = "super_admin" | "admin" | "editor" | "moderator";
 
 export type AdminUser = {
