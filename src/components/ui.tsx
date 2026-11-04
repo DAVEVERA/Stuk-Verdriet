@@ -833,6 +833,67 @@ export function EpisodeSignupSection({ status }: { status?: string | null }) {
   );
 }
 
+export function DonationBanner() {
+  const [copied, setCopied] = useState(false);
+  const ibanDisplay = 'NL47 RABO 0178 4871 63';
+  const ibanRaw = 'NL47RABO0178487163';
+
+  async function copyIban() {
+    try {
+      await navigator.clipboard.writeText(ibanRaw);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2400);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <section className="donation-band" id="steun" aria-labelledby="donation-band-title">
+      <div className="donation-band-inner">
+        <div className="donation-band-copy">
+          <p className="donation-band-eyebrow">
+            <Heart aria-hidden="true" /> Steun de stichting
+          </p>
+          <h2 id="donation-band-title">Samen houden we Stuk Verdriet overeind</h2>
+          <p className="donation-band-lede">
+            Stichting Stuk Verdriet werkt zonder winstoogmerk. Jouw bijdrage maakt de podcast,
+            de community en de activiteiten die eraan komen mogelijk. Scan de iDEAL-code of maak
+            je gift over &mdash; elk bedrag helpt.
+          </p>
+          <div className="donation-band-actions">
+            <button type="button" className="button donation-band-copy-button" onClick={copyIban}>
+              {copied ? 'IBAN gekopieerd' : 'Kopieer IBAN'}
+            </button>
+            <Link className="text-link donation-band-policy-link" href="/beleidsplan">
+              Lees waar je bijdrage naartoe gaat
+            </Link>
+          </div>
+          <p className="donation-band-iban">
+            Of maak over op{' '}
+            <span className="donation-band-iban-number">{ibanDisplay}</span> t.n.v. Stichting Stuk Verdriet.
+          </p>
+          <span className="donation-band-copied" role="status" aria-live="polite">
+            {copied ? 'Rekeningnummer gekopieerd naar je klembord.' : ''}
+          </span>
+        </div>
+        <figure className="donation-band-qr">
+          <span className="donation-band-qr-frame">
+            <Image
+              src="/img/qr-ideal-doneren.png"
+              alt="iDEAL QR-code om te doneren aan Stichting Stuk Verdriet"
+              width={600}
+              height={599}
+              sizes="(min-width: 760px) 200px, 150px"
+            />
+          </span>
+          <figcaption>Scan met je bankapp en doneer direct via iDEAL</figcaption>
+        </figure>
+      </div>
+    </section>
+  );
+}
+
 export function PodcastOnePagerSection({
   latest,
   seasons,
