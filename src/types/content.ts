@@ -529,6 +529,21 @@ export type ThemeArticle = {
   seo: ThemeArticleSeo;
 };
 
+// Admin/database row for theme articles managed via the admin portal.
+export type ThemeArticleRecord = {
+  id: string;
+  slug: string;
+  title: string;
+  body_markdown: string;
+  seo_title: string;
+  meta_description: string;
+  card_text: string;
+  display_order: number;
+  status: ContentStatus;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AdminUserRole = "super_admin" | "admin" | "editor" | "moderator";
 
 export type AdminUser = {

@@ -36,7 +36,7 @@ import {
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
-import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation } from "@/lib/admin-operations";
+import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation, saveThemeArticle, deleteThemeArticle } from "@/lib/admin-operations";
 import { AdminSiteEditor } from "./AdminSiteEditor";
 import { AdminCommunityManager } from "./AdminCommunityManager";
 import styles from "./AdminDashboard.module.css";
@@ -50,6 +50,7 @@ import type {
   LegalDocument,
   FAQ,
   HostProfile,
+  ThemeArticleRecord,
   AdminUserRole,
   ContentStatus,
   MarketingItem,
@@ -140,6 +141,7 @@ type AdminDashboardProps = {
   legalDocuments?: LegalDocument[];
   faqs?: FAQ[];
   hosts?: HostProfile[];
+  themeArticles?: ThemeArticleRecord[];
   marketingItems?: MarketingItem[];
   aiSettings?: AISettings;
   automations?: Automation[];
@@ -222,6 +224,7 @@ const tabs = [
   ["seasons", "Seizoenen"],
   ["community", "Community"],
   ["site", "Site bewerken"],
+  ["themes", "Thema's"],
   ["hosts", "Hosts"],
   ["documents", "Documentatie"]
 ] as const;
@@ -242,7 +245,7 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Content & media",
     helper: "Podcast, site en documenten",
-    ids: ["site", "podcast", "seasons", "hosts", "brand", "documents"]
+    ids: ["site", "themes", "podcast", "seasons", "hosts", "brand", "documents"]
   },
   {
     title: "Groei & planning",
@@ -340,6 +343,7 @@ export function AdminDashboard({
   legalDocuments = [],
   faqs = [],
   hosts = [],
+  themeArticles = [],
   marketingItems = [],
   aiSettings,
   automations = [],
@@ -728,6 +732,7 @@ export function AdminDashboard({
       {activeTab === "brand" ? <BrandLibrary /> : null}
       {activeTab === "community" ? <AdminCommunityManager posts={communityPosts} replies={communityReplies} profiles={communityProfiles} moments={communityPulseMoments} sourceError={communityDataError} /> : null}
       {activeTab === "site" ? <AdminSiteEditor siteSettings={siteSettings} sectionDesign={sectionDesign} /> : null}
+      {activeTab === "themes" ? <ThemeArticleManager articles={themeArticles} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
       {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
         </div>
@@ -2065,6 +2070,164 @@ function DocumentsManager({ legalDocuments = [] }: { legalDocuments?: LegalDocum
               </div>
             ))}
             {!legalDocuments.length ? <p className="empty-state">Geen documenten in database.</p> : null}
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+const themeStatusLabels: Record<ContentStatus, string> = {
+  draft: "Concept",
+  scheduled: "Gepland",
+  published: "Gepubliceerd",
+  archived: "Gearchiveerd"
+};
+
+function ThemeArticleManager({ articles = [] }: { articles?: ThemeArticleRecord[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [cardText, setCardText] = useState("");
+  const [body, setBody] = useState("");
+  const [displayOrder, setDisplayOrder] = useState<number>(100);
+  const [status, setStatus] = useState<ContentStatus>("draft");
+
+  function editArticle(article: ThemeArticleRecord) {
+    setEditingId(article.id);
+    setTitle(article.title);
+    setSlug(article.slug);
+    setSeoTitle(article.seo_title);
+    setMetaDescription(article.meta_description);
+    setCardText(article.card_text);
+    setBody(article.body_markdown);
+    setDisplayOrder(article.display_order);
+    setStatus(article.status);
+    setErrorMsg("");
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setTitle("");
+    setSlug("");
+    setSeoTitle("");
+    setMetaDescription("");
+    setCardText("");
+    setBody("");
+    setDisplayOrder(100);
+    setStatus("draft");
+  }
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !slug.trim()) return;
+    setErrorMsg("");
+
+    startTransition(async () => {
+      try {
+        const res = await saveThemeArticle(
+          editingId,
+          slug,
+          title,
+          body,
+          seoTitle,
+          metaDescription,
+          cardText,
+          displayOrder,
+          status
+        );
+        if (res.error) {
+          setErrorMsg("Fout bij opslaan thema: " + res.error);
+        } else {
+          resetForm();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Opslaan niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Weet je zeker dat je dit thema wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        const res = await deleteThemeArticle(id);
+        if (res.error) {
+          setErrorMsg("Fout bij verwijderen thema: " + res.error);
+        } else {
+          if (editingId === id) resetForm();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Verwijderen niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Sitebeheer</p>
+          <h2>Thema&apos;s</h2>
+          <p>Beheer hier de thema-artikelen die onder /thema&apos;s verschijnen. Alleen thema&apos;s met status &laquo;Gepubliceerd&raquo; zijn zichtbaar op de site.</p>
+        </div>
+      </div>
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h2>{editingId ? "Thema bewerken" : "Thema toevoegen"}</h2>
+          <form className="form-grid" onSubmit={handleSave}>
+            <label>Titel<input required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isPending} placeholder="bijv. Rouw algemeen" /></label>
+            <label>Slug (URL)<input required value={slug} onChange={(e) => setSlug(e.target.value)} disabled={isPending} placeholder="bijv. rouw-algemeen" /></label>
+            <label>SEO-titel<input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} disabled={isPending} placeholder="Titel voor Google en social" /></label>
+            <label>Meta-description<textarea style={{ minHeight: "70px" }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} disabled={isPending} placeholder="Korte omschrijving voor zoekresultaten (max ~155 tekens)" /></label>
+            <label>Kaarttekst<textarea style={{ minHeight: "60px" }} value={cardText} onChange={(e) => setCardText(e.target.value)} disabled={isPending} placeholder="Korte tekst op de themakaart" /></label>
+            <label>Inhoud (markdown)<textarea style={{ minHeight: "320px", fontFamily: "monospace" }} value={body} onChange={(e) => setBody(e.target.value)} disabled={isPending} placeholder={"Inleiding in gewone alinea's.\n\n## Een kopje\nTekst onder het kopje.\n- Een lijstpunt\n- Nog een lijstpunt"} /></label>
+            <p className="small-note">Begin met een of meer inleidende alinea&apos;s. Gebruik <code>## Kop</code> voor een nieuw onderdeel en <code>- </code> voor lijstpunten. Laat een lege regel tussen alinea&apos;s.</p>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <label style={{ flex: "1 1 120px" }}>Volgorde<input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} disabled={isPending} /></label>
+              <label style={{ flex: "1 1 160px" }}>Status
+                <select value={status} onChange={(e) => setStatus(e.target.value as ContentStatus)} disabled={isPending}>
+                  {(Object.keys(themeStatusLabels) as ContentStatus[]).map((value) => (
+                    <option key={value} value={value}>{themeStatusLabels[value]}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+              {editingId ? <button className="button ghost" type="button" onClick={resetForm} disabled={isPending}>Annuleren</button> : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Bestaande thema&apos;s ({articles.length})</h2>
+          <div className="compact-list" style={{ marginTop: "1rem" }}>
+            {articles.map((article) => (
+              <div key={article.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <div>
+                  <strong>{article.title}</strong>
+                  <p className="small-note">/themas/{article.slug} · {themeStatusLabels[article.status]} · volgorde {article.display_order}</p>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => editArticle(article)} disabled={isPending}>Bewerk</button>
+                  <button type="button" className="text-link danger" onClick={() => handleDelete(article.id)} disabled={isPending}>Verwijder</button>
+                </div>
+              </div>
+            ))}
+            {!articles.length ? <p className="empty-state">Nog geen thema&apos;s in de database. De site toont dan de meegeleverde standaardthema&apos;s.</p> : null}
           </div>
         </article>
       </div>

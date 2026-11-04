@@ -7,7 +7,7 @@ type ThemasPageProps = {
 
 export async function generateMetadata({ searchParams }: ThemasPageProps) {
   const params = await searchParams;
-  const article = getThemeArticleBySlug(params?.theme);
+  const article = await getThemeArticleBySlug(params?.theme);
   if (!article) {
     return {
       title: "Thema's",

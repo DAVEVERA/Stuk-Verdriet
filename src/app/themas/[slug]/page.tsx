@@ -6,13 +6,14 @@ type ThemeArticlePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return getThemeArticles().map((article) => ({ slug: article.slug }));
+export async function generateStaticParams() {
+  const articles = await getThemeArticles();
+  return articles.map((article) => ({ slug: article.slug }));
 }
 
 export async function generateMetadata({ params }: ThemeArticlePageProps) {
   const { slug } = await params;
-  const article = getThemeArticleBySlug(slug);
+  const article = await getThemeArticleBySlug(slug);
   if (!article) return {};
 
   return {
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: ThemeArticlePageProps) {
 
 export default async function ThemeArticlePage({ params }: ThemeArticlePageProps) {
   const { slug } = await params;
-  const article = getThemeArticleBySlug(slug);
+  const article = await getThemeArticleBySlug(slug);
   if (!article) notFound();
 
   return <Onepager initialPanel="themas" initialTheme={article.slug} />;

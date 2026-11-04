@@ -18,6 +18,7 @@ import type {
   AISettings,
   Automation,
   MarketingItemStatus,
+  ThemeArticleRecord,
 } from '@/types/content';
 
 export async function getAdminCustomers() {
@@ -347,6 +348,99 @@ export async function deleteFaq(id: string) {
   const admin = await requireAdminClient();
 
   const { error } = await admin.from('faqs').delete().eq('id', id);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+// === THEME ARTICLES CRUD ===
+export async function getAdminThemeArticles() {
+  const admin = await requireAdminClient();
+
+  const { data, error } = await admin
+    .from('theme_articles')
+    .select('*')
+    .order('display_order', { ascending: true })
+    .order('title', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching theme articles:', error);
+    return [] as ThemeArticleRecord[];
+  }
+  return (data ?? []) as ThemeArticleRecord[];
+}
+
+export async function saveThemeArticle(
+  id: string | null,
+  slug: string,
+  title: string,
+  bodyMarkdown: string,
+  seoTitle: string,
+  metaDescription: string,
+  cardText: string,
+  displayOrder: number,
+  status: ContentStatus
+) {
+  const admin = await requireAdminClient();
+
+  const normalizedSlug = slug
+    .trim()
+    .replace(/^\/+/, '')
+    .toLowerCase()
+    .replace(/\s+/g, '-');
+  const trimmedTitle = title.trim();
+
+  if (!normalizedSlug) {
+    return { error: 'Een slug is verplicht.' };
+  }
+  if (!trimmedTitle) {
+    return { error: 'Een titel is verplicht.' };
+  }
+
+  const payload = {
+    slug: normalizedSlug,
+    title: trimmedTitle,
+    body_markdown: bodyMarkdown,
+    seo_title: seoTitle.trim(),
+    meta_description: metaDescription.trim(),
+    card_text: cardText.trim(),
+    display_order: Number.isFinite(displayOrder) ? displayOrder : 100,
+    status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (id) {
+    const { data, error } = await admin
+      .from('theme_articles')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as ThemeArticleRecord };
+  } else {
+    const { data, error } = await admin
+      .from('theme_articles')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+    return { success: true, data: data as ThemeArticleRecord };
+  }
+}
+
+export async function deleteThemeArticle(id: string) {
+  const admin = await requireAdminClient();
+
+  const { error } = await admin.from('theme_articles').delete().eq('id', id);
 
   if (error) {
     return { error: error.message };

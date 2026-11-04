@@ -44,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedEpisodes(),
     getApprovedCommunityPosts()
   ]);
-  const themes = getThemeArticles();
+  const themes = await getThemeArticles();
 
   const episodeLastModified = newestDate(
     episodes.flatMap((episode) => [episode.updated_at, episode.publication_date, episode.created_at])

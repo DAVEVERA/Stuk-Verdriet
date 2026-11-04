@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ThemeArticle, ThemeArticleBlock, ThemeArticleSection } from "@/types/content";
+import type { ThemeArticle } from "@/types/content";
+import { createSupabasePublicClient } from "@/lib/supabase";
+import { parseIntroAndSections, recordToThemeArticle, type ThemeArticleRow } from "@/lib/theme-article-parse";
+
+export { parseIntroAndSections, recordToThemeArticle };
 
 const themeArticleFiles = [
   "01-Rouw-algemeen.md",
@@ -42,47 +46,6 @@ const themeArticleFallbacks: Partial<Record<(typeof themeArticleFiles)[number], 
 
 const articlesDirectory = path.join(process.cwd(), "assets", "StukVerdriet-Themas");
 
-function pushParagraph(target: ThemeArticleBlock[], lines: string[]) {
-  const content = lines.join(" ").trim();
-  if (content) target.push({ type: "paragraph", content });
-  lines.length = 0;
-}
-
-function parseBlocks(lines: string[]) {
-  const blocks: ThemeArticleBlock[] = [];
-  const paragraphLines: string[] = [];
-  let listItems: string[] = [];
-
-  function flushList() {
-    if (listItems.length) {
-      blocks.push({ type: "list", items: listItems });
-      listItems = [];
-    }
-  }
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) {
-      pushParagraph(blocks, paragraphLines);
-      flushList();
-      continue;
-    }
-
-    if (line.startsWith("- ")) {
-      pushParagraph(blocks, paragraphLines);
-      listItems.push(line.slice(2).trim());
-      continue;
-    }
-
-    flushList();
-    paragraphLines.push(line);
-  }
-
-  pushParagraph(blocks, paragraphLines);
-  flushList();
-  return blocks;
-}
-
 function readSeoField(lines: string[], label: string) {
   const prefix = `${label}:`;
   const found = lines.find((line) => line.trim().startsWith(prefix));
@@ -101,39 +64,7 @@ function parseThemeArticle(
   const title = titleLine?.replace(/^#\s+/, "").trim() || htmlTitle || fallback?.title || "Thema";
 
   const contentLines = articleLines.filter((line) => !line.startsWith("# ") && !/<h1>.*<\/h1>/i.test(line));
-  const sections: ThemeArticleSection[] = [];
-  const introLines: string[] = [];
-  let currentHeading: string | null = null;
-  let currentLines: string[] = [];
-
-  function flushSection() {
-    if (!currentHeading) return;
-    sections.push({
-      heading: currentHeading,
-      blocks: parseBlocks(currentLines)
-    });
-    currentLines = [];
-  }
-
-  for (const rawLine of contentLines) {
-    if (rawLine.startsWith("## ")) {
-      if (currentHeading) {
-        flushSection();
-      } else {
-        introLines.push(...currentLines);
-        currentLines = [];
-      }
-      currentHeading = rawLine.replace(/^##\s+/, "").trim();
-      continue;
-    }
-    currentLines.push(rawLine);
-  }
-
-  if (currentHeading) {
-    flushSection();
-  } else {
-    introLines.push(...currentLines);
-  }
+  const { intro, sections } = parseIntroAndSections(contentLines.join("\n"));
 
   const seoLines = seoMarkdown.split("\n");
   const slug = readSeoField(seoLines, "URL slug").replace(/^\//, "") || fallback?.slug || "";
@@ -141,9 +72,7 @@ function parseThemeArticle(
   return {
     slug,
     title,
-    intro: parseBlocks(introLines)
-      .filter((block): block is Extract<ThemeArticleBlock, { type: "paragraph" }> => block.type === "paragraph")
-      .map((block) => block.content),
+    intro,
     sections,
     seo: {
       title: readSeoField(seoLines, "SEO titel") || fallback?.seoTitle || title,
@@ -154,14 +83,38 @@ function parseThemeArticle(
   };
 }
 
-export function getThemeArticles(): ThemeArticle[] {
+/** Bundled markdown files — the fallback when the database is empty/unreachable. */
+function getThemeArticlesFromFiles(): ThemeArticle[] {
   return themeArticleFiles.map((fileName) => {
     const markdown = fs.readFileSync(path.join(articlesDirectory, fileName), "utf8");
     return parseThemeArticle(markdown, themeArticleFallbacks[fileName]);
   });
 }
 
-export function getThemeArticleBySlug(slug: string | null | undefined) {
+/**
+ * Published theme articles. Prefers the database (so the foundation can manage
+ * them from the admin portal) and falls back to the bundled markdown files when
+ * Supabase is unavailable or the table does not exist yet — the public site
+ * therefore keeps working regardless of whether the migration has run.
+ */
+export async function getThemeArticles(): Promise<ThemeArticle[]> {
+  const supabase = createSupabasePublicClient();
+  if (!supabase) return getThemeArticlesFromFiles();
+
+  const { data, error } = await supabase
+    .from("theme_articles")
+    .select("slug, title, body_markdown, seo_title, meta_description, card_text")
+    .eq("status", "published")
+    .order("display_order", { ascending: true })
+    .order("title", { ascending: true });
+
+  if (error || !data) return getThemeArticlesFromFiles();
+  return (data as ThemeArticleRow[]).map(recordToThemeArticle);
+}
+
+export async function getThemeArticleBySlug(slug: string | null | undefined): Promise<ThemeArticle | null> {
   if (!slug) return null;
-  return getThemeArticles().find((article) => article.slug === slug.replace(/^\//, "")) ?? null;
+  const normalized = slug.replace(/^\//, "");
+  const articles = await getThemeArticles();
+  return articles.find((article) => article.slug === normalized) ?? null;
 }
