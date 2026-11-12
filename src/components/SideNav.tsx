@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
-import { Headphones, Home, Mail, Users } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Headphones, Home, Mail, Menu, Users, X } from "lucide-react";
 import { useSectionContrast } from "@/hooks/useSectionContrast";
 import { site } from "@/lib/site";
 import type { SocialLinks } from "@/types/content";
@@ -12,6 +12,24 @@ import type { SocialLinks } from "@/types/content";
 type SideNavProps = {
   socialLinks: SocialLinks;
 };
+
+const PANEL_ID = "site-side-nav-panel";
+
+/**
+ * Compact viewports collapse the rail to a labelled trigger, so the navigation
+ * stops reserving inline space over the page. Without JavaScript the trigger
+ * can never open, so the panel falls back to its always-visible rail form.
+ */
+const NO_SCRIPT_FALLBACK = `
+.site-side-nav-toggle,
+.site-side-nav-scrim { display: none !important; }
+.site-side-nav-shell {
+  opacity: 1 !important;
+  position: static !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+`;
 
 function SpotifyIcon() {
   return (
@@ -28,7 +46,78 @@ export function SideNav({ socialLinks }: SideNavProps) {
   const pathname = usePathname();
   const isCommunityPage = pathname === "/community" || pathname.startsWith("/community/");
   const railRef = useRef<HTMLElement | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [stepAside, setStepAside] = useState(false);
+  const [renderedPath, setRenderedPath] = useState(pathname);
   const isOnLight = useSectionContrast(railRef, [pathname]);
+
+  const collapse = useCallback(() => setOpen(false), []);
+
+  // Navigating away always collapses the flyout - including via the browser's
+  // back/forward buttons, which never run the links' own click handler.
+  if (renderedPath !== pathname) {
+    setRenderedPath(pathname);
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    }
+
+    // The flyout is a transient overlay: any page scroll collapses it again.
+    function handleScroll() {
+      setOpen(false);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [open]);
+
+  // Focus deliberately stays on the trigger: this is a disclosure, not a modal
+  // dialog. The panel follows the trigger in DOM order, so Tab walks straight
+  // into it, and Escape hands focus back explicitly.
+
+  // The collapsed trigger floats over the page, so it steps aside while the
+  // reader scrolls down and returns the moment they scroll up or stop. That
+  // keeps it off the content without ever hiding it for long - it is the only
+  // navigation on compact viewports.
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let frame = 0;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function handleScroll() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const y = window.scrollY;
+        const delta = y - lastY;
+        if (Math.abs(delta) > 4) {
+          setStepAside(delta > 0 && y > 140);
+          lastY = y;
+        }
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => setStepAside(false), 450);
+      });
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+      clearTimeout(idleTimer);
+    };
+  }, []);
 
   const mainLinks = [
     {
@@ -79,9 +168,31 @@ export function SideNav({ socialLinks }: SideNavProps) {
       ref={railRef}
       className={isOnLight ? "site-side-nav is-on-light" : "site-side-nav"}
       aria-label="Sitenavigatie"
+      data-open={open ? "true" : "false"}
+      data-step-aside={!open && stepAside ? "true" : "false"}
       data-community-context={isCommunityPage ? "true" : undefined}
     >
-      <div className="site-side-nav-shell">
+      <noscript>
+        <style>{NO_SCRIPT_FALLBACK}</style>
+      </noscript>
+
+      <button
+        type="button"
+        ref={toggleRef}
+        className="site-side-nav-toggle"
+        aria-expanded={open}
+        aria-controls={PANEL_ID}
+        onClick={() => setOpen((previous) => !previous)}
+      >
+        {open ? <X size={20} strokeWidth={2} aria-hidden /> : <Menu size={20} strokeWidth={2} aria-hidden />}
+        <span>{open ? "Sluiten" : "Menu"}</span>
+      </button>
+
+      <button type="button" className="site-side-nav-scrim" tabIndex={-1} onClick={collapse}>
+        <span className="sr-only">Menu sluiten</span>
+      </button>
+
+      <div id={PANEL_ID} className="site-side-nav-shell">
         <nav className="site-side-nav-group site-side-nav-main" aria-label="Hoofdnavigatie">
           {mainLinks.map((item) => (
             <Link
@@ -90,6 +201,7 @@ export function SideNav({ socialLinks }: SideNavProps) {
               className={`site-side-nav-link${item.active ? " active" : ""}`}
               aria-label={item.label}
               aria-current={item.active ? "page" : undefined}
+              onClick={collapse}
             >
               {item.icon}
               <span className="site-side-nav-tooltip">{item.label}</span>
@@ -110,6 +222,7 @@ export function SideNav({ socialLinks }: SideNavProps) {
                 target={isEmail ? undefined : "_blank"}
                 rel={isEmail ? undefined : "noopener noreferrer"}
                 aria-label={item.label}
+                onClick={collapse}
               >
                 {item.icon}
                 <span className="site-side-nav-tooltip">{item.label}</span>

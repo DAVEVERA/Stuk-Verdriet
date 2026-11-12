@@ -36,7 +36,7 @@ import {
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { archiveEpisode, moderateCommunityReply, moderateInterviewComment, moderatePost, refreshEpisodeTranscript, resolveCommunityReport, saveEpisode, saveSeason, signOutAdmin, startEpisodeTranscript } from "@/lib/actions";
-import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation, saveThemeArticle, deleteThemeArticle, sendAdminPushBroadcast } from "@/lib/admin-operations";
+import { addAdminUser, removeAdminUser, updateAdminUserRole, saveLegalDocument, deleteLegalDocument, saveFaq as saveFaqDb, deleteFaq as deleteFaqDb, saveHost as saveHostDb, deleteHost as deleteHostDb, saveMarketingItem, deleteMarketingItem, saveAISettings, saveAutomation, deleteAutomation, saveThemeArticle, deleteThemeArticle, sendAdminPushBroadcast, saveBoardMember, deleteBoardMember, saveGovernanceFact, deleteGovernanceFact } from "@/lib/admin-operations";
 import { AdminSiteEditor } from "./AdminSiteEditor";
 import { AdminCommunityManager } from "./AdminCommunityManager";
 import styles from "./AdminDashboard.module.css";
@@ -54,6 +54,9 @@ import type {
   EpisodeSignup,
   InterviewSubscriber,
   PushSubscriberStats,
+  BoardMemberRecord,
+  GovernanceFactRecord,
+  GovernanceFactGroup,
   AdminUserRole,
   ContentStatus,
   MarketingItem,
@@ -148,6 +151,8 @@ type AdminDashboardProps = {
   episodeSignups?: EpisodeSignup[];
   interviewSubscribers?: InterviewSubscriber[];
   pushStats?: PushSubscriberStats;
+  boardMembers?: BoardMemberRecord[];
+  governanceFacts?: GovernanceFactRecord[];
   marketingItems?: MarketingItem[];
   aiSettings?: AISettings;
   automations?: Automation[];
@@ -232,6 +237,7 @@ const tabs = [
   ["community", "Community"],
   ["site", "Site bewerken"],
   ["themes", "Thema's"],
+  ["stichting", "Stichting"],
   ["hosts", "Hosts"],
   ["documents", "Documentatie"]
 ] as const;
@@ -252,7 +258,7 @@ const tabGroups: Array<{ title: string; helper: string; ids: AdminTabId[] }> = [
   {
     title: "Content & media",
     helper: "Podcast, site en documenten",
-    ids: ["site", "themes", "podcast", "seasons", "hosts", "brand", "documents"]
+    ids: ["site", "themes", "stichting", "podcast", "seasons", "hosts", "brand", "documents"]
   },
   {
     title: "Groei & planning",
@@ -354,6 +360,8 @@ export function AdminDashboard({
   episodeSignups = [],
   interviewSubscribers = [],
   pushStats = { total: 0, enabled: 0 },
+  boardMembers = [],
+  governanceFacts = [],
   marketingItems = [],
   aiSettings,
   automations = [],
@@ -745,6 +753,7 @@ export function AdminDashboard({
       {activeTab === "community" ? <AdminCommunityManager posts={communityPosts} replies={communityReplies} profiles={communityProfiles} moments={communityPulseMoments} sourceError={communityDataError} /> : null}
       {activeTab === "site" ? <AdminSiteEditor siteSettings={siteSettings} sectionDesign={sectionDesign} /> : null}
       {activeTab === "themes" ? <ThemeArticleManager articles={themeArticles} /> : null}
+      {activeTab === "stichting" ? <GovernanceManager boardMembers={boardMembers} governanceFacts={governanceFacts} /> : null}
       {activeTab === "hosts" ? <HostAndFaqForms faqs={faqs} hosts={hosts} /> : null}
       {activeTab === "documents" ? <DocumentsManager legalDocuments={legalDocuments} /> : null}
         </div>
@@ -2401,6 +2410,309 @@ function SubscribersManager({
               </div>
             ))}
             {!interviewSubscribers.length ? <p className="empty-state">Nog geen interview-abonnees.</p> : null}
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+const governanceFactGroupLabels: Record<GovernanceFactGroup, string> = {
+  organisation: "Registratie",
+  contact: "Contact en vestiging",
+  banking: "Donaties"
+};
+
+function GovernanceManager({
+  boardMembers,
+  governanceFacts
+}: {
+  boardMembers: BoardMemberRecord[];
+  governanceFacts: GovernanceFactRecord[];
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Board member form
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [bName, setBName] = useState("");
+  const [bFullName, setBFullName] = useState("");
+  const [bRole, setBRole] = useState("");
+  const [bTagline, setBTagline] = useState("");
+  const [bImageUrl, setBImageUrl] = useState("");
+  const [bImageAlt, setBImageAlt] = useState("");
+  const [bObjectPosition, setBObjectPosition] = useState("");
+  const [bOrder, setBOrder] = useState<number>(100);
+  const [bStatus, setBStatus] = useState<ContentStatus>("published");
+
+  // Fact form
+  const [factId, setFactId] = useState<string | null>(null);
+  const [fGroup, setFGroup] = useState<GovernanceFactGroup>("organisation");
+  const [fLabel, setFLabel] = useState("");
+  const [fValue, setFValue] = useState("");
+  const [fCopy, setFCopy] = useState(false);
+  const [fCopyValue, setFCopyValue] = useState("");
+  const [fHint, setFHint] = useState("");
+  const [fHref, setFHref] = useState("");
+  const [fOrder, setFOrder] = useState<number>(100);
+  const [fStatus, setFStatus] = useState<ContentStatus>("published");
+
+  function editBoard(member: BoardMemberRecord) {
+    setBoardId(member.id);
+    setBName(member.name);
+    setBFullName(member.full_name);
+    setBRole(member.role);
+    setBTagline(member.tagline);
+    setBImageUrl(member.image_url ?? "");
+    setBImageAlt(member.image_alt ?? "");
+    setBObjectPosition(member.object_position ?? "");
+    setBOrder(member.display_order);
+    setBStatus(member.status);
+    setErrorMsg("");
+  }
+
+  function resetBoard() {
+    setBoardId(null);
+    setBName("");
+    setBFullName("");
+    setBRole("");
+    setBTagline("");
+    setBImageUrl("");
+    setBImageAlt("");
+    setBObjectPosition("");
+    setBOrder(100);
+    setBStatus("published");
+  }
+
+  function editFact(fact: GovernanceFactRecord) {
+    setFactId(fact.id);
+    setFGroup(fact.group);
+    setFLabel(fact.label);
+    setFValue(fact.value);
+    setFCopy(fact.copy);
+    setFCopyValue(fact.copy_value ?? "");
+    setFHint(fact.hint ?? "");
+    setFHref(fact.href ?? "");
+    setFOrder(fact.display_order);
+    setFStatus(fact.status);
+    setErrorMsg("");
+  }
+
+  function resetFact() {
+    setFactId(null);
+    setFGroup("organisation");
+    setFLabel("");
+    setFValue("");
+    setFCopy(false);
+    setFCopyValue("");
+    setFHint("");
+    setFHref("");
+    setFOrder(100);
+    setFStatus("published");
+  }
+
+  function handleSaveBoard(e: React.FormEvent) {
+    e.preventDefault();
+    if (!bName.trim() || !bRole.trim()) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        const res = await saveBoardMember(boardId, {
+          name: bName,
+          fullName: bFullName,
+          role: bRole,
+          tagline: bTagline,
+          imageUrl: bImageUrl,
+          imageAlt: bImageAlt,
+          objectPosition: bObjectPosition,
+          displayOrder: bOrder,
+          status: bStatus
+        });
+        if (res.error) setErrorMsg("Fout bij opslaan bestuurslid: " + res.error);
+        else {
+          resetBoard();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Opslaan niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  function handleDeleteBoard(id: string) {
+    if (!confirm("Weet je zeker dat je dit bestuurslid wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        const res = await deleteBoardMember(id);
+        if (res.error) setErrorMsg("Fout bij verwijderen bestuurslid: " + res.error);
+        else {
+          if (boardId === id) resetBoard();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Verwijderen niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  function handleSaveFact(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fLabel.trim() || !fValue.trim()) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        const res = await saveGovernanceFact(factId, {
+          group: fGroup,
+          label: fLabel,
+          value: fValue,
+          copy: fCopy,
+          copyValue: fCopyValue,
+          hint: fHint,
+          href: fHref,
+          displayOrder: fOrder,
+          status: fStatus
+        });
+        if (res.error) setErrorMsg("Fout bij opslaan gegeven: " + res.error);
+        else {
+          resetFact();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Opslaan niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  function handleDeleteFact(id: string) {
+    if (!confirm("Weet je zeker dat je dit gegeven wilt verwijderen?")) return;
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        const res = await deleteGovernanceFact(id);
+        if (res.error) setErrorMsg("Fout bij verwijderen gegeven: " + res.error);
+        else {
+          if (factId === id) resetFact();
+          router.refresh();
+        }
+      } catch {
+        setErrorMsg("Verwijderen niet gelukt. Log opnieuw in met een geautoriseerd Google-account en probeer het nog eens.");
+      }
+    });
+  }
+
+  return (
+    <div className="admin-module">
+      <div className="admin-module-hero">
+        <div>
+          <p className="eyebrow">Stichting</p>
+          <h2>Bestuur &amp; stichtingsgegevens</h2>
+          <p>Beheer de bestuursleden en de officiële gegevens. De samenstellingstabel op &laquo;Bestuur en beloningsbeleid&raquo; volgt automatisch de bestuursleden hieronder (volledige naam).</p>
+        </div>
+      </div>
+
+      {errorMsg ? <p className="notice error">{errorMsg}</p> : null}
+
+      <div className="admin-grid wide">
+        <article className="admin-panel">
+          <h2>{boardId ? "Bestuurslid bewerken" : "Bestuurslid toevoegen"}</h2>
+          <form className="form-grid" onSubmit={handleSaveBoard}>
+            <label>Weergavenaam (voornaam)<input required value={bName} onChange={(e) => setBName(e.target.value)} disabled={isPending} placeholder="bijv. Susan" /></label>
+            <label>Volledige naam (voor de bestuurstabel)<input value={bFullName} onChange={(e) => setBFullName(e.target.value)} disabled={isPending} placeholder="bijv. Susan Mathijssen" /></label>
+            <label>Functie<input required value={bRole} onChange={(e) => setBRole(e.target.value)} disabled={isPending} placeholder="bijv. Voorzitter" /></label>
+            <label>Tagline<textarea style={{ minHeight: "70px" }} value={bTagline} onChange={(e) => setBTagline(e.target.value)} disabled={isPending} placeholder="Korte omschrijving onder de naam" /></label>
+            <label>Foto-URL<input value={bImageUrl} onChange={(e) => setBImageUrl(e.target.value)} disabled={isPending} placeholder="bijv. /img/portret.png" /></label>
+            <label>Alt-tekst foto<input value={bImageAlt} onChange={(e) => setBImageAlt(e.target.value)} disabled={isPending} placeholder="Omschrijving van de foto" /></label>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <label style={{ flex: "1 1 150px" }}>Foto-uitsnede<input value={bObjectPosition} onChange={(e) => setBObjectPosition(e.target.value)} disabled={isPending} placeholder="bijv. center 30%" /></label>
+              <label style={{ flex: "1 1 100px" }}>Volgorde<input type="number" value={bOrder} onChange={(e) => setBOrder(Number(e.target.value))} disabled={isPending} /></label>
+              <label style={{ flex: "1 1 140px" }}>Status
+                <select value={bStatus} onChange={(e) => setBStatus(e.target.value as ContentStatus)} disabled={isPending}>
+                  {(Object.keys(themeStatusLabels) as ContentStatus[]).map((value) => (
+                    <option key={value} value={value}>{themeStatusLabels[value]}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+              {boardId ? <button className="button ghost" type="button" onClick={resetBoard} disabled={isPending}>Annuleren</button> : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Bestuursleden ({boardMembers.length})</h2>
+          <div className="compact-list" style={{ marginTop: "1rem" }}>
+            {boardMembers.map((member) => (
+              <div key={member.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <strong>{member.full_name || member.name}</strong>
+                  <p className="small-note">{member.role} · {themeStatusLabels[member.status]} · volgorde {member.display_order}</p>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => editBoard(member)} disabled={isPending}>Bewerk</button>
+                  <button type="button" className="text-link danger" onClick={() => handleDeleteBoard(member.id)} disabled={isPending}>Verwijder</button>
+                </div>
+              </div>
+            ))}
+            {!boardMembers.length ? <p className="empty-state">Nog geen bestuursleden in de database. De site toont dan de meegeleverde standaardgegevens.</p> : null}
+          </div>
+        </article>
+
+        <article className="admin-panel">
+          <h2>{factId ? "Gegeven bewerken" : "Gegeven toevoegen"}</h2>
+          <form className="form-grid" onSubmit={handleSaveFact}>
+            <label>Groep
+              <select value={fGroup} onChange={(e) => setFGroup(e.target.value as GovernanceFactGroup)} disabled={isPending}>
+                {(Object.keys(governanceFactGroupLabels) as GovernanceFactGroup[]).map((value) => (
+                  <option key={value} value={value}>{governanceFactGroupLabels[value]}</option>
+                ))}
+              </select>
+            </label>
+            <label>Label<input required value={fLabel} onChange={(e) => setFLabel(e.target.value)} disabled={isPending} placeholder="bijv. KVK-nummer" /></label>
+            <label>Waarde<input required value={fValue} onChange={(e) => setFValue(e.target.value)} disabled={isPending} placeholder="bijv. 42137342" /></label>
+            <label className="check-row">
+              <input type="checkbox" checked={fCopy} onChange={(e) => setFCopy(e.target.checked)} disabled={isPending} />
+              Toon kopieerknop
+            </label>
+            <label>Kopieerwaarde (optioneel)<input value={fCopyValue} onChange={(e) => setFCopyValue(e.target.value)} disabled={isPending} placeholder="Zonder spaties, bijv. NL47RABO0178487163" /></label>
+            <label>Toelichting (optioneel)<input value={fHint} onChange={(e) => setFHint(e.target.value)} disabled={isPending} placeholder="bijv. Kamer van Koophandel" /></label>
+            <label>Link (optioneel)<input value={fHref} onChange={(e) => setFHref(e.target.value)} disabled={isPending} placeholder="bijv. mailto:info@... of https://..." /></label>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <label style={{ flex: "1 1 100px" }}>Volgorde<input type="number" value={fOrder} onChange={(e) => setFOrder(Number(e.target.value))} disabled={isPending} /></label>
+              <label style={{ flex: "1 1 140px" }}>Status
+                <select value={fStatus} onChange={(e) => setFStatus(e.target.value as ContentStatus)} disabled={isPending}>
+                  {(Object.keys(themeStatusLabels) as ContentStatus[]).map((value) => (
+                    <option key={value} value={value}>{themeStatusLabels[value]}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="button" type="submit" disabled={isPending}>Opslaan</button>
+              {factId ? <button className="button ghost" type="button" onClick={resetFact} disabled={isPending}>Annuleren</button> : null}
+            </div>
+          </form>
+        </article>
+
+        <article className="admin-panel">
+          <h2>Stichtingsgegevens ({governanceFacts.length})</h2>
+          <div className="compact-list" style={{ marginTop: "1rem" }}>
+            {governanceFacts.map((fact) => (
+              <div key={fact.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <strong>{fact.label}</strong>
+                  <p className="small-note">{fact.value} · {governanceFactGroupLabels[fact.group]} · {themeStatusLabels[fact.status]}</p>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" className="text-link" onClick={() => editFact(fact)} disabled={isPending}>Bewerk</button>
+                  <button type="button" className="text-link danger" onClick={() => handleDeleteFact(fact.id)} disabled={isPending}>Verwijder</button>
+                </div>
+              </div>
+            ))}
+            {!governanceFacts.length ? <p className="empty-state">Nog geen gegevens in de database. De site toont dan de meegeleverde standaardgegevens.</p> : null}
           </div>
         </article>
       </div>

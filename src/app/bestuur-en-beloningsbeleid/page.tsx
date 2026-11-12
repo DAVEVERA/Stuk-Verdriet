@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { GovernanceSections } from "@/components/governance/GovernanceSections";
 import { GovernanceShell } from "@/components/governance/GovernanceShell";
-import { bestuurSections } from "@/lib/governance";
+import { getBestuurSections } from "@/lib/governance-data";
 
 export const metadata: Metadata = {
   title: "Bestuur en beloningsbeleid",
@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   }
 };
 
-export default function BestuurEnBeloningsbeleidPage() {
+export default async function BestuurEnBeloningsbeleidPage() {
+  const sections = await getBestuurSections();
   return (
     <GovernanceShell
       current="/bestuur-en-beloningsbeleid"
@@ -20,7 +21,7 @@ export default function BestuurEnBeloningsbeleidPage() {
       title="Bestuur en beloningsbeleid"
       lede="Wie het bestuur vormen, waarvoor zij verantwoordelijk zijn en waarom geen van hen een beloning ontvangt."
     >
-      <GovernanceSections sections={bestuurSections} />
+      <GovernanceSections sections={sections} />
     </GovernanceShell>
   );
 }

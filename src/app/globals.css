@@ -8288,9 +8288,10 @@ textarea {
     grid-row: 2;
     height: auto;
     left: auto;
-    margin: clamp(-62px, -8svh, -38px) 14px 0;
+    margin-block: clamp(-62px, -8svh, -38px) 0;
+    margin-inline: 14px;
     max-height: none;
-    padding: 12px;
+    padding: 12px 10px;
     position: relative;
     right: auto;
     top: auto;
@@ -8312,6 +8313,19 @@ textarea {
 
   .hero-player-audio {
     border-radius: 10px;
+    /* Break out of the card inline padding: the Spotify embed clips its own
+       play button below ~310px of internal width. */
+    margin-inline: -10px;
+    /* The base rule pins width:100%, which would stop the negative margins
+       from widening the block. */
+    width: auto;
+  }
+
+  /* Only the Spotify embed goes flush: it brings its own dark background and
+     rounded corners, so the wrapper padding is invisible and only costs width.
+     The native <audio> fallback keeps the padded frame from the base rule. */
+  .hero-player-audio:has(.spotify-embed-player) {
+    padding: 0;
   }
 
   .hero-player-audio-control {

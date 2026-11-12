@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FactGroup } from "@/components/governance/FactGroup";
 import { GovernanceShell } from "@/components/governance/GovernanceShell";
 import styles from "@/components/governance/Governance.module.css";
-import { bankingFacts, contactFacts, organisationFacts } from "@/lib/governance";
+import { getGovernanceFacts } from "@/lib/governance-data";
 
 export const metadata: Metadata = {
   title: "Stichtingsgegevens",
@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   }
 };
 
-export default function StichtingsgegevensPage() {
+export default async function StichtingsgegevensPage() {
+  const facts = await getGovernanceFacts();
   return (
     <GovernanceShell
       current="/stichtingsgegevens"
@@ -21,9 +22,9 @@ export default function StichtingsgegevensPage() {
       title="Stichtingsgegevens"
       lede="De gegevens waarmee de stichting is geregistreerd, en het rekeningnummer waarop donaties binnenkomen."
     >
-      <FactGroup facts={organisationFacts} title="Registratie" />
-      <FactGroup facts={contactFacts} title="Contact en vestiging" />
-      <FactGroup facts={bankingFacts} title="Donaties" />
+      <FactGroup facts={facts.organisation} title="Registratie" />
+      <FactGroup facts={facts.contact} title="Contact en vestiging" />
+      <FactGroup facts={facts.banking} title="Donaties" />
       <div className={styles.note}>
         <p>
           Giften komen volledig ten goede aan de doelstelling van de stichting. Bestuurders ontvangen geen beloning voor

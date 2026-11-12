@@ -567,6 +567,39 @@ export type PushSubscriberStats = {
   enabled: number;
 };
 
+// Governance / stichting content managed via the admin portal.
+export type BoardMemberRecord = {
+  id: string;
+  name: string;
+  full_name: string;
+  role: string;
+  tagline: string;
+  image_url: string | null;
+  image_alt: string | null;
+  object_position: string | null;
+  display_order: number;
+  status: ContentStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GovernanceFactGroup = "organisation" | "contact" | "banking";
+
+export type GovernanceFactRecord = {
+  id: string;
+  group: GovernanceFactGroup;
+  label: string;
+  value: string;
+  copy: boolean;
+  copy_value: string | null;
+  hint: string | null;
+  href: string | null;
+  display_order: number;
+  status: ContentStatus;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AdminUserRole = "super_admin" | "admin" | "editor" | "moderator";
 
 export type AdminUser = {

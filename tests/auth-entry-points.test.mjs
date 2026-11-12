@@ -44,6 +44,8 @@ const mocks = {
     export async function getAdminEpisodeSignups() { return []; }
     export async function getAdminInterviewSubscribers() { return []; }
     export async function getPushSubscriberStats() { return { total: 0, enabled: 0 }; }
+    export async function getAdminBoardMembers() { return []; }
+    export async function getAdminGovernanceFacts() { return []; }
   `),
   localAdmin: moduleUrl(`
     export async function hasLocalAdminSession() { return false; }

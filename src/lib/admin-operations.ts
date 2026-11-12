@@ -23,6 +23,9 @@ import type {
   EpisodeSignup,
   InterviewSubscriber,
   PushSubscriberStats,
+  BoardMemberRecord,
+  GovernanceFactRecord,
+  GovernanceFactGroup,
 } from '@/types/content';
 
 export async function getAdminCustomers() {
@@ -495,6 +498,137 @@ export async function getPushSubscriberStats(): Promise<PushSubscriberStats> {
     total: totalResult.count ?? 0,
     enabled: enabledResult.count ?? 0,
   };
+}
+
+// === GOVERNANCE: BOARD MEMBERS ===
+export async function getAdminBoardMembers() {
+  const admin = await requireAdminClient();
+
+  const { data, error } = await admin
+    .from('board_members')
+    .select('*')
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching board members:', error);
+    return [] as BoardMemberRecord[];
+  }
+  return (data ?? []) as BoardMemberRecord[];
+}
+
+export async function saveBoardMember(
+  id: string | null,
+  values: {
+    name: string;
+    fullName: string;
+    role: string;
+    tagline: string;
+    imageUrl: string;
+    imageAlt: string;
+    objectPosition: string;
+    displayOrder: number;
+    status: ContentStatus;
+  }
+) {
+  const admin = await requireAdminClient();
+
+  const name = values.name.trim();
+  if (!name) return { error: 'Een naam is verplicht.' };
+  if (!values.role.trim()) return { error: 'Een functie is verplicht.' };
+
+  const payload = {
+    name,
+    full_name: values.fullName.trim() || name,
+    role: values.role.trim(),
+    tagline: values.tagline.trim(),
+    image_url: values.imageUrl.trim() || null,
+    image_alt: values.imageAlt.trim() || null,
+    object_position: values.objectPosition.trim() || null,
+    display_order: Number.isFinite(values.displayOrder) ? values.displayOrder : 100,
+    status: values.status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (id) {
+    const { data, error } = await admin.from('board_members').update(payload).eq('id', id).select().single();
+    if (error) return { error: error.message };
+    return { success: true, data: data as BoardMemberRecord };
+  }
+  const { data, error } = await admin.from('board_members').insert(payload).select().single();
+  if (error) return { error: error.message };
+  return { success: true, data: data as BoardMemberRecord };
+}
+
+export async function deleteBoardMember(id: string) {
+  const admin = await requireAdminClient();
+  const { error } = await admin.from('board_members').delete().eq('id', id);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+// === GOVERNANCE: STICHTINGSGEGEVENS (FACTS) ===
+export async function getAdminGovernanceFacts() {
+  const admin = await requireAdminClient();
+
+  const { data, error } = await admin
+    .from('governance_facts')
+    .select('*')
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching governance facts:', error);
+    return [] as GovernanceFactRecord[];
+  }
+  return (data ?? []) as GovernanceFactRecord[];
+}
+
+export async function saveGovernanceFact(
+  id: string | null,
+  values: {
+    group: GovernanceFactGroup;
+    label: string;
+    value: string;
+    copy: boolean;
+    copyValue: string;
+    hint: string;
+    href: string;
+    displayOrder: number;
+    status: ContentStatus;
+  }
+) {
+  const admin = await requireAdminClient();
+
+  if (!values.label.trim()) return { error: 'Een label is verplicht.' };
+  if (!values.value.trim()) return { error: 'Een waarde is verplicht.' };
+
+  const payload = {
+    group: values.group,
+    label: values.label.trim(),
+    value: values.value.trim(),
+    copy: values.copy,
+    copy_value: values.copyValue.trim() || null,
+    hint: values.hint.trim() || null,
+    href: values.href.trim() || null,
+    display_order: Number.isFinite(values.displayOrder) ? values.displayOrder : 100,
+    status: values.status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (id) {
+    const { data, error } = await admin.from('governance_facts').update(payload).eq('id', id).select().single();
+    if (error) return { error: error.message };
+    return { success: true, data: data as GovernanceFactRecord };
+  }
+  const { data, error } = await admin.from('governance_facts').insert(payload).select().single();
+  if (error) return { error: error.message };
+  return { success: true, data: data as GovernanceFactRecord };
+}
+
+export async function deleteGovernanceFact(id: string) {
+  const admin = await requireAdminClient();
+  const { error } = await admin.from('governance_facts').delete().eq('id', id);
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function sendAdminPushBroadcast(title: string, body: string, url: string) {
