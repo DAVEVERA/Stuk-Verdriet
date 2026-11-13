@@ -1416,6 +1416,13 @@ p {
   padding-inline: clamp(18px, 4vw, 56px);
 }
 
+/* De sectie-ontwerpregels cappen elk direct kind van .image-band op de
+   contentbreedte (standaard 1180px, !important). De themacarrousel mag juist
+   de volle sectiebreedte benutten; de viewport erbinnen centreert zichzelf. */
+.image-band > .category-carousel {
+  max-width: none !important;
+}
+
 .image-band .section-heading h2 {
   color: var(--pine);
 }
@@ -1503,8 +1510,15 @@ p {
   overflow: clip;
 }
 
+/* Verborgen op verzoek. Verwijder deze regel om de sectie weer te tonen. */
+.community-preview-section {
+  display: none;
+}
+
 /* Donatiebalk direct onder de hero (iDEAL QR + IBAN) */
 .donation-band {
+  /* Zacht wit, transparant: een luchtige sluier over de achtergrond. */
+  background: rgba(255, 253, 248, 0.55);
   padding-inline: clamp(16px, 5vw, 56px);
   padding-block: clamp(22px, 5vw, 52px);
 }
@@ -2476,6 +2490,12 @@ p {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
+}
+
+/* The .hosts-section a { color: inherit } rule (0,2,0) otherwise wins over
+   .button's white, leaving dark text on the pine fill. Restore white. */
+.host-family-card-actions a.button {
+  color: var(--white);
 }
 
 .category-card,
@@ -7604,13 +7624,21 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  /* Two shared row tracks (main area, family card) so both host-cards align
+     row-for-row via subgrid; the Eva and Tycho family cards then take the same
+     height no matter how differently their text wraps. */
+  .host-grid {
+    grid-template-rows: auto auto;
+  }
+
   .episode-card,
   .host-card {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
   .host-card {
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
   }
 
   .host-card > div:not(.host-family-card) {
