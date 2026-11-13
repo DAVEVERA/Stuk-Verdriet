@@ -144,6 +144,18 @@ export function Footer({ socialLinks: _socialLinks, logoUrl }: { socialLinks: So
             height={125}
           />
         </a>
+        <Link
+          className="footer-anbi-link"
+          href="/stichtingsgegevens"
+          aria-label="ANBI: erkend door de Belastingdienst - bekijk de stichtingsgegevens"
+        >
+          <Image
+            src="/img/ANBI/anbi-algemeen-nut-beogende-instelling.svg"
+            alt="Algemeen Nut Beogende Instelling (ANBI)"
+            width={133}
+            height={105}
+          />
+        </Link>
       </div>
       <nav className="footer-governance" aria-labelledby="footer-governance-title">
         <p className="footer-governance-title" id="footer-governance-title">
@@ -1027,11 +1039,9 @@ export function SpotifyEmbedPlayer({
     <iframe
       className={compact ? 'spotify-embed-player is-compact' : 'spotify-embed-player'}
       title={`Spotify-player: ${episode.title}`}
-      style={{ borderRadius: '12px' }}
       src={spotifyEmbedUrl}
       width="100%"
-      height={compact ? '110' : '152'}
-      frameBorder={0}
+      height="152"
       allowFullScreen
       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
       loading="lazy"

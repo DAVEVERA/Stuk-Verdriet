@@ -797,8 +797,13 @@ p {
 
 .spotify-embed-player {
   border: 0;
+  border-radius: 12px;
+  color-scheme: normal;
   display: block;
   max-width: 100%;
+  /* min-width:0 lets the iframe shrink inside grid/flex tracks instead of
+     forcing overflow; width:100% keeps it flush to whatever frame holds it. */
+  min-width: 0;
   width: 100%;
 }
 
@@ -5656,6 +5661,33 @@ textarea {
   width: 112px;
 }
 
+/* ANBI status badge: modest, professional, a quiet mark rather than a feature. */
+.footer-anbi-link {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: inline-flex;
+  justify-content: center;
+  padding: 6px 10px;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.footer-anbi-link:hover,
+.footer-anbi-link:focus-visible {
+  border-color: rgba(66, 86, 69, 0.28);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.footer-anbi-link img {
+  height: auto;
+  object-fit: contain;
+  width: clamp(76px, 18vw, 104px);
+}
+
 .footer-feature-grid {
   align-items: stretch;
   display: grid;
@@ -7394,6 +7426,18 @@ textarea {
 
   .podcast-flyout-feature {
     padding: 16px;
+  }
+
+  /* The Spotify episode embed stops showing its transport controls below
+     ~296px of internal width. In a queue item it otherwise sits in the
+     content column only (the 40px number badge + 12px gap eat into it), so
+     on phones it breaks the grid and spans the full item width instead. */
+  .episode-queue-item-with-player .spotify-embed-player {
+    margin-left: calc(-1 * (40px + 12px));
+    /* max-width:100% from the base rule would otherwise clamp the breakout
+       straight back to the content-column width. */
+    max-width: none;
+    width: calc(100% + 40px + 12px);
   }
 
   .podcast-flyout-feature h3 {
